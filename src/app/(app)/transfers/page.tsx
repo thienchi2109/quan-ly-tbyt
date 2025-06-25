@@ -1,0 +1,544 @@
+"use client"
+
+import * as React from "react"
+import { PlusCircle, ArrowLeftRight, Filter, RefreshCw } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/contexts/auth-context"
+import { AddTransferDialog } from "@/components/add-transfer-dialog"
+import { EditTransferDialog } from "@/components/edit-transfer-dialog"
+import { TransferDetailDialog } from "@/components/transfer-detail-dialog"
+import { 
+  TransferRequest, 
+  TRANSFER_STATUSES, 
+  TRANSFER_TYPES,
+  type TransferStatus
+} from "@/types/database"
+
+const KANBAN_COLUMNS: { status: TransferStatus; title: string; description: string; color: string }[] = [
+  {
+    status: 'cho_duyet',
+    title: 'Chờ duyệt',
+    description: 'Yêu cầu mới, chờ phê duyệt',
+    color: 'bg-slate-50 border-slate-200'
+  },
+  {
+    status: 'da_duyet', 
+    title: 'Đã duyệt',
+    description: 'Đã được phê duyệt, chờ bàn giao',
+    color: 'bg-blue-50 border-blue-200'
+  },
+  {
+    status: 'dang_luan_chuyen',
+    title: 'Đang luân chuyển', 
+    description: 'Thiết bị đang được luân chuyển',
+    color: 'bg-orange-50 border-orange-200'
+  },
+  {
+    status: 'hoan_thanh',
+    title: 'Hoàn thành',
+    description: 'Đã hoàn thành luân chuyển',
+    color: 'bg-green-50 border-green-200'
+  }
+]
+
+export default function TransfersPage() {
+  const { toast } = useToast()
+  const { user } = useAuth()
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [transfers, setTransfers] = React.useState<TransferRequest[]>([])
+  const [isRefreshing, setIsRefreshing] = React.useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
+  const [editingTransfer, setEditingTransfer] = React.useState<TransferRequest | null>(null)
+  const [detailDialogOpen, setDetailDialogOpen] = React.useState(false)
+  const [detailTransfer, setDetailTransfer] = React.useState<TransferRequest | null>(null)
+
+  const fetchTransfers = React.useCallback(async () => {
+    if (!supabase) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể kết nối đến cơ sở dữ liệu."
+      })
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('yeu_cau_luan_chuyen')
+        .select(`
+          *,
+          thiet_bi:thiet_bi_id (
+            id,
+            ma_thiet_bi,
+            ten_thiet_bi,
+            model,
+            serial
+          ),
+          nguoi_yeu_cau:nguoi_yeu_cau_id (
+            id,
+            full_name,
+            username
+          ),
+          nguoi_duyet:nguoi_duyet_id (
+            id,
+            full_name,
+            username
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        throw error
+      }
+
+      setTransfers(data as TransferRequest[])
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi tải danh sách yêu cầu",
+        description: error.message
+      })
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }, [toast])
+
+  React.useEffect(() => {
+    fetchTransfers()
+  }, [fetchTransfers])
+
+  const handleRefresh = () => {
+    setIsRefreshing(true)
+    fetchTransfers()
+  }
+
+  const getTransfersByStatus = (status: TransferStatus) => {
+    return transfers.filter(transfer => transfer.trang_thai === status)
+  }
+
+  const getTypeVariant = (type: 'noi_bo' | 'ben_ngoai') => {
+    return type === 'noi_bo' ? 'default' : 'secondary'
+  }
+
+  const canEdit = (transfer: TransferRequest) => {
+    // Allow edit in "cho_duyet" status for everyone
+    // Allow edit in "da_duyet" status but with restrictions
+    return transfer.trang_thai === 'cho_duyet' || transfer.trang_thai === 'da_duyet'
+  }
+
+  const canDelete = (transfer: TransferRequest) => {
+    // Only allow delete in "cho_duyet" status
+    return transfer.trang_thai === 'cho_duyet'
+  }
+
+  const handleEditTransfer = (transfer: TransferRequest) => {
+    setEditingTransfer(transfer)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleDeleteTransfer = async (transferId: number) => {
+    if (!supabase) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể kết nối đến cơ sở dữ liệu."
+      })
+      return
+    }
+
+    if (!confirm("Bạn có chắc chắn muốn xóa yêu cầu luân chuyển này?")) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('yeu_cau_luan_chuyen')
+        .delete()
+        .eq('id', transferId)
+
+      if (error) {
+        throw error
+      }
+
+      toast({
+        title: "Thành công",
+        description: "Đã xóa yêu cầu luân chuyển."
+      })
+
+      fetchTransfers()
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Có lỗi xảy ra khi xóa yêu cầu."
+      })
+    }
+  }
+
+  const handleApproveTransfer = async (transferId: number) => {
+    if (!supabase) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể kết nối đến cơ sở dữ liệu."
+      })
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('yeu_cau_luan_chuyen')
+        .update({
+          trang_thai: 'da_duyet',
+          nguoi_duyet_id: user?.id,
+          ngay_duyet: new Date().toISOString(),
+          updated_by: user?.id
+        })
+        .eq('id', transferId)
+
+      if (error) {
+        throw error
+      }
+
+      toast({
+        title: "Thành công",
+        description: "Đã duyệt yêu cầu luân chuyển."
+      })
+
+      fetchTransfers()
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Có lỗi xảy ra khi duyệt yêu cầu."
+      })
+    }
+  }
+
+  const handleStartTransfer = async (transferId: number) => {
+    if (!supabase) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể kết nối đến cơ sở dữ liệu."
+      })
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('yeu_cau_luan_chuyen')
+        .update({
+          trang_thai: 'dang_luan_chuyen',
+          ngay_ban_giao: new Date().toISOString(),
+          updated_by: user?.id
+        })
+        .eq('id', transferId)
+
+      if (error) {
+        throw error
+      }
+
+      toast({
+        title: "Thành công",
+        description: "Đã bắt đầu luân chuyển thiết bị."
+      })
+
+      fetchTransfers()
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Có lỗi xảy ra khi bắt đầu luân chuyển."
+      })
+    }
+  }
+
+  const handleCompleteTransfer = async (transferId: number) => {
+    if (!supabase) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể kết nối đến cơ sở dữ liệu."
+      })
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('yeu_cau_luan_chuyen')
+        .update({
+          trang_thai: 'hoan_thanh',
+          ngay_hoan_thanh: new Date().toISOString(),
+          updated_by: user?.id
+        })
+        .eq('id', transferId)
+
+      if (error) {
+        throw error
+      }
+
+      toast({
+        title: "Thành công",
+        description: "Đã hoàn thành luân chuyển thiết bị."
+      })
+
+      fetchTransfers()
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Có lỗi xảy ra khi hoàn thành luân chuyển."
+      })
+    }
+  }
+
+  const getStatusActions = (transfer: TransferRequest) => {
+    const actions = []
+    
+    switch (transfer.trang_thai) {
+      case 'cho_duyet':
+        // Only admin and to_qltb can approve
+        if (user && (user.role === 'admin' || user.role === 'to_qltb')) {
+          actions.push(
+            <Button
+              key="approve"
+              size="sm"
+              variant="default"
+              className="h-6 px-2 text-xs bg-blue-600 hover:bg-blue-700"
+              onClick={() => handleApproveTransfer(transfer.id)}
+            >
+              Duyệt
+            </Button>
+          )
+        }
+        break
+        
+      case 'da_duyet':
+        // Admin, to_qltb, and department managers can start transfer
+        if (user && (
+          user.role === 'admin' || 
+          user.role === 'to_qltb' ||
+          (user.role === 'qltb_khoa' && user.khoa_phong === transfer.khoa_phong_hien_tai)
+        )) {
+          actions.push(
+            <Button
+              key="start"
+              size="sm"
+              variant="default"
+              className="h-6 px-2 text-xs bg-orange-600 hover:bg-orange-700"
+              onClick={() => handleStartTransfer(transfer.id)}
+            >
+              Bắt đầu
+            </Button>
+          )
+        }
+        break
+        
+      case 'dang_luan_chuyen':
+        // Admin, to_qltb, and receiving department can complete
+        if (user && (
+          user.role === 'admin' || 
+          user.role === 'to_qltb' ||
+          (user.role === 'qltb_khoa' && (
+            user.khoa_phong === transfer.khoa_phong_hien_tai ||
+            user.khoa_phong === transfer.khoa_phong_nhan
+          ))
+        )) {
+          actions.push(
+            <Button
+              key="complete"
+              size="sm"
+              variant="default"
+              className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700"
+              onClick={() => handleCompleteTransfer(transfer.id)}
+            >
+              Hoàn thành
+            </Button>
+          )
+        }
+        break
+    }
+    
+    return actions
+  }
+
+  const handleViewDetail = (transfer: TransferRequest) => {
+    setDetailTransfer(transfer)
+    setDetailDialogOpen(true)
+  }
+
+  return (
+    <>
+      <AddTransferDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={fetchTransfers}
+      />
+
+      <EditTransferDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={fetchTransfers}
+        transfer={editingTransfer}
+      />
+
+      <TransferDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        transfer={detailTransfer}
+      />
+
+      <Card>
+        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle>Luân chuyển thiết bị</CardTitle>
+            <CardDescription>
+              Quản lý luân chuyển thiết bị giữa các bộ phận và đơn vị bên ngoài
+            </CardDescription>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Làm mới
+            </Button>
+            <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Tạo yêu cầu mới
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Kanban Board */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {KANBAN_COLUMNS.map((column) => {
+              const columnTransfers = getTransfersByStatus(column.status)
+              
+              return (
+                <Card key={column.status} className={`${column.color} min-h-[600px]`}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-medium">
+                        {column.title}
+                      </CardTitle>
+                      <Badge variant="secondary" className="ml-2">
+                        {columnTransfers.length}
+                      </Badge>
+                    </div>
+                    <CardDescription className="text-xs">
+                      {column.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {isLoading ? (
+                      Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-32 w-full" />
+                      ))
+                    ) : columnTransfers.length === 0 ? (
+                      <div className="text-center text-muted-foreground text-sm py-8">
+                        Không có yêu cầu nào
+                      </div>
+                    ) : (
+                      columnTransfers.map((transfer) => (
+                        <Card 
+                          key={transfer.id} 
+                          className="mb-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => handleViewDetail(transfer)}
+                        >
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-1">
+                                  <p className="text-sm font-medium leading-none">
+                                    {transfer.ma_yeu_cau}
+                                  </p>
+                                  <Badge variant={getTypeVariant(transfer.loai_hinh)}>
+                                    {TRANSFER_TYPES[transfer.loai_hinh]}
+                                  </Badge>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Thiết bị</p>
+                                  <p className="text-sm font-medium">
+                                    {transfer.thiet_bi?.ma_thiet_bi} - {transfer.thiet_bi?.ten_thiet_bi}
+                                  </p>
+                                </div>
+                                
+                                {transfer.loai_hinh === 'noi_bo' ? (
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">Từ → Đến</p>
+                                    <p className="text-sm">
+                                      {transfer.khoa_phong_hien_tai} → {transfer.khoa_phong_nhan}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <p className="text-xs text-muted-foreground">Đơn vị nhận</p>
+                                    <p className="text-sm">{transfer.don_vi_nhan}</p>
+                                  </div>
+                                )}
+                                
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Lý do</p>
+                                  <p className="text-sm line-clamp-2">{transfer.ly_do_luan_chuyen}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center justify-between pt-2 border-t">
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(transfer.created_at).toLocaleDateString('vi-VN')}
+                                </p>
+                                <div className="flex items-center gap-1 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                                  {/* Status Action Buttons */}
+                                  {getStatusActions(transfer)}
+                                  
+                                  {/* Edit/Delete Buttons */}
+                                  {canEdit(transfer) && (
+                                    <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => handleEditTransfer(transfer)}>
+                                      Sửa
+                                    </Button>
+                                  )}
+                                  {canDelete(transfer) && (
+                                    <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-destructive" onClick={() => handleDeleteTransfer(transfer.id)}>
+                                      Xóa
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </>
+  )
+} 
