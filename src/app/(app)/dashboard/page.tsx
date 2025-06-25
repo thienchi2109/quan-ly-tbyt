@@ -191,7 +191,7 @@ export default async function Dashboard() {
             <QrCode className="h-6 w-6" />
             <div className="text-center">
               <div className="font-semibold">Quét mã QR</div>
-              <div className="text-xs text-muted-foreground">Quét mã QR thiết bị (sắp ra mắt)</div>
+              <div className="text-xs text-muted-foreground">Quét mã QR thiết bị nhanh chóng</div>
             </div>
           </Link>
         </Button>

@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { AddTransferDialog } from "@/components/add-transfer-dialog"
 import { EditTransferDialog } from "@/components/edit-transfer-dialog"
 import { TransferDetailDialog } from "@/components/transfer-detail-dialog"
+import { OverdueTransfersAlert } from "@/components/overdue-transfers-alert"
 import { 
   TransferRequest, 
   TRANSFER_STATUSES, 
@@ -44,6 +45,12 @@ const KANBAN_COLUMNS: { status: TransferStatus; title: string; description: stri
     title: 'Đang luân chuyển', 
     description: 'Thiết bị đang được luân chuyển',
     color: 'bg-orange-50 border-orange-200'
+  },
+  {
+    status: 'da_ban_giao',
+    title: 'Đã bàn giao',
+    description: 'Đã bàn giao cho bên ngoài, chờ hoàn trả',
+    color: 'bg-purple-50 border-purple-200'
   },
   {
     status: 'hoan_thanh',
@@ -269,6 +276,87 @@ export default function TransfersPage() {
     }
   }
 
+  // New function for external handover
+  const handleHandoverToExternal = async (transferId: number) => {
+    if (!supabase) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể kết nối đến cơ sở dữ liệu."
+      })
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('yeu_cau_luan_chuyen')
+        .update({
+          trang_thai: 'da_ban_giao',
+          ngay_ban_giao: new Date().toISOString(),
+          updated_by: user?.id
+        })
+        .eq('id', transferId)
+
+      if (error) {
+        throw error
+      }
+
+      toast({
+        title: "Thành công",
+        description: "Đã bàn giao thiết bị cho đơn vị bên ngoài."
+      })
+
+      fetchTransfers()
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Có lỗi xảy ra khi bàn giao thiết bị."
+      })
+    }
+  }
+
+  // New function for returning equipment from external
+  const handleReturnFromExternal = async (transferId: number) => {
+    if (!supabase) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể kết nối đến cơ sở dữ liệu."
+      })
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('yeu_cau_luan_chuyen')
+        .update({
+          trang_thai: 'hoan_thanh',
+          ngay_hoan_tra: new Date().toISOString(),
+          ngay_hoan_thanh: new Date().toISOString(),
+          updated_by: user?.id
+        })
+        .eq('id', transferId)
+
+      if (error) {
+        throw error
+      }
+
+      toast({
+        title: "Thành công",
+        description: "Đã xác nhận hoàn trả thiết bị từ đơn vị bên ngoài."
+      })
+
+      fetchTransfers()
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error.message || "Có lỗi xảy ra khi xác nhận hoàn trả."
+      })
+    }
+  }
+
   const handleCompleteTransfer = async (transfer: TransferRequest) => {
     if (!supabase) {
       toast({
@@ -311,7 +399,7 @@ export default function TransfersPage() {
       // Step 3: Log the event to the general equipment history
       const mo_ta = transfer.loai_hinh === 'noi_bo'
         ? `Thiết bị được luân chuyển từ "${transfer.khoa_phong_hien_tai}" đến "${transfer.khoa_phong_nhan}".`
-        : `Thiết bị được luân chuyển ra bên ngoài đến đơn vị "${transfer.don_vi_nhan}".`;
+        : `Thiết bị được hoàn trả từ đơn vị bên ngoài "${transfer.don_vi_nhan}".`;
 
       const { error: historyError } = await supabase
         .from('lich_su_thiet_bi')
@@ -340,7 +428,9 @@ export default function TransfersPage() {
 
       toast({
         title: "Thành công",
-        description: "Đã hoàn thành luân chuyển thiết bị."
+        description: transfer.loai_hinh === 'noi_bo' 
+          ? "Đã hoàn thành luân chuyển nội bộ thiết bị."
+          : "Đã xác nhận hoàn trả thiết bị."
       })
 
       fetchTransfers()
@@ -396,7 +486,7 @@ export default function TransfersPage() {
         break
         
       case 'dang_luan_chuyen':
-        // Admin, to_qltb, and receiving department can complete
+        // Different actions for internal vs external transfers
         if (user && (
           user.role === 'admin' || 
           user.role === 'to_qltb' ||
@@ -405,15 +495,51 @@ export default function TransfersPage() {
             user.khoa_phong === transfer.khoa_phong_nhan
           ))
         )) {
+          if (transfer.loai_hinh === 'noi_bo') {
+            // For internal transfers - complete immediately
+            actions.push(
+              <Button
+                key="complete"
+                size="sm"
+                variant="default"
+                className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700"
+                onClick={() => handleCompleteTransfer(transfer)}
+              >
+                Hoàn thành
+              </Button>
+            )
+          } else {
+            // For external transfers - handover first
+            actions.push(
+              <Button
+                key="handover"
+                size="sm"
+                variant="default"
+                className="h-6 px-2 text-xs bg-purple-600 hover:bg-purple-700"
+                onClick={() => handleHandoverToExternal(transfer.id)}
+              >
+                Bàn giao
+              </Button>
+            )
+          }
+        }
+        break
+        
+      case 'da_ban_giao':
+        // Only for external transfers - mark as returned
+        if (user && (
+          user.role === 'admin' || 
+          user.role === 'to_qltb'
+        )) {
           actions.push(
             <Button
-              key="complete"
+              key="return"
               size="sm"
               variant="default"
               className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700"
-              onClick={() => handleCompleteTransfer(transfer)}
+              onClick={() => handleReturnFromExternal(transfer.id)}
             >
-              Hoàn thành
+              Hoàn trả
             </Button>
           )
         }
@@ -449,6 +575,8 @@ export default function TransfersPage() {
         transfer={detailTransfer}
       />
 
+      <OverdueTransfersAlert onViewTransfer={handleViewDetail} />
+
       <Card>
         <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -475,7 +603,7 @@ export default function TransfersPage() {
         </CardHeader>
         <CardContent>
           {/* Kanban Board */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {KANBAN_COLUMNS.map((column) => {
               const columnTransfers = getTransfersByStatus(column.status)
               
@@ -539,9 +667,28 @@ export default function TransfersPage() {
                                     </p>
                                   </div>
                                 ) : (
-                                  <div>
-                                    <p className="text-xs text-muted-foreground">Đơn vị nhận</p>
-                                    <p className="text-sm">{transfer.don_vi_nhan}</p>
+                                  <div className="space-y-1">
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Đơn vị nhận</p>
+                                      <p className="text-sm">{transfer.don_vi_nhan}</p>
+                                    </div>
+                                    {transfer.ngay_du_kien_tra && (
+                                      <div>
+                                        <p className="text-xs text-muted-foreground">Dự kiến hoàn trả</p>
+                                        <div className="flex items-center gap-1">
+                                          <p className="text-sm">
+                                            {new Date(transfer.ngay_du_kien_tra).toLocaleDateString('vi-VN')}
+                                          </p>
+                                          {/* Overdue indicator for external transfers */}
+                                          {(transfer.trang_thai === 'da_ban_giao' || transfer.trang_thai === 'dang_luan_chuyen') && 
+                                           new Date(transfer.ngay_du_kien_tra) < new Date() && (
+                                            <Badge variant="destructive" className="text-xs px-1 py-0">
+                                              Quá hạn
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                                 

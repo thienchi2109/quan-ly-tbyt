@@ -41,7 +41,7 @@ export interface TransferRequest {
   ma_yeu_cau: string;
   thiet_bi_id: number;
   loai_hinh: 'noi_bo' | 'ben_ngoai';
-  trang_thai: 'cho_duyet' | 'da_duyet' | 'dang_luan_chuyen' | 'hoan_thanh';
+  trang_thai: 'cho_duyet' | 'da_duyet' | 'dang_luan_chuyen' | 'da_ban_giao' | 'hoan_thanh';
   
   // Request details
   nguoi_yeu_cau_id?: number;
@@ -107,6 +107,7 @@ export const TRANSFER_STATUSES = {
   cho_duyet: 'Chờ duyệt',
   da_duyet: 'Đã duyệt', 
   dang_luan_chuyen: 'Đang luân chuyển',
+  da_ban_giao: 'Đã bàn giao',
   hoan_thanh: 'Hoàn thành'
 } as const;
 

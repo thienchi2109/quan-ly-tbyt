@@ -93,6 +93,8 @@ import { AddEquipmentDialog } from "@/components/add-equipment-dialog"
 import { ImportEquipmentDialog } from "@/components/import-equipment-dialog"
 import { useAuth } from "@/contexts/auth-context"
 import { EditEquipmentDialog } from "@/components/edit-equipment-dialog"
+import { MobileFiltersDropdown } from "@/components/mobile-filters-dropdown"
+import { ResponsivePaginationInfo } from "@/components/responsive-pagination-info"
 import { useIsMobile } from "@/hooks/use-mobile"
 
 type Attachment = {
@@ -813,13 +815,35 @@ export default function EquipmentPage() {
   // Handle URL parameters for quick actions
   React.useEffect(() => {
     const actionParam = searchParams.get('action')
+    const highlightParam = searchParams.get('highlight')
+    const tabParam = searchParams.get('tab')
     
     if (actionParam === 'add') {
       setIsAddDialogOpen(true)
       // Clear URL params after opening dialog
       router.replace('/equipment', { scroll: false })
     }
-  }, [searchParams, router])
+    
+    // Handle QR Scanner highlights
+    if (highlightParam && data.length > 0) {
+      const equipmentToHighlight = data.find(eq => eq.id === Number(highlightParam))
+      if (equipmentToHighlight) {
+        setSelectedEquipment(equipmentToHighlight)
+        setIsDetailModalOpen(true)
+        
+        // Clear URL params after opening modal
+        router.replace('/equipment', { scroll: false })
+        
+        // Auto scroll to equipment in table (with delay for modal to open)
+        setTimeout(() => {
+          const element = document.querySelector(`[data-equipment-id="${highlightParam}"]`)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 300)
+      }
+    }
+  }, [searchParams, router, data])
 
   const fetchAttachments = React.useCallback(async (equipmentId: number) => {
     if (!supabase) return;
@@ -1074,7 +1098,7 @@ export default function EquipmentPage() {
         {table.getRowModel().rows.map((row) => {
           const equipment = row.original;
           return (
-            <Card key={equipment.id}>
+            <Card key={equipment.id} data-equipment-id={equipment.id}>
               <CardHeader className="flex flex-row items-start justify-between pb-4">
                 <div className="max-w-[calc(100%-40px)]">
                   <CardTitle className="text-base font-bold leading-tight truncate">{equipment.ten_thiet_bi}</CardTitle>
@@ -1131,7 +1155,11 @@ export default function EquipmentPage() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+              <TableRow 
+                key={row.id} 
+                data-state={row.getIsSelected() && "selected"}
+                data-equipment-id={row.original.id}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1367,193 +1395,247 @@ export default function EquipmentPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex flex-1 items-center space-x-2 flex-wrap gap-y-2 min-w-[200px]">
-                  <Input
-                  placeholder="Tìm kiếm chung..."
-                  value={globalFilter ?? ""}
-                  onChange={(event) => setGlobalFilter(event.target.value)}
-                  className="h-8 w-[150px] lg:w-[250px]"
+          {/* Mobile-optimized filters layout */}
+          <div className="space-y-3">
+            {/* Search bar - full width on mobile */}
+            <div className="w-full">
+              <Input
+                placeholder="Tìm kiếm chung..."
+                value={globalFilter ?? ""}
+                onChange={(event) => setGlobalFilter(event.target.value)}
+                className="h-8 w-full"
+              />
+            </div>
+            
+            {/* Responsive filters layout */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Always show main filters */}
+              <DataTableFacetedFilter
+                column={table.getColumn("tinh_trang_hien_tai")}
+                title="Tình trạng"
+                options={statuses.map(s => ({label: s!, value: s!}))}
+              />
+              <DataTableFacetedFilter
+                column={table.getColumn("khoa_phong_quan_ly")}
+                title="Khoa/Phòng"
+                options={departments.map(d => ({label: d, value: d}))}
+              />
+              
+              {/* Desktop: Show all filters inline */}
+              {!isMobile && (
+                <>
+                  <DataTableFacetedFilter
+                    column={table.getColumn("nguoi_dang_truc_tiep_quan_ly")}
+                    title="Người sử dụng"
+                    options={users.map(d => ({label: d, value: d}))}
                   />
-                  <div className="flex items-center space-x-2 flex-wrap gap-y-2">
-                    <DataTableFacetedFilter
-                        column={table.getColumn("tinh_trang_hien_tai")}
-                        title="Tình trạng"
-                        options={statuses.map(s => ({label: s!, value: s!}))}
-                    />
-                    <DataTableFacetedFilter
-                        column={table.getColumn("khoa_phong_quan_ly")}
-                        title="Khoa/Phòng"
-                        options={departments.map(d => ({label: d, value: d}))}
-                    />
-                    {!isMobile && (
-                      <>
-                        <DataTableFacetedFilter
-                            column={table.getColumn("nguoi_dang_truc_tiep_quan_ly")}
-                            title="Người sử dụng"
-                            options={users.map(d => ({label: d, value: d}))}
-                        />
-                        <DataTableFacetedFilter
-                            column={table.getColumn("phan_loai_theo_nd98")}
-                            title="Phân loại"
-                            options={classifications.map(c => ({label: c, value: c}))}
-                        />
-                      </>
-                    )}
-                    {isFiltered && (
-                        <Button
-                            variant="ghost"
-                            onClick={() => table.resetColumnFilters()}
-                            className="h-8 px-2 lg:px-3"
-                        >
-                            Xóa
-                            <FilterX className="ml-2 h-4 w-4" />
-                        </Button>
-                    )}
-                  </div>
-              </div>
+                  <DataTableFacetedFilter
+                    column={table.getColumn("phan_loai_theo_nd98")}
+                    title="Phân loại"
+                    options={classifications.map(c => ({label: c, value: c}))}
+                  />
+                </>
+              )}
+              
+              {/* Mobile: Show additional filters in dropdown */}
+              {isMobile && (
+                <MobileFiltersDropdown
+                  activeFiltersCount={
+                    ((table.getColumn("nguoi_dang_truc_tiep_quan_ly")?.getFilterValue() as string[])?.length || 0) +
+                    ((table.getColumn("phan_loai_theo_nd98")?.getFilterValue() as string[])?.length || 0)
+                  }
+                  onClearFilters={() => {
+                    table.getColumn("nguoi_dang_truc_tiep_quan_ly")?.setFilterValue([])
+                    table.getColumn("phan_loai_theo_nd98")?.setFilterValue([])
+                  }}
+                >
+                  <DataTableFacetedFilter
+                    column={table.getColumn("nguoi_dang_truc_tiep_quan_ly")}
+                    title="Người sử dụng"
+                    options={users.map(d => ({label: d, value: d}))}
+                  />
+                  <DataTableFacetedFilter
+                    column={table.getColumn("phan_loai_theo_nd98")}
+                    title="Phân loại"
+                    options={classifications.map(c => ({label: c, value: c}))}
+                  />
+                </MobileFiltersDropdown>
+              )}
+              
+              {/* Clear all filters button */}
+              {isFiltered && (
+                <Button
+                  variant="ghost"
+                  onClick={() => table.resetColumnFilters()}
+                  className="h-8 px-2 lg:px-3"
+                >
+                  <span className="hidden sm:inline">Xóa tất cả</span>
+                  <FilterX className="h-4 w-4 sm:ml-2" />
+                </Button>
+              )}
+            </div>
+          </div>
 
-              <div className="flex items-center gap-2">
-                {!isMobile && (
-                  <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="h-8 gap-1">
-                          Cột
-                          <ChevronDown className="h-3.5 w-3.5" />
-                      </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="max-h-[50vh] overflow-y-auto">
-                      <DropdownMenuLabel>Hiện/Ẩn cột</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {table
-                          .getAllColumns()
-                          .filter((column) => column.getCanHide())
-                          .map((column) => {
-                          return (
-                              <DropdownMenuCheckboxItem
-                              key={column.id}
-                              className="capitalize"
-                              checked={column.getIsVisible()}
-                              onCheckedChange={(value) =>
-                                  column.toggleVisibility(!!value)
-                              }
-                              onSelect={(e) => e.preventDefault()}
-                              >
-                              {columnLabels[column.id as keyof Equipment] || column.id}
-                              </DropdownMenuCheckboxItem>
-                          )
-                          })}
-                      </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleDownloadTemplate}>
-                  <File className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Mẫu
-                  </span>
-              </Button>
-              <DropdownMenu>
+          {/* Action buttons - responsive layout */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 order-2 sm:order-1">
+              {!isMobile && (
+                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button size="sm" className="h-8 gap-1">
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Thêm
-                        </span>
+                    <Button variant="outline" className="h-8 gap-1">
+                      Cột
+                      <ChevronDown className="h-3.5 w-3.5" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => setIsAddDialogOpen(true)}>
-                          Thêm thủ công
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => setIsImportDialogOpen(true)}>
-                          Nhập từ Excel
-                      </DropdownMenuItem>
+                  <DropdownMenuContent align="end" className="max-h-[50vh] overflow-y-auto">
+                    <DropdownMenuLabel>Hiện/Ẩn cột</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {table
+                      .getAllColumns()
+                      .filter((column) => column.getCanHide())
+                      .map((column) => {
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={column.id}
+                            className="capitalize"
+                            checked={column.getIsVisible()}
+                            onCheckedChange={(value) =>
+                              column.toggleVisibility(!!value)
+                            }
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            {columnLabels[column.id as keyof Equipment] || column.id}
+                          </DropdownMenuCheckboxItem>
+                        )
+                      })}
                   </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleDownloadTemplate}>
+                <File className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  Mẫu
+                </span>
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-2 order-1 sm:order-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" className="h-8 gap-1">
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      Thêm thiết bị
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setIsAddDialogOpen(true)}>
+                    Thêm thủ công
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setIsImportDialogOpen(true)}>
+                    Nhập từ Excel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
               </DropdownMenu>
-              </div>
+            </div>
           </div>
         
           <div className="mt-4">
             {renderContent()}
           </div>
         </CardContent>
-        <CardFooter className="flex items-center justify-between py-4">
-            <div className="text-sm text-muted-foreground">
-                Hiển thị <strong>{table.getFilteredRowModel().rows.length}</strong> trên <strong>{data.length}</strong> thiết bị.
-            </div>
-            <div className="flex flex-col gap-2 items-end">
-                <button
-                    onClick={handleExportData}
-                    className="text-sm font-medium text-primary underline-offset-4 hover:underline disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
-                    disabled={table.getFilteredRowModel().rows.length === 0}
+        <CardFooter className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Records count - responsive position */}
+          <div className="order-2 sm:order-1">
+            <ResponsivePaginationInfo
+              currentCount={table.getFilteredRowModel().rows.length}
+              totalCount={data.length}
+              currentPage={table.getState().pagination.pageIndex + 1}
+              totalPages={table.getPageCount()}
+            />
+          </div>
+          
+          {/* Export and pagination controls */}
+          <div className="flex flex-col gap-3 items-center order-1 sm:order-2 sm:items-end">
+            <button
+              onClick={handleExportData}
+              className="text-sm font-medium text-primary underline-offset-4 hover:underline disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
+              disabled={table.getFilteredRowModel().rows.length === 0}
+            >
+              Tải về file Excel
+            </button>
+            
+            {/* Mobile-optimized pagination */}
+            <div className="flex flex-col gap-3 items-center sm:flex-row sm:gap-6">
+              {/* Page size selector */}
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">Số dòng</p>
+                <Select
+                  value={`${table.getState().pagination.pageSize}`}
+                  onValueChange={(value) => {
+                    table.setPageSize(Number(value))
+                  }}
                 >
-                    Tải về file Excel
-                </button>
-                <div className="flex items-center gap-x-6 lg:gap-x-8">
-                    <div className="flex items-center space-x-2">
-                        <p className="text-sm font-medium">Số dòng</p>
-                        <Select
-                            value={`${table.getState().pagination.pageSize}`}
-                            onValueChange={(value) => {
-                            table.setPageSize(Number(value))
-                            }}
-                        >
-                            <SelectTrigger className="h-8 w-[70px]">
-                            <SelectValue placeholder={table.getState().pagination.pageSize} />
-                            </SelectTrigger>
-                            <SelectContent side="top">
-                            {[10, 20, 50, 100].map((pageSize) => (
-                                <SelectItem key={pageSize} value={`${pageSize}`}>
-                                {pageSize}
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                        Trang {table.getState().pagination.pageIndex + 1} /{" "}
-                        {table.getPageCount()}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Button
-                            variant="outline"
-                            className="hidden h-8 w-8 p-0 lg:flex"
-                            onClick={() => table.setPageIndex(0)}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            <span className="sr-only">Go to first page</span>
-                            <ChevronsLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-8 w-8 p-0"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            <span className="sr-only">Go to previous page</span>
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="h-8 w-8 p-0"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            <span className="sr-only">Go to next page</span>
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="hidden h-8 w-8 p-0 lg:flex"
-                            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            <span className="sr-only">Go to last page</span>
-                            <ChevronsRight className="h-4 w-4" />
-                        </Button>
-                    </div>
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue placeholder={table.getState().pagination.pageSize} />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {[10, 20, 50, 100].map((pageSize) => (
+                      <SelectItem key={pageSize} value={`${pageSize}`}>
+                        {pageSize}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Page info and navigation */}
+              <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
+                <div className="text-sm font-medium hidden sm:block">
+                  Trang {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
                 </div>
+                <div className="flex items-center space-x-1">
+                  <Button
+                    variant="outline"
+                    className="hidden h-8 w-8 p-0 sm:flex"
+                    onClick={() => table.setPageIndex(0)}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    <span className="sr-only">Go to first page</span>
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    <span className="sr-only">Go to previous page</span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    <span className="sr-only">Go to next page</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="hidden h-8 w-8 p-0 sm:flex"
+                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    <span className="sr-only">Go to last page</span>
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
+          </div>
         </CardFooter>
       </Card>
     </>
