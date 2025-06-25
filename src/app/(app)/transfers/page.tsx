@@ -269,7 +269,7 @@ export default function TransfersPage() {
     }
   }
 
-  const handleCompleteTransfer = async (transferId: number) => {
+  const handleCompleteTransfer = async (transfer: TransferRequest) => {
     if (!supabase) {
       toast({
         variant: "destructive",
@@ -280,17 +280,62 @@ export default function TransfersPage() {
     }
 
     try {
-      const { error } = await supabase
+      // Step 1: Update transfer request status
+      const { error: updateError } = await supabase
         .from('yeu_cau_luan_chuyen')
         .update({
           trang_thai: 'hoan_thanh',
           ngay_hoan_thanh: new Date().toISOString(),
           updated_by: user?.id
         })
-        .eq('id', transferId)
+        .eq('id', transfer.id)
 
-      if (error) {
-        throw error
+      if (updateError) throw updateError;
+
+      // Step 2: If internal transfer, update the equipment's department
+      if (transfer.loai_hinh === 'noi_bo' && transfer.khoa_phong_nhan) {
+        const { error: equipmentUpdateError } = await supabase
+          .from('thiet_bi')
+          .update({ khoa_phong_quan_ly: transfer.khoa_phong_nhan })
+          .eq('id', transfer.thiet_bi_id)
+        
+        if (equipmentUpdateError) {
+          toast({
+            variant: "destructive",
+            title: "Lỗi cập nhật thiết bị",
+            description: `Đã hoàn thành yêu cầu, nhưng không thể cập nhật khoa/phòng mới cho thiết bị. ${equipmentUpdateError.message}`,
+          });
+        }
+      }
+
+      // Step 3: Log the event to the general equipment history
+      const mo_ta = transfer.loai_hinh === 'noi_bo'
+        ? `Thiết bị được luân chuyển từ "${transfer.khoa_phong_hien_tai}" đến "${transfer.khoa_phong_nhan}".`
+        : `Thiết bị được luân chuyển ra bên ngoài đến đơn vị "${transfer.don_vi_nhan}".`;
+
+      const { error: historyError } = await supabase
+        .from('lich_su_thiet_bi')
+        .insert({
+          thiet_bi_id: transfer.thiet_bi_id,
+          loai_su_kien: 'Luân chuyển',
+          mo_ta: mo_ta,
+          chi_tiet: {
+            ma_yeu_cau: transfer.ma_yeu_cau,
+            loai_hinh: transfer.loai_hinh,
+            khoa_phong_hien_tai: transfer.khoa_phong_hien_tai,
+            khoa_phong_nhan: transfer.khoa_phong_nhan,
+            don_vi_nhan: transfer.don_vi_nhan,
+          },
+          yeu_cau_id: transfer.id,
+          nguoi_thuc_hien_id: user?.id
+        });
+
+      if (historyError) {
+        toast({
+          variant: "destructive",
+          title: "Lỗi ghi lịch sử",
+          description: `Yêu cầu đã hoàn thành nhưng không thể ghi lại lịch sử thiết bị. ${historyError.message}`,
+        });
       }
 
       toast({
@@ -366,7 +411,7 @@ export default function TransfersPage() {
               size="sm"
               variant="default"
               className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700"
-              onClick={() => handleCompleteTransfer(transfer.id)}
+              onClick={() => handleCompleteTransfer(transfer)}
             >
               Hoàn thành
             </Button>
