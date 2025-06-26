@@ -151,7 +151,16 @@ export default function MaintenancePage() {
 
     const { data, error } = await supabase
       .from('cong_viec_bao_tri')
-      .select('*, thiet_bi(*)')
+      .select(`
+        *, 
+        thiet_bi(*),
+        thang_1_hoan_thanh, thang_2_hoan_thanh, thang_3_hoan_thanh, thang_4_hoan_thanh,
+        thang_5_hoan_thanh, thang_6_hoan_thanh, thang_7_hoan_thanh, thang_8_hoan_thanh,
+        thang_9_hoan_thanh, thang_10_hoan_thanh, thang_11_hoan_thanh, thang_12_hoan_thanh,
+        ngay_hoan_thanh_1, ngay_hoan_thanh_2, ngay_hoan_thanh_3, ngay_hoan_thanh_4,
+        ngay_hoan_thanh_5, ngay_hoan_thanh_6, ngay_hoan_thanh_7, ngay_hoan_thanh_8,
+        ngay_hoan_thanh_9, ngay_hoan_thanh_10, ngay_hoan_thanh_11, ngay_hoan_thanh_12
+      `)
       .eq('ke_hoach_id', plan.id)
       .order('id', { ascending: true });
 
@@ -520,7 +529,10 @@ export default function MaintenancePage() {
   const canCompleteTask = user && (user.role === 'admin' || user.role === 'to_qltb');
   
   const handleMarkAsCompleted = React.useCallback(async (task: MaintenanceTask, month: number) => {
+      console.log('handleMarkAsCompleted called:', { taskId: task.id, month, canCompleteTask, user: user?.role });
+      
       if (!supabase || !selectedPlan || !user || !canCompleteTask) {
+          console.log('Permission denied:', { supabase: !!supabase, selectedPlan: !!selectedPlan, user: !!user, canCompleteTask });
           toast({
               variant: "destructive",
               title: "Không có quyền",
@@ -535,6 +547,24 @@ export default function MaintenancePage() {
       setIsCompletingTask(completionKey);
 
       try {
+          const completionDate = new Date().toISOString();
+          
+          // 1. Cập nhật trạng thái hoàn thành trong bảng cong_viec_bao_tri
+          const completionFieldName = `thang_${month}_hoan_thanh`;
+          const completionDateFieldName = `ngay_hoan_thanh_${month}`;
+          
+          const { error: taskUpdateError } = await supabase
+              .from('cong_viec_bao_tri')
+              .update({
+                  [completionFieldName]: true,
+                  [completionDateFieldName]: completionDate,
+                  updated_at: completionDate
+              })
+              .eq('id', task.id);
+
+          if (taskUpdateError) throw taskUpdateError;
+
+          // 2. Ghi vào lịch sử thiết bị
           const { data: historyData, error: historyError } = await supabase
               .from('lich_su_thiet_bi')
               .insert({
@@ -548,7 +578,7 @@ export default function MaintenancePage() {
                       khoa_phong: selectedPlan.khoa_phong,
                       nam: selectedPlan.nam,
                   },
-                  ngay_thuc_hien: new Date().toISOString(),
+                  ngay_thuc_hien: completionDate,
               })
               .select('id')
               .single();
@@ -557,13 +587,18 @@ export default function MaintenancePage() {
           
           toast({
               title: "Ghi nhận thành công",
-              description: `Đã ghi nhận hoàn thành ${selectedPlan.loai_cong_viec} cho thiết bị.`,
+              description: `Đã ghi nhận hoàn thành ${selectedPlan.loai_cong_viec} cho thiết bị tháng ${month}.`,
           });
 
           setCompletionStatus(prev => ({
               ...prev,
               [completionKey]: { historyId: historyData.id },
           }));
+
+          // Refresh tasks data to reflect the completion status
+          if (selectedPlan) {
+            await fetchPlanDetails(selectedPlan);
+          }
 
       } catch (error: any) {
           toast({
@@ -574,7 +609,7 @@ export default function MaintenancePage() {
       } finally {
           setIsCompletingTask(null);
       }
-  }, [selectedPlan, user, canCompleteTask, completionStatus, isCompletingTask, toast]);
+  }, [selectedPlan, user, canCompleteTask, completionStatus, isCompletingTask, toast, fetchPlanDetails]);
 
 
   const taskColumns: ColumnDef<MaintenanceTask>[] = React.useMemo(() => [
@@ -645,8 +680,24 @@ export default function MaintenancePage() {
 
               if (isLoadingCompletion) return <Skeleton className="h-4 w-4 mx-auto" />;
 
+              // Check completion status from actual database field
+              const completionFieldName = `thang_${month}_hoan_thanh` as keyof MaintenanceTask;
+              const isCompletedFromDB = !!row.original[completionFieldName];
+              
+              // Debug logging
+              if (month === 5 || month === 12) { // Only log for specific months to avoid spam
+                console.log(`Row ${row.index + 1}, Month ${month}:`, {
+                  taskId: row.original.id,
+                  isScheduled,
+                  completionFieldName,
+                  isCompletedFromDB,
+                  rawValue: row.original[completionFieldName],
+                  canCompleteTask,
+                  rowData: row.original
+                });
+              }
+              
               const completionKey = `${row.original.id}-${month}`;
-              const isCompleted = completionStatus[completionKey];
               const isUpdating = isCompletingTask === completionKey;
 
               if (isUpdating) {
@@ -657,10 +708,16 @@ export default function MaintenancePage() {
                   );
               }
 
-              if (isCompleted) {
+              if (isCompletedFromDB) {
+                  const completionDateField = `ngay_hoan_thanh_${month}` as keyof MaintenanceTask;
+                  const completionDate = row.original[completionDateField] as string;
+                  const formattedDate = completionDate ? new Date(completionDate).toLocaleDateString('vi-VN') : '';
+                  
                   return (
                       <div className="flex justify-center items-center h-full">
+                                                <div title={`Đã hoàn thành${formattedDate ? ` ngày ${formattedDate}` : ''}`}>
                           <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      </div>
                       </div>
                   );
               }

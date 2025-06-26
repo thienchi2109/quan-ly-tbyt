@@ -32,67 +32,142 @@ export function useMaintenanceReportData(
         throw new Error('Supabase client not initialized')
       }
 
-      // --- 1. Fetch Repair Data ---
-      const { data: repairData, error: repairError } = await supabase
+      console.log('Fetching maintenance report data for date range:', fromDate, 'to', toDate)
+
+      // --- 1. Fetch ALL Repair Data first to debug ---
+      const { data: allRepairData, error: allRepairError } = await supabase
         .from('yeu_cau_sua_chua')
-        .select('trang_thai')
-        .gte('created_at', fromDate)
-        .lte('created_at', toDate)
+        .select('*')
 
-      if (repairError) throw repairError
+      if (allRepairError) {
+        console.error('Error fetching repair data:', allRepairError)
+        throw allRepairError
+      }
 
-      // --- 2. Fetch PLANNED Maintenance Data ---
-      const { data: maintenancePlanData, error: maintenancePlanError } = await supabase
-        .from('lich_bao_tri')
-        .select('loai_bao_tri')
-        .gte('ngay_bao_tri', fromDate)
-        .lte('ngay_bao_tri', toDate)
+      console.log('Total repair requests in database:', allRepairData?.length || 0)
+      console.log('Sample repair data:', allRepairData?.slice(0, 2))
 
-      if (maintenancePlanError) throw maintenancePlanError
+      // Filter by date range
+      const repairData = allRepairData?.filter(r => {
+        const requestDate = r.ngay_yeu_cau || r.created_at
+        if (!requestDate) return false
+        const dateStr = requestDate.split('T')[0] // Get YYYY-MM-DD part
+        return dateStr >= fromDate && dateStr <= toDate
+      }) || []
 
-      // --- 3. Fetch COMPLETED Maintenance Data ---
-      const { data: maintenanceCompletedData, error: maintenanceCompletedError } = await supabase
-        .from('lich_bao_tri')
-        .select('loai_bao_tri')
-        .gte('ngay_hoan_thanh', fromDate)
-        .lte('ngay_hoan_thanh', toDate)
-        .eq('trang_thai', 'hoan_thanh')
+      console.log('Repair requests in date range:', repairData.length)
 
-      if (maintenanceCompletedError) throw maintenanceCompletedError
+      // --- 2. Fetch ALL Maintenance Plans ---
+      const { data: allMaintenancePlansData, error: maintenancePlansError } = await supabase
+        .from('ke_hoach_bao_tri')
+        .select('*')
+
+      if (maintenancePlansError) {
+        console.error('Error fetching maintenance plans:', maintenancePlansError)
+        throw maintenancePlansError
+      }
+
+      console.log('Total maintenance plans:', allMaintenancePlansData?.length || 0)
+      console.log('Sample maintenance plan:', allMaintenancePlansData?.[0])
+
+      // Filter approved plans for current year
+      const currentYear = new Date().getFullYear()
+      const approvedPlans = allMaintenancePlansData?.filter(plan => 
+        plan.nam === currentYear && plan.trang_thai === 'Đã duyệt'
+      ) || []
+
+      console.log('Approved plans for year', currentYear, ':', approvedPlans.length)
+
+      // --- 3. Fetch Maintenance Tasks ---
+      let maintenanceTasksData: any[] = []
       
-      // --- 4. Process Data ---
+      if (approvedPlans.length > 0) {
+        const planIds = approvedPlans.map(plan => plan.id)
+        
+        const { data: tasksData, error: tasksError } = await supabase
+          .from('cong_viec_bao_tri')
+          .select('*')
+          .in('ke_hoach_id', planIds)
 
-      // Process Repair Data (based on requests created in the period)
+        if (tasksError) {
+          console.error('Error fetching maintenance tasks:', tasksError)
+          throw tasksError
+        }
+
+        maintenanceTasksData = tasksData || []
+        console.log('Maintenance tasks for approved plans:', maintenanceTasksData.length)
+      }
+      
+      // --- 4. Process Repair Data ---
       const totalRepairs = repairData.length
-      const completedRepairs = repairData.filter(r => r.trang_thai === 'hoan_thanh').length
-      const pendingRepairs = repairData.filter(r => r.trang_thai === 'cho_xu_ly').length
-      const processingRepairs = repairData.filter(r => r.trang_thai === 'dang_xu_ly').length
-      const rejectedRepairs = repairData.filter(r => r.trang_thai === 'tu_choi').length
+      const completedRepairs = repairData.filter(r => r.trang_thai === 'Hoàn thành').length
+      const notCompletedRepairs = repairData.filter(r => r.trang_thai === 'Không HT').length
+      const pendingRepairs = repairData.filter(r => r.trang_thai === 'Chờ xử lý').length
+      const approvedRepairs = repairData.filter(r => r.trang_thai === 'Đã duyệt').length
+      
+      const totalFinishedRepairs = completedRepairs + notCompletedRepairs
       const repairCompletionRate = totalRepairs > 0 ? (completedRepairs / totalRepairs) * 100 : 0
       
-      const repairStatusDistribution = [
-        { name: 'Hoàn thành', value: completedRepairs, color: 'hsl(var(--chart-5))' },
-        { name: 'Đang xử lý', value: processingRepairs, color: 'hsl(var(--chart-2))' },
-        { name: 'Chờ xử lý', value: pendingRepairs, color: 'hsl(var(--chart-3))' },
-        { name: 'Từ chối', value: rejectedRepairs, color: 'hsl(var(--chart-4))' },
-      ]
-
-      // Process Maintenance Data
-      const maintenanceTypes = ['Bảo trì', 'Hiệu chuẩn', 'Kiểm định']
-      const maintenancePlanVsActual = maintenanceTypes.map(type => {
-        const planned = maintenancePlanData.filter(m => m.loai_bao_tri === type).length
-        const actual = maintenanceCompletedData.filter(m => m.loai_bao_tri === type).length
-        return { name: type, planned, actual }
+      console.log('Repair status breakdown:', {
+        total: totalRepairs,
+        completed: completedRepairs,
+        notCompleted: notCompletedRepairs,
+        approved: approvedRepairs,
+        pending: pendingRepairs
       })
 
-      const totalMaintenancePlanned = maintenancePlanData.length
-      const totalMaintenanceCompleted = maintenanceCompletedData.length
-      // This rate now compares work completed in period vs work planned for period.
-      // This is a measure of throughput against plan.
+      const repairStatusDistribution = [
+        { name: 'Hoàn thành', value: completedRepairs, color: 'hsl(var(--chart-1))' },
+        { name: 'Không HT', value: notCompletedRepairs, color: 'hsl(var(--chart-5))' },
+        { name: 'Đã duyệt', value: approvedRepairs, color: 'hsl(var(--chart-2))' },
+        { name: 'Chờ xử lý', value: pendingRepairs, color: 'hsl(var(--chart-3))' },
+      ].filter(item => item.value > 0)
+
+      // --- 5. Process Maintenance Data ---
+      const maintenanceTypes = ['Bảo trì', 'Hiệu chuẩn', 'Kiểm định']
+      const maintenancePlanVsActual = maintenanceTypes.map(type => {
+        // Count tasks for this type
+        const tasksOfType = maintenanceTasksData.filter(task => task.loai_cong_viec === type)
+        
+        // Count planned months
+        let plannedMonths = 0
+        let completedMonths = 0
+        
+        tasksOfType.forEach(task => {
+          for (let month = 1; month <= 12; month++) {
+            const plannedField = `thang_${month}` as keyof typeof task
+            const completedField = `thang_${month}_hoan_thanh` as keyof typeof task
+            
+            if (task[plannedField]) {
+              plannedMonths++
+            }
+            
+            if (task[completedField]) {
+              completedMonths++
+            }
+          }
+        })
+
+        return { 
+          name: type, 
+          planned: plannedMonths, 
+          actual: completedMonths 
+        }
+      })
+
+      // Calculate totals
+      const totalMaintenancePlanned = maintenancePlanVsActual.reduce((sum, item) => sum + item.planned, 0)
+      const totalMaintenanceCompleted = maintenancePlanVsActual.reduce((sum, item) => sum + item.actual, 0)
       const maintenanceCompletionRate = totalMaintenancePlanned > 0 ? (totalMaintenanceCompleted / totalMaintenancePlanned) * 100 : 0
+
+      console.log('Maintenance breakdown:', {
+        totalPlanned: totalMaintenancePlanned,
+        totalCompleted: totalMaintenanceCompleted,
+        completionRate: maintenanceCompletionRate,
+        byType: maintenancePlanVsActual
+      })
       
-      // --- 5. Return Combined Report Data ---
-      return {
+      const result = {
         summary: {
           totalRepairs,
           repairCompletionRate,
@@ -104,8 +179,14 @@ export function useMaintenanceReportData(
           maintenancePlanVsActual
         }
       }
+
+      console.log('Final result:', result)
+      return result
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 30 * 1000, // 30 seconds for debugging
+    gcTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 } 

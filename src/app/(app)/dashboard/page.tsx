@@ -34,6 +34,9 @@ export default async function Dashboard() {
   let totalDevices = 0;
   let upcomingMaintenance = 0;
   let repairRequestsCount = 0;
+  let pendingRepairRequests = 0;
+  let approvedRepairRequests = 0;
+  let completedRepairRequests = 0;
   let equipmentNeedingAttention: Equipment[] = [];
   let maintenancePlans: MaintenancePlan[] = [];
 
@@ -49,11 +52,27 @@ export default async function Dashboard() {
       .in('tinh_trang_hien_tai', ['Chờ bảo trì', 'Chờ hiệu chuẩn/kiểm định']);
     upcomingMaintenance = maintenanceCount ?? 0;
 
-    const { count: requestsCount } = await supabase
+    // Count repair requests by status
+    const { count: pendingCount } = await supabase
       .from('yeu_cau_sua_chua')
       .select('*', { count: 'exact', head: true })
-      .in('trang_thai', ['Chờ xử lý', 'Đang xử lý']);
-    repairRequestsCount = requestsCount ?? 0;
+      .eq('trang_thai', 'Chờ xử lý');
+    pendingRepairRequests = pendingCount ?? 0;
+
+    const { count: approvedCount } = await supabase
+      .from('yeu_cau_sua_chua')
+      .select('*', { count: 'exact', head: true })
+      .eq('trang_thai', 'Đã duyệt');
+    approvedRepairRequests = approvedCount ?? 0;
+
+    const { count: completedCount } = await supabase
+      .from('yeu_cau_sua_chua')
+      .select('*', { count: 'exact', head: true })
+      .in('trang_thai', ['Hoàn thành', 'Không HT']);
+    completedRepairRequests = completedCount ?? 0;
+
+    // Total active repair requests (pending + approved)
+    repairRequestsCount = pendingRepairRequests + approvedRepairRequests;
 
     const { data: attentionData } = await supabase
       .from('thiet_bi')
@@ -137,7 +156,7 @@ export default async function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{repairRequestsCount}</div>
             <p className="text-xs text-muted-foreground">
-              Yêu cầu đang hoạt động
+              {pendingRepairRequests} chờ xử lý • {approvedRepairRequests} đã duyệt • {completedRepairRequests} hoàn thành
             </p>
           </CardContent>
         </Card>
