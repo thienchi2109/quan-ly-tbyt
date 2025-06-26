@@ -37,14 +37,23 @@ export function InventoryReportTab() {
   const [searchTerm, setSearchTerm] = React.useState("")
   const [showExportDialog, setShowExportDialog] = React.useState(false)
   
-  // Fetch data using custom hook
+  // Fetch data using React Query hook
   const { 
-    data, 
-    summary, 
+    data: inventoryResult, 
     isLoading, 
-    departments,
+    error,
     refetch 
   } = useInventoryData(dateRange, selectedDepartment, searchTerm)
+
+  // Extract data from query result
+  const data = inventoryResult?.data || []
+  const summary = inventoryResult?.summary || {
+    totalImported: 0,
+    totalExported: 0,
+    currentStock: 0,
+    netChange: 0
+  }
+  const departments = inventoryResult?.departments || []
 
   const handleRefresh = () => {
     refetch()
@@ -53,6 +62,17 @@ export function InventoryReportTab() {
       description: "Báo cáo đã được cập nhật với dữ liệu mới nhất."
     })
   }
+
+  // Show error if any
+  React.useEffect(() => {
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi tải dữ liệu",
+        description: error instanceof Error ? error.message : "Không thể tải dữ liệu báo cáo"
+      })
+    }
+  }, [error, toast])
 
   return (
     <>

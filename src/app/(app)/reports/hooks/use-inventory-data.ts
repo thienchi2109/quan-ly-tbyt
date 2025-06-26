@@ -1,6 +1,5 @@
-import * as React from "react"
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from "@/lib/supabase"
-import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 
 export interface InventoryItem {
@@ -32,27 +31,32 @@ interface DateRange {
   to: Date
 }
 
+// Query keys for reports caching
+export const reportsKeys = {
+  all: ['reports'] as const,
+  inventory: () => [...reportsKeys.all, 'inventory'] as const,
+  inventoryData: (filters: Record<string, any>) => [...reportsKeys.inventory(), { filters }] as const,
+}
+
 export function useInventoryData(
   dateRange: DateRange,
   selectedDepartment: string,
   searchTerm: string
 ) {
-  const { toast } = useToast()
-  const [data, setData] = React.useState<InventoryItem[]>([])
-  const [summary, setSummary] = React.useState<InventorySummary>({
-    totalImported: 0,
-    totalExported: 0,
-    currentStock: 0,
-    netChange: 0
-  })
-  const [departments, setDepartments] = React.useState<string[]>([])
-  const [isLoading, setIsLoading] = React.useState(true)
+  return useQuery({
+    queryKey: reportsKeys.inventoryData({
+      dateRange: {
+        from: format(dateRange.from, 'yyyy-MM-dd'),
+        to: format(dateRange.to, 'yyyy-MM-dd')
+      },
+      selectedDepartment,
+      searchTerm
+    }),
+    queryFn: async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized')
+      }
 
-  const fetchInventoryData = React.useCallback(async () => {
-    if (!supabase) return
-
-    setIsLoading(true)
-    try {
       const fromDate = format(dateRange.from, 'yyyy-MM-dd')
       const toDate = format(dateRange.to, 'yyyy-MM-dd')
 
@@ -156,8 +160,6 @@ export function useInventoryData(
       // Sort by date
       allItems.sort((a, b) => new Date(b.ngay_nhap).getTime() - new Date(a.ngay_nhap).getTime())
 
-      setData(allItems)
-
       // Calculate summary
       const totalImported = importedItems.length
       const totalExported = exportedItems.length
@@ -168,12 +170,12 @@ export function useInventoryData(
         .from('thiet_bi')
         .select('*', { count: 'exact', head: true })
 
-      setSummary({
+      const summary: InventorySummary = {
         totalImported,
         totalExported,
         currentStock: currentStock || 0,
         netChange
-      })
+      }
 
       // Get departments for filter
       const { data: deptData } = await supabase
@@ -182,30 +184,15 @@ export function useInventoryData(
         .not('khoa_phong_quan_ly', 'is', null)
 
       const uniqueDepts = [...new Set(deptData?.map(item => item.khoa_phong_quan_ly).filter(Boolean))]
-      setDepartments(uniqueDepts as string[])
 
-    } catch (error: any) {
-      console.error('Error fetching inventory data:', error)
-      toast({
-        variant: "destructive",
-        title: "Lỗi tải dữ liệu",
-        description: error.message || "Không thể tải dữ liệu báo cáo"
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [dateRange, selectedDepartment, searchTerm, toast])
-
-  // Fetch data on mount and when dependencies change
-  React.useEffect(() => {
-    fetchInventoryData()
-  }, [fetchInventoryData])
-
-  return {
-    data,
-    summary,
-    departments,
-    isLoading,
-    refetch: fetchInventoryData
-  }
+      return {
+        data: allItems,
+        summary,
+        departments: uniqueDepts as string[]
+      }
+    },
+    staleTime: 3 * 60 * 1000, // 3 minutes - reports data can be cached for a while
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 1,
+  })
 } 
