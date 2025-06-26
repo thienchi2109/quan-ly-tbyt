@@ -124,7 +124,8 @@ export function InventoryTable({ data, isLoading }: InventoryTableProps) {
           manual: "Thêm thủ công",
           excel: "Import Excel",
           transfer_internal: "Luân chuyển nội bộ",
-          transfer_external: "Luân chuyển bên ngoài"
+          transfer_external: "Luân chuyển bên ngoài",
+          liquidation: "Thanh lý"
         }
         return (
           <Badge variant="outline">

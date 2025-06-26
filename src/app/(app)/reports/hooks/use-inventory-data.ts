@@ -12,7 +12,7 @@ export interface InventoryItem {
   ngay_nhap: string
   created_at: string
   type: 'import' | 'export'
-  source: 'manual' | 'excel' | 'transfer_internal' | 'transfer_external'
+  source: 'manual' | 'excel' | 'transfer_internal' | 'transfer_external' | 'liquidation'
   quantity: number
   value?: number
   reason?: string
@@ -103,6 +103,22 @@ export function useInventoryData(
 
       if (transferError) throw transferError
 
+      // Fetch liquidated equipment
+      const { data: liquidatedEquipment, error: liquidationError } = await supabase
+        .from('yeu_cau_luan_chuyen')
+        .select(`
+          *,
+          thiet_bi:thiet_bi_id (
+            id, ma_thiet_bi, ten_thiet_bi, model, serial, khoa_phong_quan_ly
+          )
+        `)
+        .eq('loai_hinh', 'thanh_ly')
+        .eq('trang_thai', 'hoan_thanh')
+        .gte('ngay_hoan_thanh', fromDate)
+        .lte('ngay_hoan_thanh', toDate)
+
+      if (liquidationError) throw liquidationError
+
       // Process imported equipment
       const importedItems: InventoryItem[] = (importedEquipment || []).map(item => ({
         id: item.id,
@@ -119,8 +135,8 @@ export function useInventoryData(
         value: item.gia_goc
       }))
 
-      // Process exported equipment
-      const exportedItems: InventoryItem[] = (transferredEquipment || [])
+      // Process exported equipment from transfers
+      const exportedFromTransfers: InventoryItem[] = (transferredEquipment || [])
         .filter(transfer => transfer.thiet_bi)
         .map(transfer => ({
           id: transfer.id,
@@ -137,6 +153,27 @@ export function useInventoryData(
           reason: transfer.ly_do_luan_chuyen,
           destination: transfer.loai_hinh === 'noi_bo' ? transfer.khoa_phong_nhan : transfer.don_vi_nhan
         }))
+
+      // Process liquidated equipment as exports
+      const exportedFromLiquidation: InventoryItem[] = (liquidatedEquipment || [])
+        .filter(transfer => transfer.thiet_bi)
+        .map(transfer => ({
+          id: transfer.id,
+          ma_thiet_bi: transfer.thiet_bi.ma_thiet_bi,
+          ten_thiet_bi: transfer.thiet_bi.ten_thiet_bi,
+          model: transfer.thiet_bi.model,
+          serial: transfer.thiet_bi.serial,
+          khoa_phong_quan_ly: transfer.thiet_bi.khoa_phong_quan_ly,
+          ngay_nhap: transfer.ngay_hoan_thanh,
+          created_at: transfer.created_at,
+          type: 'export' as const,
+          source: 'liquidation' as const,
+          quantity: 1,
+          reason: transfer.ly_do_luan_chuyen,
+          destination: 'Thanh lý'
+        }))
+
+      const exportedItems = [...exportedFromTransfers, ...exportedFromLiquidation]
 
       // Combine and filter data
       let allItems = [...importedItems, ...exportedItems]

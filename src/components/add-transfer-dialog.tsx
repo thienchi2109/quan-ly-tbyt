@@ -191,6 +191,8 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
       return
     }
 
+    // Thanh lý không cần validate thêm vì đã có default values
+
     if (!supabase) {
       toast({
         variant: "destructive",
@@ -215,13 +217,19 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
       if (formData.loai_hinh === 'noi_bo') {
         insertData.khoa_phong_hien_tai = formData.khoa_phong_hien_tai.trim()
         insertData.khoa_phong_nhan = formData.khoa_phong_nhan.trim()
-      } else {
+      } else if (formData.loai_hinh === 'ben_ngoai') {
         insertData.muc_dich = formData.muc_dich
         insertData.don_vi_nhan = formData.don_vi_nhan.trim()
         insertData.dia_chi_don_vi = formData.dia_chi_don_vi.trim() || null
         insertData.nguoi_lien_he = formData.nguoi_lien_he.trim() || null
         insertData.so_dien_thoai = formData.so_dien_thoai.trim() || null
         insertData.ngay_du_kien_tra = formData.ngay_du_kien_tra || null
+      } else if (formData.loai_hinh === 'thanh_ly') {
+        // Thanh lý: mặc định đơn vị nhận là Tổ QLTB
+        insertData.muc_dich = 'thanh_ly'
+        insertData.don_vi_nhan = 'Tổ QLTB'
+        insertData.khoa_phong_hien_tai = formData.khoa_phong_hien_tai.trim()
+        insertData.khoa_phong_nhan = 'Tổ QLTB'
       }
 
       const { error } = await supabase
@@ -234,7 +242,9 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
 
       toast({
         title: "Thành công",
-        description: "Đã tạo yêu cầu luân chuyển mới."
+        description: formData.loai_hinh === 'thanh_ly' 
+          ? "Đã tạo yêu cầu thanh lý thiết bị."
+          : "Đã tạo yêu cầu luân chuyển mới."
       })
 
       onSuccess()
@@ -316,7 +326,7 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
                   {Object.entries(TRANSFER_TYPES).map(([key, label]) => (
                     <SelectItem key={key} value={key}>
                       <div className="flex items-center gap-2">
-                        <Badge variant={key === 'noi_bo' ? 'default' : 'secondary'}>
+                        <Badge variant={key === 'noi_bo' ? 'default' : key === 'thanh_ly' ? 'destructive' : 'secondary'}>
                           {label}
                         </Badge>
                       </div>
@@ -325,6 +335,12 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
                 </SelectContent>
               </Select>
             </div>
+
+            {formData.loai_hinh === 'thanh_ly' && (
+              <div className="p-3 mt-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                <p><strong>Lưu ý:</strong> Khi chọn "Thanh lý", thiết bị sẽ được chuyển về cho <strong>Tổ QLTB</strong> để xử lý. Sau khi hoàn tất, trạng thái thiết bị sẽ được cập nhật thành "Ngưng sử dụng".</p>
+              </div>
+            )}
 
             {/* Conditional Fields for Internal Transfer */}
             {formData.loai_hinh === 'noi_bo' && (
@@ -443,12 +459,20 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
 
             {/* Reason */}
             <div className="grid gap-2">
-              <Label htmlFor="reason">Lý do luân chuyển *</Label>
+              <Label htmlFor="reason">{
+                formData.loai_hinh === 'thanh_ly' 
+                ? 'Lý do thanh lý *' 
+                : 'Lý do luân chuyển *'
+              }</Label>
               <Textarea
                 id="reason"
                 value={formData.ly_do_luan_chuyen}
                 onChange={(e) => setFormData(prev => ({ ...prev, ly_do_luan_chuyen: e.target.value }))}
-                placeholder="Mô tả lý do cần luân chuyển thiết bị"
+                placeholder={
+                  formData.loai_hinh === 'thanh_ly' 
+                  ? 'Mô tả lý do cần thanh lý thiết bị (ví dụ: hỏng không thể sửa chữa, lỗi thời...)'
+                  : 'Mô tả lý do cần luân chuyển thiết bị'
+                }
                 disabled={isLoading}
                 required
                 rows={3}

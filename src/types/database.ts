@@ -40,7 +40,7 @@ export interface TransferRequest {
   id: number;
   ma_yeu_cau: string;
   thiet_bi_id: number;
-  loai_hinh: 'noi_bo' | 'ben_ngoai';
+  loai_hinh: 'noi_bo' | 'ben_ngoai' | 'thanh_ly';
   trang_thai: 'cho_duyet' | 'da_duyet' | 'dang_luan_chuyen' | 'da_ban_giao' | 'hoan_thanh';
   
   // Request details
@@ -100,7 +100,8 @@ export interface TransferHistory {
 // Constants for transfer system
 export const TRANSFER_TYPES = {
   noi_bo: 'Nội bộ',
-  ben_ngoai: 'Bên ngoài'
+  ben_ngoai: 'Bên ngoài',
+  thanh_ly: 'Thanh lý'
 } as const;
 
 export const TRANSFER_STATUSES = {

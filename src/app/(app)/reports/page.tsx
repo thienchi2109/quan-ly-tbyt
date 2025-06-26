@@ -4,6 +4,7 @@ import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { InventoryReportTab } from "./components/inventory-report-tab"
+import { MaintenanceReportTab } from "./components/maintenance-report-tab"
 
 export default function ReportsPage() {
   return (
@@ -15,9 +16,8 @@ export default function ReportsPage() {
       <Tabs defaultValue="inventory" className="space-y-4">
         <TabsList>
           <TabsTrigger value="inventory">Xuất-Nhập-Tồn</TabsTrigger>
-          <TabsTrigger value="maintenance" disabled>
-            Bảo trì 
-            <span className="ml-1 text-xs text-muted-foreground">(Sắp ra mắt)</span>
+          <TabsTrigger value="maintenance">
+            Bảo trì / Sửa chữa
           </TabsTrigger>
           <TabsTrigger value="utilization" disabled>
             Sử dụng thiết bị
@@ -30,19 +30,7 @@ export default function ReportsPage() {
         </TabsContent>
         
         <TabsContent value="maintenance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Báo cáo Bảo trì</CardTitle>
-              <CardDescription>
-                Báo cáo tình hình bảo trì, sửa chữa thiết bị
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center h-96 text-muted-foreground">
-                Tính năng đang được phát triển...
-              </div>
-            </CardContent>
-          </Card>
+          <MaintenanceReportTab />
         </TabsContent>
         
         <TabsContent value="utilization" className="space-y-4">

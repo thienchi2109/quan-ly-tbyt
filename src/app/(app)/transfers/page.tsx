@@ -138,8 +138,16 @@ export default function TransfersPage() {
     return transfers.filter(transfer => transfer.trang_thai === status)
   }
 
-  const getTypeVariant = (type: 'noi_bo' | 'ben_ngoai') => {
-    return type === 'noi_bo' ? 'default' : 'secondary'
+  const getTypeVariant = (type: TransferRequest['loai_hinh']) => {
+    switch (type) {
+      case 'noi_bo':
+        return 'default'
+      case 'thanh_ly':
+        return 'destructive'
+      case 'ben_ngoai':
+      default:
+        return 'secondary'
+    }
   }
 
   const canEdit = (transfer: TransferRequest) => {
@@ -380,7 +388,7 @@ export default function TransfersPage() {
 
       if (updateError) throw updateError;
 
-      // Step 2: If internal transfer, update the equipment's department
+      // Step 2: Update equipment based on transfer type
       if (transfer.loai_hinh === 'noi_bo' && transfer.khoa_phong_nhan) {
         const { error: equipmentUpdateError } = await supabase
           .from('thiet_bi')
@@ -394,18 +402,42 @@ export default function TransfersPage() {
             description: `Đã hoàn thành yêu cầu, nhưng không thể cập nhật khoa/phòng mới cho thiết bị. ${equipmentUpdateError.message}`,
           });
         }
+      } else if (transfer.loai_hinh === 'thanh_ly') {
+        const { error: equipmentUpdateError } = await supabase
+          .from('thiet_bi')
+          .update({ 
+            tinh_trang: 'Ngưng sử dụng',
+            khoa_phong_quan_ly: 'Tổ QLTB'
+          })
+          .eq('id', transfer.thiet_bi_id)
+
+        if (equipmentUpdateError) {
+          toast({
+            variant: "destructive",
+            title: "Lỗi cập nhật thiết bị",
+            description: `Đã hoàn thành yêu cầu thanh lý, nhưng không thể cập nhật trạng thái thiết bị. ${equipmentUpdateError.message}`,
+          });
+        }
       }
 
       // Step 3: Log the event to the general equipment history
-      const mo_ta = transfer.loai_hinh === 'noi_bo'
-        ? `Thiết bị được luân chuyển từ "${transfer.khoa_phong_hien_tai}" đến "${transfer.khoa_phong_nhan}".`
-        : `Thiết bị được hoàn trả từ đơn vị bên ngoài "${transfer.don_vi_nhan}".`;
+      let mo_ta = '';
+      let loai_su_kien = 'Luân chuyển';
+
+      if (transfer.loai_hinh === 'noi_bo') {
+        mo_ta = `Thiết bị được luân chuyển từ "${transfer.khoa_phong_hien_tai}" đến "${transfer.khoa_phong_nhan}".`;
+      } else if (transfer.loai_hinh === 'thanh_ly') {
+        mo_ta = `Thiết bị được thanh lý. Lý do: ${transfer.ly_do_luan_chuyen}`;
+        loai_su_kien = 'Thanh lý';
+      } else { // ben_ngoai
+        mo_ta = `Thiết bị được hoàn trả từ đơn vị bên ngoài "${transfer.don_vi_nhan}".`;
+      }
 
       const { error: historyError } = await supabase
         .from('lich_su_thiet_bi')
         .insert({
           thiet_bi_id: transfer.thiet_bi_id,
-          loai_su_kien: 'Luân chuyển',
+          loai_su_kien: loai_su_kien,
           mo_ta: mo_ta,
           chi_tiet: {
             ma_yeu_cau: transfer.ma_yeu_cau,
@@ -428,9 +460,11 @@ export default function TransfersPage() {
 
       toast({
         title: "Thành công",
-        description: transfer.loai_hinh === 'noi_bo' 
-          ? "Đã hoàn thành luân chuyển nội bộ thiết bị."
-          : "Đã xác nhận hoàn trả thiết bị."
+        description: transfer.loai_hinh === 'thanh_ly'
+          ? "Đã hoàn tất yêu cầu thanh lý thiết bị."
+          : transfer.loai_hinh === 'noi_bo' 
+            ? "Đã hoàn thành luân chuyển nội bộ thiết bị."
+            : "Đã xác nhận hoàn trả thiết bị."
       })
 
       fetchTransfers()
@@ -646,7 +680,7 @@ export default function TransfersPage() {
                                     {transfer.ma_yeu_cau}
                                   </p>
                                   <Badge variant={getTypeVariant(transfer.loai_hinh)}>
-                                    {TRANSFER_TYPES[transfer.loai_hinh]}
+                                    {TRANSFER_TYPES[transfer.loai_hinh as keyof typeof TRANSFER_TYPES]}
                                   </Badge>
                                 </div>
                               </div>

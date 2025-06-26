@@ -103,7 +103,14 @@ export function InventoryCharts({ data, isLoading }: InventoryChartsProps) {
     // Group by transfer purpose for exports
     const purposeMap: Record<string, number> = {}
     data.filter(item => item.type === 'export').forEach(item => {
-      const purpose = item.source === 'transfer_internal' ? 'Luân chuyển nội bộ' : 'Luân chuyển bên ngoài'
+      let purpose = 'Khác';
+      if (item.source === 'transfer_internal') {
+        purpose = 'Luân chuyển nội bộ';
+      } else if (item.source === 'transfer_external') {
+        purpose = 'Luân chuyển bên ngoài';
+      } else if (item.source === 'liquidation') {
+        purpose = 'Thanh lý';
+      }
       purposeMap[purpose] = (purposeMap[purpose] || 0) + 1
     })
     const transferPurposeData = Object.entries(purposeMap).map(([name, value]) => ({ name, value }))
