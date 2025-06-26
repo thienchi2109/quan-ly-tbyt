@@ -1,0 +1,211 @@
+import * as React from "react"
+import { supabase } from "@/lib/supabase"
+import { useToast } from "@/hooks/use-toast"
+import { format } from "date-fns"
+
+export interface InventoryItem {
+  id: number
+  ma_thiet_bi: string
+  ten_thiet_bi: string
+  model?: string
+  serial?: string
+  khoa_phong_quan_ly?: string
+  ngay_nhap: string
+  created_at: string
+  type: 'import' | 'export'
+  source: 'manual' | 'excel' | 'transfer_internal' | 'transfer_external'
+  quantity: number
+  value?: number
+  reason?: string
+  destination?: string
+}
+
+export interface InventorySummary {
+  totalImported: number
+  totalExported: number
+  currentStock: number
+  netChange: number
+}
+
+interface DateRange {
+  from: Date
+  to: Date
+}
+
+export function useInventoryData(
+  dateRange: DateRange,
+  selectedDepartment: string,
+  searchTerm: string
+) {
+  const { toast } = useToast()
+  const [data, setData] = React.useState<InventoryItem[]>([])
+  const [summary, setSummary] = React.useState<InventorySummary>({
+    totalImported: 0,
+    totalExported: 0,
+    currentStock: 0,
+    netChange: 0
+  })
+  const [departments, setDepartments] = React.useState<string[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
+
+  const fetchInventoryData = React.useCallback(async () => {
+    if (!supabase) return
+
+    setIsLoading(true)
+    try {
+      const fromDate = format(dateRange.from, 'yyyy-MM-dd')
+      const toDate = format(dateRange.to, 'yyyy-MM-dd')
+
+      // Fetch imported equipment (from manual input and excel import)
+      let equipmentQuery = supabase
+        .from('thiet_bi')
+        .select('*')
+        .gte('ngay_nhap', fromDate)
+        .lte('ngay_nhap', toDate)
+
+      if (selectedDepartment !== 'all') {
+        equipmentQuery = equipmentQuery.eq('khoa_phong_quan_ly', selectedDepartment)
+      }
+
+      if (searchTerm) {
+        equipmentQuery = equipmentQuery.or(
+          `ten_thiet_bi.ilike.%${searchTerm}%,ma_thiet_bi.ilike.%${searchTerm}%`
+        )
+      }
+
+      const { data: importedEquipment, error: equipmentError } = await equipmentQuery
+
+      if (equipmentError) throw equipmentError
+
+      // Fetch exported equipment (from transfers)
+      let transferQuery = supabase
+        .from('yeu_cau_luan_chuyen')
+        .select(`
+          *,
+          thiet_bi:thiet_bi_id (
+            id,
+            ma_thiet_bi,
+            ten_thiet_bi,
+            model,
+            serial,
+            khoa_phong_quan_ly
+          )
+        `)
+        .gte('ngay_ban_giao', fromDate)
+        .lte('ngay_ban_giao', toDate)
+        .not('ngay_ban_giao', 'is', null)
+
+      const { data: transferredEquipment, error: transferError } = await transferQuery
+
+      if (transferError) throw transferError
+
+      // Process imported equipment
+      const importedItems: InventoryItem[] = (importedEquipment || []).map(item => ({
+        id: item.id,
+        ma_thiet_bi: item.ma_thiet_bi,
+        ten_thiet_bi: item.ten_thiet_bi,
+        model: item.model,
+        serial: item.serial,
+        khoa_phong_quan_ly: item.khoa_phong_quan_ly,
+        ngay_nhap: item.ngay_nhap,
+        created_at: item.created_at || item.ngay_nhap,
+        type: 'import' as const,
+        source: 'manual' as const, // We'll enhance this later to detect excel imports
+        quantity: 1,
+        value: item.gia_goc
+      }))
+
+      // Process exported equipment
+      const exportedItems: InventoryItem[] = (transferredEquipment || [])
+        .filter(transfer => transfer.thiet_bi)
+        .map(transfer => ({
+          id: transfer.id,
+          ma_thiet_bi: transfer.thiet_bi.ma_thiet_bi,
+          ten_thiet_bi: transfer.thiet_bi.ten_thiet_bi,
+          model: transfer.thiet_bi.model,
+          serial: transfer.thiet_bi.serial,
+          khoa_phong_quan_ly: transfer.thiet_bi.khoa_phong_quan_ly,
+          ngay_nhap: transfer.ngay_ban_giao,
+          created_at: transfer.created_at,
+          type: 'export' as const,
+          source: transfer.loai_hinh === 'noi_bo' ? 'transfer_internal' as const : 'transfer_external' as const,
+          quantity: 1,
+          reason: transfer.ly_do_luan_chuyen,
+          destination: transfer.loai_hinh === 'noi_bo' ? transfer.khoa_phong_nhan : transfer.don_vi_nhan
+        }))
+
+      // Combine and filter data
+      let allItems = [...importedItems, ...exportedItems]
+
+      // Apply department filter to exported items
+      if (selectedDepartment !== 'all') {
+        allItems = allItems.filter(item => 
+          item.type === 'import' || 
+          (item.type === 'export' && item.khoa_phong_quan_ly === selectedDepartment)
+        )
+      }
+
+      // Apply search filter
+      if (searchTerm) {
+        allItems = allItems.filter(item =>
+          item.ten_thiet_bi.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.ma_thiet_bi.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      }
+
+      // Sort by date
+      allItems.sort((a, b) => new Date(b.ngay_nhap).getTime() - new Date(a.ngay_nhap).getTime())
+
+      setData(allItems)
+
+      // Calculate summary
+      const totalImported = importedItems.length
+      const totalExported = exportedItems.length
+      const netChange = totalImported - totalExported
+
+      // Get current stock (total equipment in system)
+      const { count: currentStock } = await supabase
+        .from('thiet_bi')
+        .select('*', { count: 'exact', head: true })
+
+      setSummary({
+        totalImported,
+        totalExported,
+        currentStock: currentStock || 0,
+        netChange
+      })
+
+      // Get departments for filter
+      const { data: deptData } = await supabase
+        .from('thiet_bi')
+        .select('khoa_phong_quan_ly')
+        .not('khoa_phong_quan_ly', 'is', null)
+
+      const uniqueDepts = [...new Set(deptData?.map(item => item.khoa_phong_quan_ly).filter(Boolean))]
+      setDepartments(uniqueDepts as string[])
+
+    } catch (error: any) {
+      console.error('Error fetching inventory data:', error)
+      toast({
+        variant: "destructive",
+        title: "Lỗi tải dữ liệu",
+        description: error.message || "Không thể tải dữ liệu báo cáo"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }, [dateRange, selectedDepartment, searchTerm, toast])
+
+  // Fetch data on mount and when dependencies change
+  React.useEffect(() => {
+    fetchInventoryData()
+  }, [fetchInventoryData])
+
+  return {
+    data,
+    summary,
+    departments,
+    isLoading,
+    refetch: fetchInventoryData
+  }
+} 

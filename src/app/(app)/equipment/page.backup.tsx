@@ -15,6 +15,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  RowSelectionState,
 } from "@tanstack/react-table"
 import {
   ArrowUpDown,
@@ -96,6 +97,82 @@ import { EditEquipmentDialog } from "@/components/edit-equipment-dialog"
 import { MobileFiltersDropdown } from "@/components/mobile-filters-dropdown"
 import { ResponsivePaginationInfo } from "@/components/responsive-pagination-info"
 import { useIsMobile } from "@/hooks/use-mobile"
+
+// CSS for responsive table
+const responsiveTableStyles = `
+  .responsive-table {
+    font-size: 0.875rem;
+  }
+  
+  .responsive-th {
+    padding: 0.5rem;
+    white-space: nowrap;
+  }
+  
+  .responsive-td {
+    padding: 0.5rem;
+  }
+  
+  .responsive-tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+  
+  .responsive-header {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Hide less important columns on smaller screens */
+  @media (max-width: 1536px) {
+    .responsive-table [data-column="noi_san_xuat"],
+    .responsive-table [data-column="ngay_nhap"],
+    .responsive-table [data-column="ngay_dua_vao_su_dung"],
+    .responsive-table [data-column="nguon_kinh_phi"],
+    .responsive-table [data-column="han_bao_hanh"] {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 1280px) {
+    .responsive-table [data-column="nam_san_xuat"],
+    .responsive-table [data-column="hang_san_xuat"],
+    .responsive-table [data-column="gia_goc"],
+    .responsive-table [data-column="ngay_bt_tiep_theo"],
+    .responsive-table [data-column="ngay_hc_tiep_theo"],
+    .responsive-table [data-column="ngay_kd_tiep_theo"] {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 1024px) {
+    .responsive-table [data-column="model"],
+    .responsive-table [data-column="serial"],
+    .responsive-table [data-column="phan_loai_theo_nd98"] {
+      display: none;
+    }
+    
+    .responsive-table {
+      font-size: 0.75rem;
+    }
+    
+    .responsive-th,
+    .responsive-td {
+      padding: 0.25rem;
+    }
+    
+    .responsive-header {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .responsive-table [data-column="vi_tri_lap_dat"],
+    .responsive-table [data-column="nguoi_dang_truc_tiep_quan_ly"] {
+      display: none;
+    }
+  }
+`
 
 type Attachment = {
   id: string;
@@ -281,12 +358,13 @@ function DataTableFacetedFilter<TData, TValue>({
   )
 }
 
-
 export default function EquipmentPage() {
+  const { toast } = useToast()
+  const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user } = useAuth();
-  const { toast } = useToast()
+  const isMobile = useIsMobile()
+  
   const [data, setData] = React.useState<Equipment[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -297,7 +375,6 @@ export default function EquipmentPage() {
   const [selectedEquipment, setSelectedEquipment] = React.useState<Equipment | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
   const [editingEquipment, setEditingEquipment] = React.useState<Equipment | null>(null)
-  const isMobile = useIsMobile();
 
   // State for attachments
   const [attachments, setAttachments] = React.useState<Attachment[]>([]);
@@ -313,10 +390,10 @@ export default function EquipmentPage() {
 
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
     id: false,
-    ma_thiet_bi: true,           // Mã thiết bị ✅
-    ten_thiet_bi: true,          // Tên thiết bị ✅
-    model: true,                 // Model ✅
-    serial: true,                // Serial ✅
+    ma_thiet_bi: true,
+    ten_thiet_bi: true,
+    model: true,
+    serial: false,
     cau_hinh_thiet_bi: false,
     phu_kien_kem_theo: false,
     hang_san_xuat: false,
@@ -329,19 +406,21 @@ export default function EquipmentPage() {
     nam_tinh_hao_mon: false,
     ty_le_hao_mon: false,
     han_bao_hanh: false,
-    vi_tri_lap_dat: true,        // Vị trí lắp đặt ✅
-    nguoi_dang_truc_tiep_quan_ly: true,  // Người sử dụng ✅
-    khoa_phong_quan_ly: true,    // Khoa/phòng ✅
-    tinh_trang_hien_tai: true,   // Tình trạng ✅
+    vi_tri_lap_dat: true,
+    nguoi_dang_truc_tiep_quan_ly: true,
+    khoa_phong_quan_ly: true,
+    tinh_trang_hien_tai: true,
     ghi_chu: false,
     chu_ky_bt_dinh_ky: false,
-    ngay_bt_tiep_theo: false,
+    ngay_bt_tiep_theo: true,
     chu_ky_hc_dinh_ky: false,
-    ngay_hc_tiep_theo: false,
+    ngay_hc_tiep_theo: true,
     chu_ky_kd_dinh_ky: false,
-    ngay_kd_tiep_theo: false,
-    phan_loai_theo_nd98: true,   // Phân loại theo NĐ98 ✅
+    ngay_kd_tiep_theo: true,
+    phan_loai_theo_nd98: true,
   });
+
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
 
   const handleDownloadTemplate = () => {
     const templateHeaders = Object.entries(columnLabels)
@@ -675,6 +754,8 @@ export default function EquipmentPage() {
             <Button
               variant="ghost"
               onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              className="responsive-header"
+              data-column={key}
             >
               {columnLabels[key]}
               <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -973,6 +1054,44 @@ export default function EquipmentPage() {
     }
   };
 
+  // Get visible columns based on screen size
+  const getVisibleColumns = React.useMemo(() => {
+    const priorityThreshold = {
+      'sm': 0, // Mobile - show cards instead
+      'md': 2, // Medium screens - show essential columns
+      'lg': 3, // Large screens - show more columns
+      'xl': 4, // XL screens - show most columns
+      '2xl': 5, // 2XL screens - show all important columns
+    }[screenSize]
+    
+    return (Object.keys(columnPriorities) as Array<keyof Equipment>).filter(
+      key => columnPriorities[key] <= priorityThreshold
+    )
+  }, [screenSize])
+
+  // Determine if we should use compact mode (tablet-sized screens)
+  const useCompactMode = screenSize === 'md' || screenSize === 'lg'
+  const useCardMode = screenSize === 'sm' || isMobile
+
+  // Auto-adjust column visibility based on screen size
+  React.useEffect(() => {
+    if (!useCardMode) {
+      const newVisibility = { ...columnVisibility }
+      Object.keys(columnLabels).forEach(key => {
+        const typedKey = key as keyof Equipment
+        if (getVisibleColumns.includes(typedKey)) {
+          // Only show if it was not manually hidden by user
+          if (newVisibility[key] !== false) {
+            newVisibility[key] = true
+          }
+        } else {
+          newVisibility[key] = false
+        }
+      })
+      setColumnVisibility(newVisibility)
+    }
+  }, [screenSize, useCardMode, getVisibleColumns])
+
   const table = useReactTable({
     data,
     columns,
@@ -983,13 +1102,22 @@ export default function EquipmentPage() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: (row, columnId, filterValue) => {
+      const searchableColumns = ['ma_thiet_bi', 'ten_thiet_bi', 'model', 'serial', 'hang_san_xuat'];
+      return searchableColumns.some(col => {
+        const value = row.getValue(col);
+        return value && String(value).toLowerCase().includes(filterValue.toLowerCase());
+      });
+    },
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      rowSelection,
       globalFilter,
     },
   })
@@ -1098,15 +1226,20 @@ export default function EquipmentPage() {
         {table.getRowModel().rows.map((row) => {
           const equipment = row.original;
           return (
-            <Card key={equipment.id} data-equipment-id={equipment.id}>
-              <CardHeader className="flex flex-row items-start justify-between pb-4">
+            <Card key={equipment.id} data-equipment-id={equipment.id} className="hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-start justify-between pb-3">
                 <div className="max-w-[calc(100%-40px)]">
                   <CardTitle className="text-base font-bold leading-tight truncate">{equipment.ten_thiet_bi}</CardTitle>
-                  <CardDescription>{equipment.ma_thiet_bi}</CardDescription>
+                  <CardDescription className="text-sm">{equipment.ma_thiet_bi}</CardDescription>
+                  {equipment.model && (
+                    <CardDescription className="text-xs text-muted-foreground mt-1">
+                      Model: {equipment.model}
+                    </CardDescription>
+                  )}
                 </div>
                 {renderActions(equipment)}
               </CardHeader>
-              <CardContent className="text-sm space-y-3">
+              <CardContent className="text-sm space-y-3 pt-0">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Trạng thái</span>
                   {equipment.tinh_trang_hien_tai ? (
@@ -1129,6 +1262,39 @@ export default function EquipmentPage() {
                     {equipment.nguoi_dang_truc_tiep_quan_ly || <span className="italic text-muted-foreground text-xs">Chưa có</span>}
                   </span>
                 </div>
+                {equipment.phan_loai_theo_nd98 && (
+                  <>
+                    <Separator />
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-muted-foreground shrink-0">Phân loại</span>
+                      <Badge variant={getClassificationVariant(equipment.phan_loai_theo_nd98)} className="text-xs">
+                        {equipment.phan_loai_theo_nd98.trim()}
+                      </Badge>
+                    </div>
+                  </>
+                )}
+                {equipment.vi_tri_lap_dat && (
+                  <>
+                    <Separator />
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-muted-foreground shrink-0">Vị trí</span>
+                      <span className="font-medium text-right truncate text-xs">
+                        {equipment.vi_tri_lap_dat}
+                      </span>
+                    </div>
+                  </>
+                )}
+                {equipment.gia_goc && (
+                  <>
+                    <Separator />
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-muted-foreground shrink-0">Giá gốc</span>
+                      <span className="font-medium text-right text-xs">
+                        {Number(equipment.gia_goc).toLocaleString()}đ
+                      </span>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           );
@@ -1136,12 +1302,16 @@ export default function EquipmentPage() {
       </div>
     ) : (
       <div className="overflow-x-auto rounded-md border">
-        <Table>
+        <Table className="responsive-table">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-muted hover:bg-muted">
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead 
+                    key={header.id} 
+                    className="responsive-th"
+                    data-column={header.column.id}
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -1159,9 +1329,14 @@ export default function EquipmentPage() {
                 key={row.id} 
                 data-state={row.getIsSelected() && "selected"}
                 data-equipment-id={row.original.id}
+                className="responsive-tr"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell 
+                    key={cell.id} 
+                    className="responsive-td"
+                    data-column={cell.column.id}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -1185,6 +1360,7 @@ export default function EquipmentPage() {
 
   return (
     <>
+      <style jsx>{responsiveTableStyles}</style>
        <AddEquipmentDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
@@ -1504,7 +1680,9 @@ export default function EquipmentPage() {
                             }
                             onSelect={(e) => e.preventDefault()}
                           >
-                            {columnLabels[column.id as keyof Equipment] || column.id}
+                            <span>
+                              {columnLabels[column.id as keyof Equipment] || column.id}
+                            </span>
                           </DropdownMenuCheckboxItem>
                         )
                       })}

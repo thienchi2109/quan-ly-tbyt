@@ -20,6 +20,7 @@ import {
   Copyright,
   KeyRound,
   ArrowLeftRight,
+  BarChart3,
 } from "lucide-react"
 
 import {
@@ -56,6 +57,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       { href: "/repair-requests", icon: Wrench, label: "Yêu cầu sửa chữa" },
       { href: "/maintenance", icon: HardHat, label: "Bảo trì" },
       { href: "/transfers", icon: ArrowLeftRight, label: "Luân chuyển" },
+      { href: "/reports", icon: BarChart3, label: "Báo cáo" },
       { href: "/qr-scanner", icon: QrCode, label: "Quét QR" },
     ]
     
@@ -107,7 +109,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     href={href}
                     className={cn(
                       "flex items-center rounded-lg py-3 transition-all hover:text-primary",
-                      pathname === href ? "bg-muted text-primary" : "text-muted-foreground",
+                      pathname === href || pathname.startsWith(href) ? "bg-muted text-primary" : "text-muted-foreground",
                       isSidebarOpen ? "px-3 gap-3" : "h-12 w-12 justify-center"
                     )}
                     title={!isSidebarOpen ? label : ""}
@@ -155,7 +157,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         href={href}
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                          pathname === href ? "bg-muted text-primary" : "text-muted-foreground"
+                          pathname === href || pathname.startsWith(href) ? "bg-muted text-primary" : "text-muted-foreground"
                         )}
                         onClick={() => setIsMobileSheetOpen(false)}
                       >

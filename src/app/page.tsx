@@ -65,7 +65,7 @@ export default function LoginPage() {
               />
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex-col gap-4">
             <Button
               type="submit"
               className="w-full bg-primary hover:bg-primary/90"
@@ -74,6 +74,10 @@ export default function LoginPage() {
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLoading ? "Đang xác thực..." : "Đăng nhập"}
             </Button>
+            <div className="text-center text-xs text-muted-foreground">
+              <p>Phát triển bởi Nguyễn Thiện Chí</p>
+              <p>Mọi chi tiết xin LH: thienchi2109@gmail.com</p>
+            </div>
           </CardFooter>
         </form>
       </Card>
