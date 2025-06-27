@@ -7,6 +7,7 @@ import { QueryProvider } from '@/providers/query-provider';
 export const metadata: Metadata = {
   title: 'QUẢN LÝ TBYT CDC',
   description: 'Hệ thống quản lý trang thiết bị y tế',
+  manifest: '/manifest.json', // Added manifest link
 };
 
 export default function RootLayout({
@@ -16,7 +17,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
+      <head>
+        <meta name="theme-color" content="#007bff" /> {/* Added theme-color */}
+      </head>
       <body className="font-sans antialiased">
         <QueryProvider>
         <AuthProvider>
