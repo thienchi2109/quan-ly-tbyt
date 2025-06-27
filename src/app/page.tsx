@@ -17,13 +17,18 @@ import { Loader2 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 
 export default function LoginPage() {
-  const { login, isLoading } = useAuth()
+  const { login } = useAuth()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    await login(username, password)
+    setIsLoading(true);
+    const success = await login(username, password);
+    if (!success) {
+      setIsLoading(false);
+    }
   }
 
   return (

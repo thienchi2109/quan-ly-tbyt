@@ -10,7 +10,6 @@ interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
-  isLoading: boolean;
   isInitialized: boolean;
 }
 
@@ -21,7 +20,6 @@ const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
   const [isInitialized, setIsInitialized] = React.useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -31,16 +29,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const sessionString = localStorage.getItem(AUTH_SESSION_KEY);
       if (sessionString) {
         const session = JSON.parse(sessionString);
-        // Check if session is valid and not expired
         if (session.user && session.timestamp && (Date.now() - session.timestamp < SESSION_DURATION_MS)) {
             setUser(session.user);
         } else {
-            // Session expired or is invalid
             localStorage.removeItem(AUTH_SESSION_KEY);
-            toast({
-                title: "Phiên đã hết hạn",
-                description: "Vui lòng đăng nhập lại để tiếp tục.",
-            });
         }
       }
     } catch (error) {
@@ -48,18 +40,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem(AUTH_SESSION_KEY);
     }
     setIsInitialized(true);
-  }, [toast]);
+  }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    setIsLoading(true);
-
     if (supabaseError || !supabase) {
       toast({
         variant: "destructive",
         title: "Lỗi cấu hình",
         description: supabaseError || "Không thể kết nối đến Supabase.",
       });
-      setIsLoading(false);
       return false;
     }
 
@@ -76,7 +65,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: `Không thể tìm người dùng. Nguyên nhân phổ biến nhất là do chính sách Row Level Security trên Supabase đang chặn quyền đọc.`,
         duration: 10000,
       });
-      setIsLoading(false);
       return false;
     }
 
@@ -98,8 +86,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setUser(userData);
       localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(sessionData));
+      
+      toast({
+        title: "Đăng nhập thành công",
+        description: `Chào mừng ${userData.full_name || userData.username}!`,
+      });
+      
       router.push("/dashboard");
-      setIsLoading(false);
       return true;
     } else {
       toast({
@@ -107,7 +100,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Đăng nhập thất bại",
         description: "Tên đăng nhập hoặc mật khẩu không đúng.",
       });
-      setIsLoading(false);
       return false;
     }
   };
@@ -119,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading, isInitialized }}>
+    <AuthContext.Provider value={{ user, login, logout, isInitialized }}>
       {children}
     </AuthContext.Provider>
   );

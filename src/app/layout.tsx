@@ -19,10 +19,10 @@ export default function RootLayout({
       <head />
       <body className="font-sans antialiased">
         <QueryProvider>
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
+        <AuthProvider>
+          {children}
+          <Toaster />
+        </AuthProvider>
         </QueryProvider>
       </body>
     </html>

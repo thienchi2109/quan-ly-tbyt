@@ -463,8 +463,8 @@ export default function TransfersPage() {
         description: transfer.loai_hinh === 'thanh_ly'
           ? "Đã hoàn tất yêu cầu thanh lý thiết bị."
           : transfer.loai_hinh === 'noi_bo' 
-            ? "Đã hoàn thành luân chuyển nội bộ thiết bị."
-            : "Đã xác nhận hoàn trả thiết bị."
+          ? "Đã hoàn thành luân chuyển nội bộ thiết bị."
+          : "Đã xác nhận hoàn trả thiết bị."
       })
 
       fetchTransfers()
