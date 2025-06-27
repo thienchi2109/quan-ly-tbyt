@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/table"
 import { type Equipment, type MaintenancePlan } from "@/lib/data"
 import { supabase, supabaseError } from "@/lib/supabase"
+import { CalendarWidget } from "@/components/ui/calendar-widget"
+import { MonthlyMaintenanceSummary } from "@/components/monthly-maintenance-summary"
 
 export default async function Dashboard() {
   let totalDevices = 0;
@@ -217,9 +219,17 @@ export default async function Dashboard() {
       </div>
     </CardContent>
   </Card>
-</div>
-      
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+      </div>
+
+      {/* Calendar Widget */}
+      <div className="grid gap-4 md:gap-8">
+        <CalendarWidget />
+      </div>
+
+      {/* Monthly Summary and Main Content */}
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
@@ -346,6 +356,11 @@ export default async function Dashboard() {
             </Table>
           </CardContent>
         </Card>
+          </div>
+        </div>
+        
+        {/* Monthly Maintenance Summary */}
+        <MonthlyMaintenanceSummary />
       </div>
     </>
   )

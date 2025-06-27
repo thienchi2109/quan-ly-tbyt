@@ -19,6 +19,8 @@ import { InventoryCharts } from "./inventory-charts"
 import { InventoryTable } from "./inventory-table"
 import { ExportReportDialog } from "./export-report-dialog"
 import { useInventoryData } from "../hooks/use-inventory-data"
+import { InteractiveEquipmentChart } from "@/components/interactive-equipment-chart"
+import { EquipmentDistributionSummary } from "@/components/equipment-distribution-summary"
 
 interface DateRange {
   from: Date
@@ -264,6 +266,12 @@ export function InventoryReportTab() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Equipment Distribution Overview */}
+        <EquipmentDistributionSummary />
+
+        {/* Interactive Equipment Distribution Chart */}
+        <InteractiveEquipmentChart />
 
         {/* Charts Section */}
         <InventoryCharts data={data} isLoading={isLoading} />
