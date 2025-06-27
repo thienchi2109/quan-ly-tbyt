@@ -31,5 +31,21 @@
   "background_color": "#ffffff",
   "theme_color": "#007bff",
   "scope": "/",
-  "orientation": "portrait-primary"
+  "orientation": "portrait-primary",
+  "screenshots": [
+    {
+      "src": "/screenshots/placeholder-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop App Preview (Placeholder)"
+    },
+    {
+      "src": "/screenshots/placeholder-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile App Preview (Placeholder)"
+    }
+  ]
 }
