@@ -170,10 +170,17 @@ function CalendarWidgetImpl({ className, currentDate }: CalendarWidgetProps & { 
             <div className="text-sm text-muted-foreground">Chưa hoàn thành</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {Object.keys(filteredStats.byType).length}
-            </div>
-            <div className="text-sm text-muted-foreground">Loại công việc</div>
+            <div className="text-xs text-muted-foreground mb-1">Loại công việc</div>
+            {Object.keys(filteredStats.byType).length > 0 ? (
+              Object.entries(filteredStats.byType)
+                .map(([type, count]) => (
+                  <div key={type} className="text-sm">
+                    <span className="font-semibold">{type}:</span> {count}
+                  </div>
+                ))
+            ) : (
+              <div className="text-2xl font-bold text-purple-600">0</div>
+            )}
           </div>
         </div>
       </CardHeader>
