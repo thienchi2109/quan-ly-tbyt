@@ -1,38 +1,32 @@
 "use client"
 
 import * as React from "react"
-import { AlertTriangle } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { differenceInDays, parseISO, startOfDay } from "date-fns"
-// Kiểu dữ liệu RepairRequestWithEquipment cần được import hoặc định nghĩa ở đây nếu dùng chung
-// Tạm thời định nghĩa lại một phần để component độc lập, hoặc có thể import từ types/database nếu nó được export
-// Giả sử nó đã được export từ src/app/(app)/repair-requests/page.tsx hoặc src/types/database.ts
-// For now, let's assume a simplified version or that it will be imported.
+import Link from "next/link"
+import { AlertTriangle, ChevronDown } from "lucide-react"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { differenceInDays, parseISO, startOfDay, format } from "date-fns"
+import { vi } from 'date-fns/locale'
 
-// Đây là kiểu dữ liệu được suy ra từ `src/app/(app)/repair-requests/page.tsx`
-// Nếu bạn có định nghĩa chung, hãy import nó.
-interface RepairRequest {
-  id: number;
-  ngay_mong_muon_hoan_thanh: string | null;
-  trang_thai: string;
-  // Thêm các trường khác nếu cần để hiển thị hoặc link tới yêu cầu
-  thiet_bi?: {
-    ten_thiet_bi?: string | null;
-  } | null;
-  mo_ta_su_co?: string;
-}
+// Import kiểu dữ liệu từ trang Yêu cầu sửa chữa
+// Đảm bảo đường dẫn này chính xác và `RepairRequestWithEquipment` được export từ file đó
+import type { RepairRequestWithEquipment } from "@/app/(app)/repair-requests/page"
+
 
 interface RepairRequestAlertProps {
-  requests: RepairRequest[];
-  // Optional: Callback để xử lý khi người dùng muốn xem chi tiết các yêu cầu này
-  // onViewDetails?: (overdueRequestIds: number[]) => void;
+  requests: RepairRequestWithEquipment[];
 }
 
 // Các trạng thái được coi là chưa hoàn thành
 const UNCOMPLETED_STATUSES = ['Chờ xử lý', 'Đã duyệt'];
-// Có thể thêm các trạng thái khác như 'Đang sửa chữa', 'Chờ linh kiện' nếu có
 
-export function RepairRequestAlert({ requests /*, onViewDetails */ }: RepairRequestAlertProps) {
+export function RepairRequestAlert({ requests }: RepairRequestAlertProps) {
   const today = startOfDay(new Date());
 
   const overdueAndUpcomingRequests = React.useMemo(() => {
@@ -41,50 +35,91 @@ export function RepairRequestAlert({ requests /*, onViewDetails */ }: RepairRequ
     }
     return requests.filter(req => {
       if (!UNCOMPLETED_STATUSES.includes(req.trang_thai)) {
-        return false; // Bỏ qua nếu đã hoàn thành hoặc ở trạng thái không cần cảnh báo
+        return false;
       }
       if (!req.ngay_mong_muon_hoan_thanh) {
-        return false; // Bỏ qua nếu không có ngày mong muốn
+        return false;
       }
       try {
         const dueDate = startOfDay(parseISO(req.ngay_mong_muon_hoan_thanh));
         const daysDifference = differenceInDays(dueDate, today);
-
-        // Quá hạn (daysDifference < 0) hoặc sắp đến hạn trong vòng 7 ngày (0 <= daysDifference <= 7)
-        return daysDifference <= 7;
+        return daysDifference <= 7; // Quá hạn (daysDifference < 0) hoặc sắp đến hạn trong vòng 7 ngày (0 <= daysDifference <= 7)
       } catch (error) {
-        console.error("Invalid date format for ngay_mong_muon_hoan_thanh:", req.ngay_mong_muon_hoan_thanh, error);
+        console.error("Invalid date format for ngay_mong_muon_hoan_thanh:", req.ngay_mong_muon_hoan_thanh, req.id, error);
         return false;
       }
+    }).sort((a, b) => { // Sắp xếp: quá hạn lên trước, sau đó đến gần hạn nhất
+        const dueDateA = startOfDay(parseISO(a.ngay_mong_muon_hoan_thanh!));
+        const dueDateB = startOfDay(parseISO(b.ngay_mong_muon_hoan_thanh!));
+        return differenceInDays(dueDateA, today) - differenceInDays(dueDateB, today);
     });
   }, [requests, today]);
 
   if (overdueAndUpcomingRequests.length === 0) {
-    return null; // Không hiển thị gì nếu không có yêu cầu nào thỏa mãn
+    return null;
   }
 
   const count = overdueAndUpcomingRequests.length;
-  const message = `Có ${count} yêu cầu sửa chữa sắp đến hạn (trong vòng 7 ngày) hoặc đã quá hạn cần được chú ý.`;
+  const alertTitle = `Có ${count} yêu cầu sửa chữa sắp/quá hạn cần chú ý!`;
 
-  // Optional: Chuẩn bị list ID để truyền cho onViewDetails
-  // const requestIds = overdueAndUpcomingRequests.map(req => req.id);
+  const getDueDateStatus = (dueDateString: string | null): { text: string; className: string } => {
+    if (!dueDateString) return { text: "Không có MMHT", className: "text-gray-500" };
+    try {
+        const dueDate = startOfDay(parseISO(dueDateString));
+        const diff = differenceInDays(dueDate, today);
+
+        if (diff < 0) return { text: `Quá hạn ${Math.abs(diff)} ngày`, className: "text-red-600 font-semibold" };
+        if (diff === 0) return { text: "Đến hạn hôm nay", className: "text-orange-600 font-semibold" };
+        if (diff <= 7) return { text: `Còn ${diff} ngày`, className: "text-yellow-600 font-semibold" };
+        return { text: format(dueDate, 'dd/MM/yyyy', { locale: vi }), className: "" }; // Should not happen based on filter
+    } catch {
+        return { text: "Ngày không hợp lệ", className: "text-gray-500" };
+    }
+  };
 
   return (
-    <Alert variant="destructive" className="mb-4">
-      <AlertTriangle className="h-4 w-4" />
-      <AlertTitle>Cảnh báo quan trọng!</AlertTitle>
-      <AlertDescription>
-        {message}
-        {/* {onViewDetails && (
-          <Button
-            variant="link"
-            className="p-0 h-auto ml-2 text-white hover:text-white/80"
-            onClick={() => onViewDetails(requestIds)}
-          >
-            Xem chi tiết
-          </Button>
-        )} */}
-      </AlertDescription>
-    </Alert>
+    <Accordion type="single" collapsible className="w-full mb-4">
+      <AccordionItem value="repair-alert" className="border border-destructive/50 bg-destructive/5 shadow-lg rounded-lg">
+        <AccordionTrigger className="px-4 py-3 text-destructive hover:no-underline">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 mr-2" />
+            <span className="font-semibold">{alertTitle}</span>
+          </div>
+        </AccordionTrigger>
+        <AccordionContent className="px-4 pt-0 pb-3">
+          <div className="space-y-3 max-h-72 overflow-y-auto">
+            {overdueAndUpcomingRequests.map((req) => {
+              const dueDateStatus = getDueDateStatus(req.ngay_mong_muon_hoan_thanh);
+              return (
+                <div key={req.id} className="p-3 bg-background/50 rounded-md border">
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className="font-semibold text-sm">
+                      {req.thiet_bi?.ten_thiet_bi || 'Không rõ thiết bị'}
+                      {req.thiet_bi?.ma_thiet_bi && ` (${req.thiet_bi.ma_thiet_bi})`}
+                    </h4>
+                    <Badge variant={dueDateStatus.text.includes("Quá hạn") || dueDateStatus.text.includes("hôm nay") ? "destructive" : "warning"} className="whitespace-nowrap">
+                        {dueDateStatus.text}
+                    </Badge>
+                  </div>
+                  {req.mo_ta_su_co && (
+                    <p className="text-xs text-muted-foreground truncate mb-1">
+                      Mô tả: {req.mo_ta_su_co}
+                    </p>
+                  )}
+                  {req.nguoi_yeu_cau && (
+                     <p className="text-xs text-muted-foreground mb-2">Người YC: {req.nguoi_yeu_cau}</p>
+                  )}
+                  <Link href={`/(app)/repair-requests/${req.id}`} passHref legacyBehavior>
+                    <Button size="xs" variant="outline" className="w-full sm:w-auto">
+                      Xem chi tiết
+                    </Button>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }
