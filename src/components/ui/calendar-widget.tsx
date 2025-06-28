@@ -51,10 +51,40 @@ const getEventTypeIcon = (type: TaskType) => {
 }
 
 export function CalendarWidget({ className }: CalendarWidgetProps) {
-  const [currentDate, setCurrentDate] = React.useState(new Date())
+  const [currentDate, setCurrentDate] = React.useState<Date | null>(null)
   const [selectedDepartment, setSelectedDepartment] = React.useState<string>("all")
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null)
   const { toast } = useToast()
+
+  // Initialize current date on client side only
+  React.useEffect(() => {
+    setCurrentDate(new Date())
+  }, [])
+
+  // Don't render until currentDate is initialized
+  if (!currentDate) {
+    return (
+      <Card className={className}>
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5" />
+            Lịch Bảo trì/Hiệu chuẩn/Kiểm định
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="grid grid-cols-7 gap-1">
+                {[...Array(7)].map((_, j) => (
+                  <Skeleton key={j} className="h-20 w-full" />
+                ))}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
   // Get calendar range
   const monthStart = startOfMonth(currentDate)
@@ -64,8 +94,8 @@ export function CalendarWidget({ className }: CalendarWidgetProps) {
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd })
 
   // Navigation handlers
-  const goToPreviousMonth = () => setCurrentDate(prev => subMonths(prev, 1))
-  const goToNextMonth = () => setCurrentDate(prev => addMonths(prev, 1))
+  const goToPreviousMonth = () => setCurrentDate(prev => prev ? subMonths(prev, 1) : new Date())
+  const goToNextMonth = () => setCurrentDate(prev => prev ? addMonths(prev, 1) : new Date())
   const goToToday = () => setCurrentDate(new Date())
 
   // Fetch data using custom hook

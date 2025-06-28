@@ -2,6 +2,8 @@
   "name": "Quản lý Thiết bị Y tế",
   "short_name": "Thiết bị YT",
   "description": "Ứng dụng quản lý thiết bị y tế thông minh",
+  "lang": "vi",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -29,7 +31,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#007bff",
+  "theme_color": "#447896",
   "scope": "/",
   "orientation": "portrait-primary",
   "screenshots": [
