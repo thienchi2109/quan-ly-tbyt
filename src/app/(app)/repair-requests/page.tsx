@@ -50,6 +50,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import type { Column } from "@tanstack/react-table"
+import { RepairRequestAlert } from "@/components/repair-request-alert"
 
 
 type EquipmentSelectItem = {
@@ -58,7 +59,8 @@ type EquipmentSelectItem = {
     ten_thiet_bi: string;
 }
 
-type RepairRequestWithEquipment = {
+// Export type để RepairRequestAlert có thể sử dụng nếu cần
+export type RepairRequestWithEquipment = {
     id: number;
     thiet_bi_id: number;
     ngay_yeu_cau: string;
@@ -968,6 +970,9 @@ export default function RepairRequestsPage() {
             </AlertDialogContent>
         </AlertDialog>
       )}
+
+      {/* Repair Request Alert */}
+      <RepairRequestAlert requests={requests} />
 
       <div className="grid gap-6 md:grid-cols-5">
         <div className="md:col-span-2">
