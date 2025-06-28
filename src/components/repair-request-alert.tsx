@@ -107,13 +107,8 @@ export function RepairRequestAlert({ requests }: RepairRequestAlertProps) {
                     </p>
                   )}
                   {req.nguoi_yeu_cau && (
-                     <p className="text-xs text-muted-foreground mb-2">Người YC: {req.nguoi_yeu_cau}</p>
+                     <p className="text-xs text-muted-foreground">Người YC: {req.nguoi_yeu_cau}</p>
                   )}
-                  <Link href={`/(app)/repair-requests/${req.id}`} passHref legacyBehavior>
-                    <Button size="xs" variant="outline" className="w-full sm:w-auto">
-                      Xem chi tiết
-                    </Button>
-                  </Link>
                 </div>
               );
             })}
