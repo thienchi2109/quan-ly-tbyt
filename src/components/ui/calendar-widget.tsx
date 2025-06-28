@@ -75,8 +75,22 @@ function CalendarSkeleton({ className }: { className?: string }) {
   )
 }
 
+// Props for CalendarWidgetImpl including navigation handlers
+interface CalendarWidgetImplProps extends CalendarWidgetProps {
+  currentDate: Date
+  onPrevMonth: () => void
+  onNextMonth: () => void
+  onToday: () => void
+}
+
 // Main calendar implementation
-function CalendarWidgetImpl({ className, currentDate }: CalendarWidgetProps & { currentDate: Date }) {
+function CalendarWidgetImpl({
+  className,
+  currentDate,
+  onPrevMonth,
+  onNextMonth,
+  onToday
+}: CalendarWidgetImplProps) {
   const [selectedDepartment, setSelectedDepartment] = React.useState<string>("all")
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null)
   const { toast } = useToast()
@@ -189,13 +203,13 @@ function CalendarWidgetImpl({ className, currentDate }: CalendarWidgetProps & { 
         {/* Calendar Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => {/* Navigation will be handled by parent */}}>
+            <Button variant="outline" size="sm" onClick={onPrevMonth}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => {/* Navigation will be handled by parent */}}>
+            <Button variant="outline" size="sm" onClick={onToday}>
               Hôm nay
             </Button>
-            <Button variant="outline" size="sm" onClick={() => {/* Navigation will be handled by parent */}}>
+            <Button variant="outline" size="sm" onClick={onNextMonth}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -342,10 +356,34 @@ export function CalendarWidget({ className }: CalendarWidgetProps) {
     setCurrentDate(new Date())
   }, [])
 
+  const handlePrevMonth = () => {
+    if (currentDate) {
+      setCurrentDate(subMonths(currentDate, 1))
+    }
+  }
+
+  const handleNextMonth = () => {
+    if (currentDate) {
+      setCurrentDate(addMonths(currentDate, 1))
+    }
+  }
+
+  const handleToday = () => {
+    setCurrentDate(new Date())
+  }
+
   // Show loading skeleton until currentDate is initialized
   if (!currentDate) {
     return <CalendarSkeleton className={className} />
   }
 
-  return <CalendarWidgetImpl className={className} currentDate={currentDate} />
+  return (
+    <CalendarWidgetImpl
+      className={className}
+      currentDate={currentDate}
+      onPrevMonth={handlePrevMonth}
+      onNextMonth={handleNextMonth}
+      onToday={handleToday}
+    />
+  )
 } 
