@@ -1,25 +1,19 @@
-"use client" // Vì sử dụng Date, có thể không cần nếu logic thuần túy
+"use client"
 
 import * as React from "react"
 import { differenceInDays, parseISO, startOfDay } from "date-fns"
-// Import kiểu RepairRequestWithEquipment từ nơi nó được định nghĩa và export
-// Ví dụ: import type { RepairRequestWithEquipment } from "@/app/(app)/repair-requests/page";
-// Hoặc từ "@/types/database" nếu bạn đã chuyển nó ra đó
-// Tạm thời giả định nó sẽ được cung cấp đúng kiểu khi sử dụng hook.
-// Để hook này độc lập hơn, ta có thể định nghĩa một kiểu cơ bản mà nó cần:
+
+// Các trạng thái được coi là chưa hoàn thành
+const UNCOMPLETED_REPAIR_STATUSES = ['Chờ xử lý', 'Đã duyệt'];
+
+// Interface cơ bản cho repair request 
 interface MinimalRepairRequest {
   id: number;
   ngay_mong_muon_hoan_thanh: string | null;
   trang_thai: string;
-  // Các trường khác có thể thêm vào đây nếu hook cần xử lý dựa trên chúng
-  // Ví dụ: thiet_bi?: { ten_thiet_bi?: string | null; ma_thiet_bi?: string | null }
 }
 
-// Các trạng thái được coi là chưa hoàn thành
-const UNCOMPLETED_REPAIR_STATUSES = ['Chờ xử lý', 'Đã duyệt'];
-// Có thể thêm các trạng thái khác như 'Đang sửa chữa', 'Chờ linh kiện' nếu có
-
-export interface RepairAlertItem extends MinimalRepairRequest {
+export type RepairAlertItem<T = MinimalRepairRequest> = T & {
   daysDifference: number; // Số ngày chênh lệch so với hôm nay (âm là quá hạn, dương là còn lại)
   isOverdue: boolean;
   isUpcoming: boolean;
@@ -27,7 +21,7 @@ export interface RepairAlertItem extends MinimalRepairRequest {
 
 export function useRepairAlerts<T extends MinimalRepairRequest>(
   allRepairRequests: T[] | null | undefined
-): RepairAlertItem[] {
+): RepairAlertItem<T>[] {
   const today = startOfDay(new Date());
 
   const alertableRequests = React.useMemo(() => {
@@ -35,7 +29,7 @@ export function useRepairAlerts<T extends MinimalRepairRequest>(
       return [];
     }
 
-    const filteredAndProcessed: RepairAlertItem[] = [];
+    const filteredAndProcessed: RepairAlertItem<T>[] = [];
 
     allRepairRequests.forEach(req => {
       if (!UNCOMPLETED_REPAIR_STATUSES.includes(req.trang_thai)) {
@@ -58,7 +52,7 @@ export function useRepairAlerts<T extends MinimalRepairRequest>(
             daysDifference,
             isOverdue,
             isUpcoming,
-          });
+          } as RepairAlertItem<T>);
         }
       } catch (error) {
         console.error("Invalid date format for repair request ngay_mong_muon_hoan_thanh:", req.ngay_mong_muon_hoan_thanh, req.id, error);

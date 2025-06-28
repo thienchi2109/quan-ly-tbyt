@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Bell, AlertTriangle, ArrowLeftRight, Wrench } from "lucide-react"
+import { Bell, ArrowLeftRight, Wrench } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -9,53 +9,70 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogDescription, // (Optional) Can be used for a subtitle or general message
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-
-import { useRepairAlerts, type RepairAlertItem } from "@/hooks/use-repair-alerts"
-import { useTransferAlerts, type TransferAlertItem } from "@/hooks/use-transfer-alerts"
-import type { RepairRequestWithEquipment } from "@/app/(app)/repair-requests/page" // Adjust path if needed
-import type { TransferRequest } from "@/types/database" // Adjust path if needed
-
-import { NotificationItemCard } from "./notification-item-card" // Assuming it's in the same folder or components/
-import { format, parseISO, startOfDay, differenceInDays } from "date-fns"
-import { vi } from "date-fns/locale"
 
 interface NotificationBellDialogProps {
-  allRepairRequests: RepairRequestWithEquipment[] | null | undefined;
-  allTransferRequests: TransferRequest[] | null | undefined;
+  allRepairRequests?: any;
+  allTransferRequests?: any;
 }
-
-// Helper function to get status text and class for due dates (can be moved to a utils file)
-const getDueDateInfo = (daysDifference: number, isOverdue: boolean, isUpcoming: boolean, dueDateString?: string | null): { text: string; className: string } => {
-  if (isOverdue) return { text: `Quá hạn ${Math.abs(daysDifference)} ngày`, className: "text-red-600 font-semibold" };
-  if (isUpcoming) {
-    if (daysDifference === 0) return { text: "Đến hạn hôm nay", className: "text-orange-600 font-semibold" };
-    return { text: `Còn ${daysDifference} ngày`, className: "text-yellow-600 font-semibold" };
-  }
-  if (dueDateString) { // Fallback if not overdue/upcoming but has a due date (should not happen with current filter)
-      try {
-          return { text: format(parseISO(dueDateString), 'dd/MM/yyyy', { locale: vi }), className: "" };
-      } catch {
-        return { text: "Ngày không hợp lệ", className: "text-gray-500"};
-      }
-  }
-  return { text: "Không có MMHT", className: "text-gray-500" };
-};
-
 
 export function NotificationBellDialog({
   allRepairRequests,
   allTransferRequests,
 }: NotificationBellDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const repairAlerts = useRepairAlerts(allRepairRequests);
-  const transferAlerts = useTransferAlerts(allTransferRequests);
+  
+  // Log incoming data to debug
+  React.useEffect(() => {
+    console.log("Notification data:", {
+      allRepairRequests,
+      allTransferRequests,
+      repairRequestsType: typeof allRepairRequests,
+      transferRequestsType: typeof allTransferRequests,
+      repairRequestsLength: allRepairRequests?.length,
+      transferRequestsLength: allTransferRequests?.length,
+    });
+    
+    if (allRepairRequests && allRepairRequests.length > 0) {
+      console.log("First repair request:", allRepairRequests[0]);
+    }
+    
+    if (allTransferRequests && allTransferRequests.length > 0) {
+      console.log("First transfer request:", allTransferRequests[0]);
+    }
+  }, [allRepairRequests, allTransferRequests]);
 
-  const totalAlertsCount = repairAlerts.length + transferAlerts.length;
+  // Temporary placeholder - count of pending requests
+  const repairCount = allRepairRequests?.filter((req: any) => 
+    req.trang_thai === 'Chờ xử lý' || req.trang_thai === 'Đã duyệt'
+  )?.length || 0;
+  
+  const transferCount = allTransferRequests?.filter((req: any) => 
+    req.trang_thai === 'cho_duyet' || req.trang_thai === 'da_duyet'
+  )?.length || 0;
+  
+  const totalAlertsCount = repairCount + transferCount;
+
+  console.log("Calculated counts:", { repairCount, transferCount, totalAlertsCount });
+
+  // Log detailed filtering for repair requests
+  if (Array.isArray(allRepairRequests)) {
+    console.log('Repair requests detailed analysis:');
+    allRepairRequests.forEach((req, index) => {
+      console.log(`Repair ${index + 1}:`, {
+        id: req.id,
+        trang_thai: req.trang_thai,
+        mo_ta_su_co: req.mo_ta_su_co?.substring(0, 50),
+        ngay_yeu_cau: req.ngay_yeu_cau,
+        allKeys: Object.keys(req)
+      });
+    });
+  } else {
+    console.log('allRepairRequests is not an array:', allRepairRequests);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -76,10 +93,10 @@ export function NotificationBellDialog({
       <DialogContent className="sm:max-w-[525px] md:max-w-[650px] lg:max-w-[750px] max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Thông báo và Cảnh báo ({totalAlertsCount})</DialogTitle>
-          {/* Optional: <DialogDescription>Xem các cảnh báo quan trọng tại đây.</DialogDescription> */}
+          <DialogDescription>Xem các cảnh báo quan trọng tại đây.</DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-grow pr-6 -mr-6"> {/* Added pr-6 and -mr-6 for better scrollbar spacing */}
+        <ScrollArea className="flex-grow pr-6 -mr-6">
           {totalAlertsCount === 0 ? (
             <div className="py-10 text-center text-muted-foreground">
               <Bell className="mx-auto h-12 w-12 mb-4 opacity-50" />
@@ -87,71 +104,42 @@ export function NotificationBellDialog({
             </div>
           ) : (
             <div className="space-y-6">
-              {repairAlerts.length > 0 && (
+              {repairCount > 0 && (
                 <section>
                   <h3 className="text-md font-semibold mb-2 flex items-center">
                     <Wrench className="h-4 w-4 mr-2 text-orange-500" />
-                    Yêu cầu Sửa chữa ({repairAlerts.length})
+                    Yêu cầu Sửa chữa ({repairCount})
                   </h3>
-                  <div className="space-y-2">
-                    {repairAlerts.map((alert) => {
-                      const dueDateInfo = getDueDateInfo(alert.daysDifference, alert.isOverdue, alert.isUpcoming, alert.ngay_mong_muon_hoan_thanh);
-                      return (
-                        <NotificationItemCard
-                          key={`repair-${alert.id}`}
-                          id={alert.id}
-                          title={`${alert.thiet_bi?.ten_thiet_bi || 'N/A'} (${alert.thiet_bi?.ma_thiet_bi || 'N/A'})`}
-                          description={alert.mo_ta_su_co ? `Mô tả: ${alert.mo_ta_su_co}` : undefined}
-                          statusText={dueDateInfo.text}
-                          statusClassName={dueDateInfo.className}
-                          timestamp={alert.ngay_yeu_cau}
-                          linkHref={`/(app)/repair-requests/${alert.id}`} // Adjust if your route is different
-                          type="repair"
-                          details={{ nguoi_yeu_cau: (alert as RepairRequestWithEquipment).nguoi_yeu_cau }}
-                        />
-                      );
-                    })}
+                  <div className="p-3 border rounded-md">
+                    <p className="text-sm text-muted-foreground">
+                      Có {repairCount} yêu cầu sửa chữa đang chờ xử lý hoặc đã được duyệt.
+                    </p>
+                    <Button variant="link" className="p-0 h-auto text-sm" asChild>
+                      <a href="/repair-requests">Xem chi tiết →</a>
+                    </Button>
                   </div>
                 </section>
               )}
 
-              {transferAlerts.length > 0 && repairAlerts.length > 0 && <Separator className="my-4" />}
-
-              {transferAlerts.length > 0 && (
+              {transferCount > 0 && (
                 <section>
                   <h3 className="text-md font-semibold mb-2 flex items-center">
                     <ArrowLeftRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Yêu cầu Luân chuyển ({transferAlerts.length})
+                    Yêu cầu Luân chuyển ({transferCount})
                   </h3>
-                  <div className="space-y-2">
-                    {transferAlerts.map((alert) => {
-                      const dueDateInfo = getDueDateInfo(alert.daysDifference, alert.isOverdue, alert.isUpcoming, alert.ngay_du_kien_tra);
-                      return (
-                        <NotificationItemCard
-                          key={`transfer-${alert.id}`}
-                          id={alert.id}
-                          title={`${alert.ma_yeu_cau} - ${alert.thiet_bi?.ten_thiet_bi || 'N/A'}`}
-                          description={
-                            alert.loai_hinh === 'ben_ngoai'
-                            ? `ĐV nhận: ${alert.don_vi_nhan || 'N/A'}`
-                            : `Từ: ${alert.khoa_phong_hien_tai || 'N/A'} → Đến: ${alert.khoa_phong_nhan || 'N/A'}`
-                          }
-                          statusText={dueDateInfo.text}
-                          statusClassName={dueDateInfo.className}
-                          timestamp={alert.created_at}
-                          linkHref={`/(app)/transfers/${alert.id}`} // Adjust if your route is different
-                          type="transfer"
-                          details={{ nguoi_yeu_cau: (alert as TransferRequest).nguoi_yeu_cau?.full_name || (alert as TransferRequest).nguoi_yeu_cau?.username }}
-                        />
-                      );
-                    })}
+                  <div className="p-3 border rounded-md">
+                    <p className="text-sm text-muted-foreground">
+                      Có {transferCount} yêu cầu luân chuyển đang chờ duyệt hoặc đã được duyệt.
+                    </p>
+                    <Button variant="link" className="p-0 h-auto text-sm" asChild>
+                      <a href="/transfers">Xem chi tiết →</a>
+                    </Button>
                   </div>
                 </section>
               )}
             </div>
           )}
         </ScrollArea>
-        {/* Optional: DialogFooter if needed */}
       </DialogContent>
     </Dialog>
   );

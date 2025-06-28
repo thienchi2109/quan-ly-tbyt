@@ -7,11 +7,15 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useActiveRepairRequestsCount } from "@/hooks/use-cached-repair"
+import { useRepairRequests } from "@/hooks/use-cached-repair"
 import { Wrench } from "lucide-react"
 
 export function RepairRequestCard() {
-  const { data: repairRequestsCount, isLoading } = useActiveRepairRequestsCount()
+  const { data: repairRequests, isLoading } = useRepairRequests()
+  
+  const repairRequestsCount = repairRequests?.filter(req => 
+    req.trang_thai === 'Chờ xử lý' || req.trang_thai === 'Đã duyệt'
+  )?.length || 0
 
   return (
     <Card>
