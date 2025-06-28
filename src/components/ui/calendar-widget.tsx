@@ -50,41 +50,36 @@ const getEventTypeIcon = (type: TaskType) => {
   }
 }
 
-export function CalendarWidget({ className }: CalendarWidgetProps) {
-  const [currentDate, setCurrentDate] = React.useState<Date | null>(null)
+// Loading skeleton component
+function CalendarSkeleton({ className }: { className?: string }) {
+  return (
+    <Card className={className}>
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2">
+          <CalendarIcon className="h-5 w-5" />
+          Lịch Bảo trì/Hiệu chuẩn/Kiểm định
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="grid grid-cols-7 gap-1">
+              {[...Array(7)].map((_, j) => (
+                <Skeleton key={j} className="h-20 w-full" />
+              ))}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Main calendar implementation
+function CalendarWidgetImpl({ className, currentDate }: CalendarWidgetProps & { currentDate: Date }) {
   const [selectedDepartment, setSelectedDepartment] = React.useState<string>("all")
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null)
   const { toast } = useToast()
-
-  // Initialize current date on client side only
-  React.useEffect(() => {
-    setCurrentDate(new Date())
-  }, [])
-
-  // Don't render until currentDate is initialized
-  if (!currentDate) {
-    return (
-      <Card className={className}>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5" />
-            Lịch Bảo trì/Hiệu chuẩn/Kiểm định
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="grid grid-cols-7 gap-1">
-                {[...Array(7)].map((_, j) => (
-                  <Skeleton key={j} className="h-20 w-full" />
-                ))}
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
 
   // Get calendar range
   const monthStart = startOfMonth(currentDate)
@@ -92,11 +87,6 @@ export function CalendarWidget({ className }: CalendarWidgetProps) {
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
   const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd })
-
-  // Navigation handlers
-  const goToPreviousMonth = () => setCurrentDate(prev => prev ? subMonths(prev, 1) : new Date())
-  const goToNextMonth = () => setCurrentDate(prev => prev ? addMonths(prev, 1) : new Date())
-  const goToToday = () => setCurrentDate(new Date())
 
   // Fetch data using custom hook
   const year = currentDate.getFullYear()
@@ -192,13 +182,13 @@ export function CalendarWidget({ className }: CalendarWidgetProps) {
         {/* Calendar Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={goToPreviousMonth}>
+            <Button variant="outline" size="sm" onClick={() => {/* Navigation will be handled by parent */}}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={goToToday}>
+            <Button variant="outline" size="sm" onClick={() => {/* Navigation will be handled by parent */}}>
               Hôm nay
             </Button>
-            <Button variant="outline" size="sm" onClick={goToNextMonth}>
+            <Button variant="outline" size="sm" onClick={() => {/* Navigation will be handled by parent */}}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -278,44 +268,52 @@ export function CalendarWidget({ className }: CalendarWidgetProps) {
                     <DialogContent className="max-w-md">
                       <DialogHeader>
                         <DialogTitle>
-                          Công việc ngày {format(day, 'dd/MM/yyyy', { locale: vi })}
+                          {format(day, 'EEEE, dd MMMM yyyy', { locale: vi })}
                         </DialogTitle>
                       </DialogHeader>
-                      
-                      <ScrollArea className="max-h-96">
-                        {dayEvents.length === 0 ? (
-                          <p className="text-muted-foreground text-center py-4">
-                            Không có công việc nào được lên lịch.
-                          </p>
-                        ) : (
-                          <div className="space-y-3">
-                            {dayEvents.map(event => (
-                              <div key={event.id} className="border rounded-lg p-3">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-lg">{getEventTypeIcon(event.type)}</span>
-                                    <Badge className={getEventTypeColor(event.type, event.isCompleted)}>
-                                      {event.type}
-                                      {event.isCompleted && " ✓"}
-                                    </Badge>
+                      <div className="space-y-4">
+                        {dayEvents.length > 0 ? (
+                          <ScrollArea className="max-h-60">
+                            <div className="space-y-2">
+                              {dayEvents.map(event => (
+                                <div
+                                  key={event.id}
+                                  className={`p-3 rounded-md border-l-4 ${
+                                    event.isCompleted ? 'border-green-500 bg-green-50' :
+                                    event.type === 'Bảo trì' ? 'border-blue-500 bg-blue-50' :
+                                    event.type === 'Hiệu chuẩn' ? 'border-orange-500 bg-orange-50' :
+                                    'border-purple-500 bg-purple-50'
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-lg">{getEventTypeIcon(event.type)}</span>
+                                        <Badge className={getEventTypeColor(event.type, event.isCompleted)}>
+                                          {event.type}
+                                        </Badge>
+                                      </div>
+                                      <h4 className="font-medium mt-1">{event.title}</h4>
+                                      <p className="text-sm text-muted-foreground">
+                                        {event.department}
+                                      </p>
+                                    </div>
+                                    {event.isCompleted && (
+                                      <Badge variant="secondary" className="ml-2">
+                                        Hoàn thành
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
-                                
-                                <h4 className="font-medium mb-1">{event.title}</h4>
-                                <p className="text-sm text-muted-foreground mb-1">
-                                  Mã TB: {event.equipmentCode}
-                                </p>
-                                <p className="text-sm text-muted-foreground mb-1">
-                                  Khoa/Phòng: {event.department}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  Kế hoạch: {event.planName}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        ) : (
+                          <p className="text-center text-muted-foreground py-4">
+                            Không có công việc nào trong ngày này.
+                          </p>
                         )}
-                      </ScrollArea>
+                      </div>
                     </DialogContent>
                   </Dialog>
                 )
@@ -323,27 +321,24 @@ export function CalendarWidget({ className }: CalendarWidgetProps) {
             </div>
           </div>
         )}
-
-        {/* Legend */}
-        <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-sm">Bảo trì</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-            <span className="text-sm">Hiệu chuẩn</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-            <span className="text-sm">Kiểm định</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span className="text-sm">Đã hoàn thành</span>
-          </div>
-        </div>
       </CardContent>
     </Card>
   )
+}
+
+// Main wrapper component
+export function CalendarWidget({ className }: CalendarWidgetProps) {
+  const [currentDate, setCurrentDate] = React.useState<Date | null>(null)
+
+  // Initialize current date on client side only
+  React.useEffect(() => {
+    setCurrentDate(new Date())
+  }, [])
+
+  // Show loading skeleton until currentDate is initialized
+  if (!currentDate) {
+    return <CalendarSkeleton className={className} />
+  }
+
+  return <CalendarWidgetImpl className={className} currentDate={currentDate} />
 } 
