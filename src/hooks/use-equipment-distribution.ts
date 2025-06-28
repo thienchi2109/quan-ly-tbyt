@@ -15,23 +15,33 @@ export interface EquipmentDistributionItem {
   [key: string]: string | number
 }
 
+export interface RawEquipmentItem {
+  id: number
+  ma_thiet_bi: string
+  ten_thiet_bi: string
+  khoa_phong_quan_ly: string | null
+  vi_tri_lap_dat: string | null
+  tinh_trang_hien_tai: string | null
+}
+
 export interface EquipmentDistributionData {
   byDepartment: EquipmentDistributionItem[]
   byLocation: EquipmentDistributionItem[]
   departments: string[]
   locations: string[]
   totalEquipment: number
+  rawEquipment: RawEquipmentItem[]
 }
 
 // Query keys for caching
 export const equipmentDistributionKeys = {
   all: ['equipment-distribution'] as const,
-  data: () => [...equipmentDistributionKeys.all, 'data'] as const,
+  data: (filterDept?: string, filterLoc?: string) => [...equipmentDistributionKeys.all, 'data', filterDept, filterLoc] as const,
 }
 
-export function useEquipmentDistribution() {
+export function useEquipmentDistribution(filterDepartment?: string, filterLocation?: string) {
   return useQuery({
-    queryKey: equipmentDistributionKeys.data(),
+    queryKey: equipmentDistributionKeys.data(filterDepartment, filterLocation),
     queryFn: async (): Promise<EquipmentDistributionData> => {
       if (!supabase) {
         throw new Error('Supabase client not initialized')
@@ -57,14 +67,30 @@ export function useEquipmentDistribution() {
           byLocation: [],
           departments: [],
           locations: [],
-          totalEquipment: 0
+          totalEquipment: 0,
+          rawEquipment: []
         }
+      }
+
+      // Apply filters if provided
+      let filteredEquipment = equipment
+      
+      if (filterDepartment && filterDepartment !== 'all') {
+        filteredEquipment = filteredEquipment.filter(item => 
+          item.khoa_phong_quan_ly === filterDepartment
+        )
+      }
+      
+      if (filterLocation && filterLocation !== 'all') {
+        filteredEquipment = filteredEquipment.filter(item => 
+          item.vi_tri_lap_dat === filterLocation
+        )
       }
 
       // Process data by department
       const deptMap = new Map<string, EquipmentDistributionItem>()
       
-      equipment.forEach(item => {
+      filteredEquipment.forEach(item => {
         const dept = item.khoa_phong_quan_ly || 'Chưa phân loại'
         
         if (!deptMap.has(dept)) {
@@ -113,7 +139,7 @@ export function useEquipmentDistribution() {
       // Process data by location
       const locationMap = new Map<string, EquipmentDistributionItem>()
       
-      equipment.forEach(item => {
+      filteredEquipment.forEach(item => {
         const location = item.vi_tri_lap_dat || 'Chưa xác định'
         
         if (!locationMap.has(location)) {
@@ -165,16 +191,26 @@ export function useEquipmentDistribution() {
       const byLocation = Array.from(locationMap.values())
         .sort((a, b) => b.total - a.total)
 
-      // Get unique departments and locations for filters
-      const departments = Array.from(deptMap.keys()).filter(dept => dept !== 'Chưa phân loại').sort()
-      const locations = Array.from(locationMap.keys()).filter(loc => loc !== 'Chưa xác định').sort()
+      // Get unique departments and locations for filters (from original unfiltered data)
+      const departments = Array.from(new Set(
+        equipment
+          .map(item => item.khoa_phong_quan_ly)
+          .filter(dept => dept && dept !== 'Chưa phân loại')
+      )).sort()
+      
+      const locations = Array.from(new Set(
+        equipment
+          .map(item => item.vi_tri_lap_dat)
+          .filter(loc => loc && loc !== 'Chưa xác định')
+      )).sort()
 
       return {
         byDepartment,
         byLocation,
         departments,
         locations,
-        totalEquipment: equipment.length
+        totalEquipment: filteredEquipment.length,
+        rawEquipment: filteredEquipment
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
