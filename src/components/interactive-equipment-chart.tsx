@@ -10,11 +10,13 @@ import {
   CartesianGrid,
   Tooltip
 } from "recharts"
-import { Filter, BarChart3, MapPin, Building2 } from "lucide-react"
+import { Filter, BarChart3, MapPin, Building2, X } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { 
@@ -109,13 +111,27 @@ export function InteractiveEquipmentChart({ className }: InteractiveEquipmentCha
   const [selectedDepartment, setSelectedDepartment] = React.useState<string>('all')
   const [selectedLocation, setSelectedLocation] = React.useState<string>('all')
   
-  const { data, isLoading, error } = useEquipmentDistribution()
+  // Apply cross-filtering to the hook
+  const crossFilterDept = viewType === 'location' ? selectedDepartment : undefined
+  const crossFilterLoc = viewType === 'department' ? selectedLocation : undefined
+  
+  const { data, isLoading, error } = useEquipmentDistribution(crossFilterDept, crossFilterLoc)
 
-  // Filtered data based on current selection
+  // Reset filters function
+  const resetFilters = () => {
+    setSelectedDepartment('all')
+    setSelectedLocation('all')
+  }
+
+  // Check if any filters are active
+  const hasActiveFilters = selectedDepartment !== 'all' || selectedLocation !== 'all'
+
+  // Filtered data based on current selection with cross-filtering
   const filteredData = React.useMemo(() => {
     if (!data) return []
     
     let sourceData = viewType === 'department' ? data.byDepartment : data.byLocation
+    
     return sourceData.slice(0, 10) // Show top 10 for better visualization
   }, [data, viewType])
 
@@ -123,18 +139,19 @@ export function InteractiveEquipmentChart({ className }: InteractiveEquipmentCha
   const stats = React.useMemo(() => {
     if (!data) return null
     
-    const currentData = viewType === 'department' ? data.byDepartment : data.byLocation
+    const currentData = filteredData
     const totalCategories = currentData.length
+    const totalEquipment = currentData.reduce((sum, item) => sum + item.total, 0)
     const avgEquipmentPerCategory = currentData.length > 0 
-      ? Math.round(data.totalEquipment / currentData.length) 
+      ? Math.round(totalEquipment / currentData.length) 
       : 0
     
     return {
       totalCategories,
-      totalEquipment: data.totalEquipment,
+      totalEquipment,
       avgEquipmentPerCategory
     }
-  }, [data, viewType])
+  }, [filteredData])
 
   if (error) {
     return (
@@ -165,8 +182,18 @@ export function InteractiveEquipmentChart({ className }: InteractiveEquipmentCha
               <BarChart3 className="h-5 w-5" />
               Phân bố Thiết bị theo {viewType === 'department' ? 'Khoa/Phòng' : 'Vị trí'}
             </CardTitle>
-            <CardDescription>
-              Biểu đồ tương tác thể hiện số lượng và trạng thái thiết bị
+            <CardDescription className="flex items-center gap-2 flex-wrap">
+              <span>Biểu đồ tương tác thể hiện số lượng và trạng thái thiết bị</span>
+              {selectedDepartment !== 'all' && viewType === 'location' && (
+                <Badge variant="secondary" className="text-xs">
+                  Khoa/Phòng: {selectedDepartment}
+                </Badge>
+              )}
+              {selectedLocation !== 'all' && viewType === 'department' && (
+                <Badge variant="secondary" className="text-xs">
+                  Vị trí: {selectedLocation}
+                </Badge>
+              )}
             </CardDescription>
           </div>
           
@@ -203,8 +230,9 @@ export function InteractiveEquipmentChart({ className }: InteractiveEquipmentCha
               </TabsTrigger>
             </TabsList>
 
-            {/* Filters */}
-            <div className="flex items-center gap-4">
+            {/* Cross Filters and Reset */}
+            <div className="flex items-center gap-2">
+              {/* When viewing by department, allow filtering by location */}
               {viewType === 'department' && data?.locations && (
                 <DataFilters
                   viewType="location"
@@ -216,6 +244,7 @@ export function InteractiveEquipmentChart({ className }: InteractiveEquipmentCha
                 />
               )}
               
+              {/* When viewing by location, allow filtering by department */}
               {viewType === 'location' && data?.departments && (
                 <DataFilters
                   viewType="department"
@@ -226,12 +255,42 @@ export function InteractiveEquipmentChart({ className }: InteractiveEquipmentCha
                   isLoading={isLoading}
                 />
               )}
+
+              {/* Reset filters button */}
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={resetFilters}
+                  className="flex items-center gap-1"
+                >
+                  <X className="h-3 w-3" />
+                  Xóa bộ lọc
+                </Button>
+              )}
             </div>
           </div>
 
           <TabsContent value="department" className="space-y-4">
             {isLoading ? (
               <Skeleton className="h-[400px] w-full" />
+            ) : filteredData.length === 0 ? (
+              <div className="h-[400px] flex items-center justify-center">
+                <Alert>
+                  <AlertDescription>
+                    Không có dữ liệu để hiển thị với bộ lọc hiện tại.
+                    {hasActiveFilters && (
+                      <>
+                        {" "}
+                        <Button variant="link" className="p-0 h-auto" onClick={resetFilters}>
+                          Xóa bộ lọc
+                        </Button>
+                        {" "}để xem tất cả dữ liệu.
+                      </>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              </div>
             ) : (
               <div className="space-y-4">
                 {/* Chart */}
@@ -280,6 +339,23 @@ export function InteractiveEquipmentChart({ className }: InteractiveEquipmentCha
           <TabsContent value="location" className="space-y-4">
             {isLoading ? (
               <Skeleton className="h-[400px] w-full" />
+            ) : filteredData.length === 0 ? (
+              <div className="h-[400px] flex items-center justify-center">
+                <Alert>
+                  <AlertDescription>
+                    Không có dữ liệu để hiển thị với bộ lọc hiện tại.
+                    {hasActiveFilters && (
+                      <>
+                        {" "}
+                        <Button variant="link" className="p-0 h-auto" onClick={resetFilters}>
+                          Xóa bộ lọc
+                        </Button>
+                        {" "}để xem tất cả dữ liệu.
+                      </>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              </div>
             ) : (
               <div className="space-y-4">
                 {/* Chart */}
