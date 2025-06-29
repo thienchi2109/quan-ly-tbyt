@@ -147,13 +147,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         open={isChangePasswordOpen}
         onOpenChange={setIsChangePasswordOpen}
       />
-      <div className={cn("grid min-h-screen w-full transition-all", isSidebarOpen ? "md:grid-cols-[220px_1fr]" : "md:grid-cols-[72px_1fr]")}>
+      <div className={cn("grid min-h-screen w-full transition-all pt-14 pb-16 md:pt-0 md:pb-0", isSidebarOpen ? "md:grid-cols-[220px_1fr]" : "md:grid-cols-[72px_1fr]")}>
         <div className="hidden border-r bg-muted/40 md:block">
           <div className="flex h-full max-h-screen flex-col">
             <div className="flex h-auto flex-col items-center gap-4 border-b p-4">
               <Link href="/" className="flex flex-col items-center gap-3 font-semibold text-primary">
                 <Logo />
-                {isSidebarOpen && <span className="text-center text-lg">QUẢN LÝ TBYT - CDC</span>}
+                {isSidebarOpen && <span className="text-center heading-responsive-h4">QUẢN LÝ TBYT - CDC</span>}
               </Link>
             </div>
             <div className="flex-1 overflow-auto py-4">
@@ -179,13 +179,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="flex flex-col">
-          <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+          <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 md:relative md:z-auto fixed top-0 left-0 right-0 z-40 backdrop-blur-sm bg-muted/90 md:bg-muted/40 md:backdrop-blur-none">
             <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="shrink-0 md:hidden"
+                  className="shrink-0 md:hidden touch-target"
                 >
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle navigation menu</span>
@@ -202,16 +202,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     onClick={() => setIsMobileSheetOpen(false)}
                   >
                     <Logo />
-                    <span className="text-center text-lg">QUẢN LÝ TBYT - CDC</span>
+                    <span className="text-center heading-responsive-h3">QUẢN LÝ TBYT - CDC</span>
                   </Link>
                 </div>
-                <nav className="grid gap-2 text-base font-medium p-4">
+                <nav className="grid gap-2 body-responsive font-medium p-4">
                    {navItems.map(({ href, icon: Icon, label }) => (
                       <Link
                         key={label}
                         href={href}
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                          "flex items-center gap-3 rounded-lg mobile-interactive transition-all hover:text-primary touch-target",
                           pathname === href || pathname.startsWith(href) ? "bg-muted text-primary" : "text-muted-foreground"
                         )}
                         onClick={() => setIsMobileSheetOpen(false)}
@@ -226,7 +226,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Button
               variant="outline"
               size="icon"
-              className="hidden shrink-0 md:flex"
+              className="hidden shrink-0 md:flex touch-target"
               onClick={() => setSidebarOpen(!isSidebarOpen)}
             >
               <Menu className="h-5 w-5" />
@@ -244,7 +244,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="icon" className="rounded-full">
+                <Button variant="secondary" size="icon" className="rounded-full touch-target">
                   <User className="h-5 w-5" />
                   <span className="sr-only">Toggle user menu</span>
                 </Button>
@@ -276,10 +276,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenuContent>
             </DropdownMenu>
           </header>
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background animate-fade-in">
+          <main className="flex flex-1 flex-col gap-4 p-4 pb-20 md:pb-4 lg:gap-6 lg:p-6 bg-background animate-fade-in">
             {children}
           </main>
-          <footer className="flex flex-col items-center gap-1 p-4 text-center text-xs text-muted-foreground border-t bg-muted/40">
+          <footer className="flex flex-col items-center gap-1 p-4 text-center caption-responsive border-t bg-muted/40 md:relative md:z-auto fixed bottom-0 left-0 right-0 z-40 backdrop-blur-sm bg-muted/90 md:bg-muted/40 md:backdrop-blur-none">
             <div className="flex items-center gap-1">
               <span>Hệ thống quản lý thiết bị y tế</span>
               <Copyright className="h-3 w-3" />

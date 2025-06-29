@@ -86,3 +86,180 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Touch Target Optimization - Mobile UX Standards */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  .touch-target-sm {
+    @apply min-h-[40px] min-w-[40px];
+  }
+
+  .touch-target-lg {
+    @apply min-h-[48px] min-w-[48px];
+  }
+
+  /* Mobile-optimized button spacing */
+  .mobile-button-spacing {
+    @apply gap-3 md:gap-2;
+  }
+
+  /* Enhanced touch areas for small elements */
+  .touch-area-enhanced {
+    @apply relative;
+  }
+
+  .touch-area-enhanced::before {
+    content: '';
+    @apply absolute inset-0 min-h-[44px] min-w-[44px];
+    /* Center the touch area */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Mobile-friendly padding for interactive elements */
+  .mobile-interactive {
+    @apply px-4 py-3 md:px-3 md:py-2;
+  }
+
+  /* Improved spacing for mobile cards */
+  .mobile-card-spacing {
+    @apply p-4 gap-3 md:p-3 md:gap-2;
+  }
+
+  /* Responsive Typography Scaling */
+  .text-responsive-xs {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+    line-height: clamp(1.4, 1.5, 1.6);
+  }
+
+  .text-responsive-sm {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+    line-height: clamp(1.4, 1.5, 1.6);
+  }
+
+  .text-responsive-base {
+    font-size: clamp(1rem, 3vw, 1.125rem);
+    line-height: clamp(1.5, 1.6, 1.7);
+  }
+
+  .text-responsive-lg {
+    font-size: clamp(1.125rem, 3.5vw, 1.25rem);
+    line-height: clamp(1.4, 1.5, 1.6);
+  }
+
+  .text-responsive-xl {
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+    line-height: clamp(1.3, 1.4, 1.5);
+  }
+
+  .text-responsive-2xl {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    line-height: clamp(1.2, 1.3, 1.4);
+  }
+
+  .text-responsive-3xl {
+    font-size: clamp(1.875rem, 6vw, 2.5rem);
+    line-height: clamp(1.1, 1.2, 1.3);
+  }
+
+  /* Responsive headings with proper hierarchy */
+  .heading-responsive-h1 {
+    font-size: clamp(1.875rem, 6vw, 2.5rem);
+    line-height: clamp(1.1, 1.2, 1.3);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  .heading-responsive-h2 {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    line-height: clamp(1.2, 1.3, 1.4);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+
+  .heading-responsive-h3 {
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+    line-height: clamp(1.3, 1.4, 1.5);
+    font-weight: 600;
+  }
+
+  .heading-responsive-h4 {
+    font-size: clamp(1.125rem, 3.5vw, 1.25rem);
+    line-height: clamp(1.4, 1.5, 1.6);
+    font-weight: 500;
+  }
+
+  /* Body text variants */
+  .body-responsive {
+    font-size: clamp(1rem, 3vw, 1.125rem);
+    line-height: clamp(1.5, 1.6, 1.7);
+  }
+
+  .body-responsive-sm {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+    line-height: clamp(1.4, 1.5, 1.6);
+  }
+
+  /* Caption and helper text */
+  .caption-responsive {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+    line-height: clamp(1.4, 1.5, 1.6);
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Button text optimization */
+  .button-text-responsive {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+    font-weight: 500;
+    letter-spacing: 0.025em;
+  }
+
+  /* Progressive disclosure animations */
+  .collapsible-enter {
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .collapsible-exit {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 1000px;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 1000px;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-10px);
+      max-height: 0;
+    }
+  }
+
+  /* Smooth toggle button transitions */
+  .toggle-button {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .toggle-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}

@@ -36,13 +36,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { supabase, supabaseError } from "@/lib/supabase"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { ArrowUpDown, Calendar as CalendarIcon, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, FilterX, Loader2, MoreHorizontal, PlusCircle, Trash2 } from "lucide-react"
+import { ArrowUpDown, Calendar as CalendarIcon, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronUp, Edit, FilterX, History, Loader2, MoreHorizontal, PlusCircle, Trash2 } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { vi } from 'date-fns/locale'
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/contexts/auth-context"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu"
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -99,7 +100,7 @@ function DataTableFacetedFilter<TData, TValue>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
+        <Button variant="outline" size="sm" className="h-8 border-dashed touch-target-sm md:h-8">
           <PlusCircle className="mr-2 h-4 w-4" />
           {title}
           {selectedValues?.size > 0 && (
@@ -184,6 +185,7 @@ const requestStatuses = ['Chờ xử lý', 'Đã duyệt', 'Hoàn thành', 'Khô
 export default function RepairRequestsPage() {
   const { toast } = useToast()
   const { user } = useAuth()
+  const isMobile = useIsMobile()
   const searchParams = useSearchParams()
   const [requests, setRequests] = React.useState<RepairRequestWithEquipment[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
@@ -207,6 +209,9 @@ export default function RepairRequestsPage() {
   const [editIssueDescription, setEditIssueDescription] = React.useState("");
   const [editRepairItems, setEditRepairItems] = React.useState("");
   const [editDesiredDate, setEditDesiredDate] = React.useState<Date | undefined>();
+
+  // UI state
+  const [showRequestsList, setShowRequestsList] = React.useState(false);
 
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([
@@ -738,7 +743,7 @@ export default function RepairRequestsPage() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
+                <Button variant="ghost" className="h-8 w-8 p-0 touch-target-sm md:h-8 md:w-8">
                     <span className="sr-only">Mở menu</span>
                     <MoreHorizontal className="h-4 w-4" />
                 </Button>
@@ -889,7 +894,7 @@ export default function RepairRequestsPage() {
                 Cập nhật thông tin cho yêu cầu của thiết bị: {editingRequest.thiet_bi?.ten_thiet_bi}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 mobile-card-spacing">
               <div className="space-y-2">
                 <Label htmlFor="edit-issue">Mô tả sự cố</Label>
                 <Textarea
@@ -919,7 +924,7 @@ export default function RepairRequestsPage() {
                     <Button
                       variant={"outline"}
                       className={cn(
-                        "w-full justify-start text-left font-normal",
+                        "w-full justify-start text-left font-normal touch-target",
                         !editDesiredDate && "text-muted-foreground"
                       )}
                     >
@@ -939,8 +944,8 @@ export default function RepairRequestsPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingRequest(null)} disabled={isEditSubmitting}>Hủy</Button>
-              <Button onClick={handleUpdateRequest} disabled={isEditSubmitting}>
+              <Button variant="outline" onClick={() => setEditingRequest(null)} disabled={isEditSubmitting} className="touch-target">Hủy</Button>
+              <Button onClick={handleUpdateRequest} disabled={isEditSubmitting} className="touch-target">
                 {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Lưu thay đổi
               </Button>
@@ -974,16 +979,24 @@ export default function RepairRequestsPage() {
       {/* Repair Request Alert */}
       <RepairRequestAlert requests={requests} />
 
-      <div className="grid gap-6 md:grid-cols-5">
-        <div className="md:col-span-2">
-          <Card>
+      <div className="space-y-6">
+        {/* Primary Action: Create Repair Request Form */}
+        <div className="w-full max-w-2xl mx-auto">
+          <Card className="border-2 border-primary/20 shadow-lg">
             <CardHeader>
-              <CardTitle>Tạo yêu cầu sửa chữa</CardTitle>
-              <CardDescription>
-                Điền thông tin bên dưới để gửi yêu cầu mới.
-              </CardDescription>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <PlusCircle className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="heading-responsive-h2">Tạo yêu cầu sửa chữa</CardTitle>
+                  <CardDescription className="body-responsive-sm">
+                    Điền thông tin bên dưới để gửi yêu cầu mới.
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="mobile-card-spacing">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="search-equipment">Thiết bị</Label>
@@ -1002,7 +1015,7 @@ export default function RepairRequestsPage() {
                                   {filteredEquipment.map((equipment) => (
                                       <div
                                           key={equipment.id}
-                                          className="text-sm p-2 hover:bg-accent rounded-sm cursor-pointer"
+                                          className="text-sm mobile-interactive hover:bg-accent rounded-sm cursor-pointer touch-target-sm"
                                           onClick={() => handleSelectEquipment(equipment)}
                                       >
                                           {equipment.ten_thiet_bi} ({equipment.ma_thiet_bi})
@@ -1048,7 +1061,7 @@ export default function RepairRequestsPage() {
                               <Button
                               variant={"outline"}
                               className={cn(
-                                  "w-full justify-start text-left font-normal",
+                                  "w-full justify-start text-left font-normal touch-target",
                                   !desiredDate && "text-muted-foreground"
                               )}
                               >
@@ -1066,30 +1079,70 @@ export default function RepairRequestsPage() {
                           </PopoverContent>
                       </Popover>
                 </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button type="submit" className="w-full touch-target" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
                 </Button>
               </form>
             </CardContent>
           </Card>
+
+          {/* Toggle Button for Requests List */}
+          <div className="flex justify-center mt-6">
+            <Button
+              variant="outline"
+              onClick={() => setShowRequestsList(!showRequestsList)}
+              className="touch-target gap-2 toggle-button w-full max-w-sm md:w-auto"
+            >
+              {showRequestsList ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  <span className="button-text-responsive">Ẩn danh sách yêu cầu</span>
+                </>
+              ) : (
+                <>
+                  <History className="h-4 w-4" />
+                  <span className="button-text-responsive">
+                    <span className="hidden sm:inline">Xem danh sách yêu cầu</span>
+                    <span className="sm:hidden">Xem yêu cầu</span>
+                    {requests.length > 0 && ` (${requests.length})`}
+                  </span>
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Visual indicator when requests list is hidden */}
+          {!showRequestsList && requests.length > 0 && (
+            <div className="text-center mt-4">
+              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                <span className="caption-responsive">
+                  {requests.length} yêu cầu sửa chữa đã ghi nhận
+                </span>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="md:col-span-3">
+
+        {/* Secondary Action: View Existing Requests */}
+        {showRequestsList && (
+          <div className="w-full collapsible-enter">
           <Card>
             <CardHeader>
-              <CardTitle>Danh sách yêu cầu</CardTitle>
-              <CardDescription>
+              <CardTitle className="heading-responsive-h2">Danh sách yêu cầu</CardTitle>
+              <CardDescription className="body-responsive-sm">
                 Tất cả các yêu cầu sửa chữa đã được ghi nhận.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="mobile-card-spacing">
               <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
                   <div className="flex flex-1 items-center space-x-2">
                       <Input
                           placeholder="Tìm thiết bị, mô tả..."
                           value={globalFilter}
                           onChange={(event) => setGlobalFilter(event.target.value)}
-                          className="h-8 w-[150px] lg:w-[250px]"
+                          className="h-8 w-[150px] lg:w-[250px] touch-target-sm md:h-8"
                       />
                       <DataTableFacetedFilter
                           column={table.getColumn("trang_thai")}
@@ -1103,7 +1156,7 @@ export default function RepairRequestsPage() {
                                 table.resetColumnFilters();
                                 setGlobalFilter("");
                               }}
-                              className="h-8 px-2 lg:px-3"
+                              className="h-8 px-2 lg:px-3 touch-target-sm md:h-8"
                           >
                               Xóa
                               <FilterX className="ml-2 h-4 w-4" />
@@ -1111,60 +1164,126 @@ export default function RepairRequestsPage() {
                       )}
                   </div>
               </div>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <TableHead key={header.id}>
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={columns.length} className="h-24 text-center">
-                          <div className="flex justify-center items-center gap-2">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              <span>Đang tải...</span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : table.getRowModel().rows?.length ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          data-state={row.getIsSelected() && "selected"}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </TableCell>
+              {/* Mobile Card View */}
+              {isMobile ? (
+                <div className="space-y-4">
+                  {isLoading ? (
+                    <div className="flex justify-center items-center gap-2 py-8">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Đang tải...</span>
+                    </div>
+                  ) : table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => {
+                      const request = row.original;
+                      return (
+                        <Card key={request.id} className="mobile-card-spacing">
+                          <CardHeader className="flex flex-row items-start justify-between pb-4 mobile-interactive">
+                            <div className="max-w-[calc(100%-40px)]">
+                              <CardTitle className="heading-responsive-h4 font-bold leading-tight">
+                                {request.thiet_bi?.ten_thiet_bi || 'N/A'}
+                              </CardTitle>
+                              <CardDescription className="body-responsive-sm">
+                                {request.thiet_bi?.ma_thiet_bi || 'N/A'}
+                              </CardDescription>
+                            </div>
+                            {renderActions(request)}
+                          </CardHeader>
+                          <CardContent className="body-responsive-sm space-y-3 mobile-interactive">
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground">Trạng thái</span>
+                              <Badge variant={getStatusVariant(request.trang_thai)} className="self-start">
+                                {request.trang_thai}
+                              </Badge>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground">Ngày yêu cầu</span>
+                              <span className="font-medium">
+                                {format(parseISO(request.ngay_yeu_cau), 'dd/MM/yyyy', { locale: vi })}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-muted-foreground text-xs">Mô tả sự cố:</span>
+                              <p className="text-sm">{request.mo_ta_su_co}</p>
+                            </div>
+                            {request.hang_muc_sua_chua && (
+                              <div className="space-y-1">
+                                <span className="text-muted-foreground text-xs">Hạng mục sửa chữa:</span>
+                                <p className="text-sm">{request.hang_muc_sua_chua}</p>
+                              </div>
+                            )}
+                            {request.nguoi_yeu_cau && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">Người yêu cầu</span>
+                                <span className="font-medium">{request.nguoi_yeu_cau}</span>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Không có kết quả.
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Desktop Table View */
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id}>
+                          {headerGroup.headers.map((header) => (
+                            <TableHead key={header.id}>
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                            </TableHead>
                           ))}
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={columns.length} className="h-24 text-center">
-                          Không có kết quả.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                      ))}
+                    </TableHeader>
+                    <TableBody>
+                      {isLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={columns.length} className="h-24 text-center">
+                            <div className="flex justify-center items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>Đang tải...</span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : table.getRowModel().rows?.length ? (
+                        table.getRowModel().rows.map((row) => (
+                          <TableRow
+                            key={row.id}
+                            data-state={row.getIsSelected() && "selected"}
+                          >
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id}>
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={columns.length} className="h-24 text-center">
+                            Không có kết quả.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
             <CardFooter>
                  <div className="flex items-center justify-between w-full">
@@ -1180,7 +1299,7 @@ export default function RepairRequestsPage() {
                             table.setPageSize(Number(value))
                             }}
                         >
-                            <SelectTrigger className="h-8 w-[70px]">
+                            <SelectTrigger className="h-8 w-[70px] touch-target-sm md:h-8">
                             <SelectValue placeholder={table.getState().pagination.pageSize} />
                             </SelectTrigger>
                             <SelectContent side="top">
@@ -1199,7 +1318,7 @@ export default function RepairRequestsPage() {
                         <div className="flex items-center space-x-2">
                         <Button
                             variant="outline"
-                            className="hidden h-8 w-8 p-0 lg:flex"
+                            className="hidden h-8 w-8 p-0 lg:flex touch-target-sm md:h-8 md:w-8"
                             onClick={() => table.setPageIndex(0)}
                             disabled={!table.getCanPreviousPage()}
                         >
@@ -1208,7 +1327,7 @@ export default function RepairRequestsPage() {
                         </Button>
                         <Button
                             variant="outline"
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 touch-target-sm md:h-8 md:w-8"
                             onClick={() => table.previousPage()}
                             disabled={!table.getCanPreviousPage()}
                         >
@@ -1217,7 +1336,7 @@ export default function RepairRequestsPage() {
                         </Button>
                         <Button
                             variant="outline"
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 touch-target-sm md:h-8 md:w-8"
                             onClick={() => table.nextPage()}
                             disabled={!table.getCanNextPage()}
                         >
@@ -1226,7 +1345,7 @@ export default function RepairRequestsPage() {
                         </Button>
                         <Button
                             variant="outline"
-                            className="hidden h-8 w-8 p-0 lg:flex"
+                            className="hidden h-8 w-8 p-0 lg:flex touch-target-sm md:h-8 md:w-8"
                             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                             disabled={!table.getCanNextPage()}
                         >
@@ -1238,7 +1357,8 @@ export default function RepairRequestsPage() {
                 </div>
             </CardFooter>
           </Card>
-        </div>
+          </div>
+        )}
       </div>
     </>
   )

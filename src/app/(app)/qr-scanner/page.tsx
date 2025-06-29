@@ -178,32 +178,32 @@ export default function QRScannerPage() {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <QrCode className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-2xl">Quét mã QR thiết bị</CardTitle>
-              <CardDescription className="text-lg">
+              <CardTitle className="heading-responsive-h2">Quét mã QR thiết bị</CardTitle>
+              <CardDescription className="body-responsive">
                 Quét mã QR để truy cập nhanh thông tin thiết bị y tế
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 mobile-card-spacing">
               <div className="text-center">
                 <div className="mb-6">
                   <Button
                     size="lg"
                     onClick={handleStartScanning}
-                    className="h-14 px-8 text-lg"
+                    className="h-14 px-8 text-lg touch-target-lg"
                   >
                     <Camera className="h-6 w-6 mr-3" />
-                    Bắt đầu quét
+                    <span className="button-text-responsive">Bắt đầu quét</span>
                   </Button>
                 </div>
 
                 <div className="bg-muted/50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold mb-4">Chức năng có sẵn</h3>
+                  <h3 className="heading-responsive-h3 font-semibold mb-4">Chức năng có sẵn</h3>
                   <div className="grid gap-4 text-left">
                     <div className="flex items-start gap-3">
                       <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
                       <div>
                         <strong>Xem thông tin chi tiết:</strong>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="caption-responsive">
                           Truy cập đầy đủ thông tin kỹ thuật và vị trí thiết bị
                         </p>
                       </div>
@@ -213,7 +213,7 @@ export default function QRScannerPage() {
                       <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
                       <div>
                         <strong>Lịch sử bảo trì & sửa chữa:</strong>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="caption-responsive">
                           Theo dõi toàn bộ lịch sử hoạt động và bảo trì thiết bị
                         </p>
                       </div>
@@ -261,7 +261,7 @@ export default function QRScannerPage() {
               </div>
               
               <div className="text-center pt-4">
-                <Button asChild variant="outline">
+                <Button asChild variant="outline" className="touch-target">
                   <Link href="/dashboard">
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Về Dashboard
