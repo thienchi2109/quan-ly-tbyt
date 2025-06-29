@@ -1,29 +1,19 @@
 "use client"
 
 import * as React from "react"
-import {
-  Line,
-  LineChart,
-  Bar,
-  BarChart,
-  Area,
-  AreaChart,
-  Pie,
-  PieChart,
-  Cell,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend
-} from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Skeleton } from "@/components/ui/skeleton"
 import { InventoryItem } from "../hooks/use-inventory-data"
 import { format, parseISO, startOfMonth, endOfMonth, eachMonthOfInterval } from "date-fns"
 import { vi } from "date-fns/locale"
+import {
+  DynamicLineChart,
+  DynamicBarChart,
+  DynamicPieChart,
+  DynamicAreaChart
+} from "@/components/dynamic-chart"
+import { STATUS_COLORS } from "@/lib/chart-utils"
 
 interface InventoryChartsProps {
   data: InventoryItem[]
@@ -155,30 +145,19 @@ export function InventoryCharts({ data, isLoading }: InventoryChartsProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={processedData.monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip 
-                    labelFormatter={(label) => `Tháng ${label}`}
-                    formatter={(value, name) => [
-                      value,
-                      name === 'nhap' ? 'Thiết bị nhập' :
-                      name === 'xuat' ? 'Thiết bị xuất' : 'Tồn kho'
-                    ]}
-                  />
-                  <Legend 
-                    formatter={(value) => 
-                      value === 'nhap' ? 'Thiết bị nhập' :
-                      value === 'xuat' ? 'Thiết bị xuất' : 'Tồn kho'
-                    }
-                  />
-                  <Line type="monotone" dataKey="nhap" stroke="#00C49F" strokeWidth={2} />
-                  <Line type="monotone" dataKey="xuat" stroke="#FF8042" strokeWidth={2} />
-                  <Line type="monotone" dataKey="ton" stroke="#0088FE" strokeWidth={2} strokeDasharray="5 5" />
-                </LineChart>
-              </ResponsiveContainer>
+              <DynamicLineChart
+                data={processedData.monthlyTrend}
+                height={350}
+                xAxisKey="month"
+                lines={[
+                  { key: "nhap", color: "#00C49F", name: "Thiết bị nhập" },
+                  { key: "xuat", color: "#FF8042", name: "Thiết bị xuất" },
+                  { key: "ton", color: "#0088FE", name: "Tồn kho" }
+                ]}
+                showGrid={true}
+                showTooltip={true}
+                showLegend={true}
+              />
             </CardContent>
           </Card>
 
@@ -191,27 +170,18 @@ export function InventoryCharts({ data, isLoading }: InventoryChartsProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={processedData.monthlyTrend}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip 
-                    labelFormatter={(label) => `Tháng ${label}`}
-                    formatter={(value, name) => [
-                      value,
-                      name === 'nhap' ? 'Thiết bị nhập' : 'Thiết bị xuất'
-                    ]}
-                  />
-                  <Legend 
-                    formatter={(value) => 
-                      value === 'nhap' ? 'Thiết bị nhập' : 'Thiết bị xuất'
-                    }
-                  />
-                  <Area type="monotone" dataKey="nhap" stackId="1" stroke="#00C49F" fill="#00C49F" fillOpacity={0.7} />
-                  <Area type="monotone" dataKey="xuat" stackId="1" stroke="#FF8042" fill="#FF8042" fillOpacity={0.7} />
-                </AreaChart>
-              </ResponsiveContainer>
+              <DynamicAreaChart
+                data={processedData.monthlyTrend}
+                height={300}
+                xAxisKey="month"
+                areas={[
+                  { key: "nhap", color: "#00C49F", name: "Thiết bị nhập", stackId: "1" },
+                  { key: "xuat", color: "#FF8042", name: "Thiết bị xuất", stackId: "1" }
+                ]}
+                showGrid={true}
+                showTooltip={true}
+                showLegend={true}
+              />
             </CardContent>
           </Card>
         </div>
@@ -226,31 +196,19 @@ export function InventoryCharts({ data, isLoading }: InventoryChartsProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={processedData.departmentData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="department" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={100}
-                />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value, name) => [
-                    value,
-                    name === 'nhap' ? 'Thiết bị nhập' : 'Thiết bị xuất'
-                  ]}
-                />
-                <Legend 
-                  formatter={(value) => 
-                    value === 'nhap' ? 'Thiết bị nhập' : 'Thiết bị xuất'
-                  }
-                />
-                <Bar dataKey="nhap" fill="#00C49F" />
-                <Bar dataKey="xuat" fill="#FF8042" />
-              </BarChart>
-            </ResponsiveContainer>
+            <DynamicBarChart
+              data={processedData.departmentData}
+              height={400}
+              xAxisKey="department"
+              bars={[
+                { key: "nhap", color: "#00C49F", name: "Thiết bị nhập" },
+                { key: "xuat", color: "#FF8042", name: "Thiết bị xuất" }
+              ]}
+              showGrid={true}
+              showTooltip={true}
+              showLegend={true}
+              xAxisAngle={-45}
+            />
           </CardContent>
         </Card>
       </TabsContent>
@@ -266,24 +224,16 @@ export function InventoryCharts({ data, isLoading }: InventoryChartsProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={processedData.sourceData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {processedData.sourceData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <DynamicPieChart
+                data={processedData.sourceData}
+                height={300}
+                dataKey="value"
+                nameKey="name"
+                colors={COLORS}
+                showTooltip={true}
+                showLabels={true}
+                outerRadius={80}
+              />
             </CardContent>
           </Card>
 
@@ -296,24 +246,16 @@ export function InventoryCharts({ data, isLoading }: InventoryChartsProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={processedData.transferPurposeData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {processedData.transferPurposeData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              <DynamicPieChart
+                data={processedData.transferPurposeData}
+                height={300}
+                dataKey="value"
+                nameKey="name"
+                colors={COLORS}
+                showTooltip={true}
+                showLabels={true}
+                outerRadius={80}
+              />
             </CardContent>
           </Card>
         </div>

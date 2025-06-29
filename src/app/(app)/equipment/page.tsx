@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import * as XLSX from "xlsx"
 import type { Column, ColumnDef } from "@tanstack/react-table"
 import {
   ColumnFiltersState,
@@ -96,6 +95,7 @@ import { EditEquipmentDialog } from "@/components/edit-equipment-dialog"
 import { MobileFiltersDropdown } from "@/components/mobile-filters-dropdown"
 import { ResponsivePaginationInfo } from "@/components/responsive-pagination-info"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { exportArrayToExcel, exportToExcel } from "@/lib/excel-utils"
 
 type Attachment = {
   id: string;
@@ -343,19 +343,28 @@ export default function EquipmentPage() {
     phan_loai_theo_nd98: true,   // Phân loại theo NĐ98 ✅
   });
 
-  const handleDownloadTemplate = () => {
-    const templateHeaders = Object.entries(columnLabels)
-      .filter(([key]) => key !== 'id')
-      .map(([, label]) => label);
-  
-    const ws = XLSX.utils.aoa_to_sheet([templateHeaders]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Template Thiết Bị");
-  
-    const colWidths = templateHeaders.map(header => ({ wch: Math.max(header.length, 25) }));
-    ws['!cols'] = colWidths;
-  
-    XLSX.writeFile(wb, "Mau_Nhap_Thiet_Bi.xlsx");
+  const handleDownloadTemplate = async () => {
+    try {
+      const templateHeaders = Object.entries(columnLabels)
+        .filter(([key]) => key !== 'id')
+        .map(([, label]) => label);
+
+      const colWidths = templateHeaders.map(header => Math.max(header.length, 25));
+
+      await exportArrayToExcel(
+        [templateHeaders],
+        "Mau_Nhap_Thiet_Bi.xlsx",
+        "Template Thiết Bị",
+        colWidths
+      );
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể tải template. Vui lòng thử lại.",
+      });
+    }
   };
 
   const handleGenerateProfileSheet = (equipment: Equipment) => {
@@ -994,7 +1003,7 @@ export default function EquipmentPage() {
     },
   })
   
-  const handleExportData = () => {
+  const handleExportData = async () => {
     const rowsToExport = table.getFilteredRowModel().rows;
     if (rowsToExport.length === 0) {
       toast({
@@ -1005,29 +1014,39 @@ export default function EquipmentPage() {
       return;
     }
 
-    const dataToExport = rowsToExport.map(row => row.original);
+    try {
+      const dataToExport = rowsToExport.map(row => row.original);
 
-    const dbKeysInOrder = (Object.keys(columnLabels) as Array<keyof Equipment>).filter(key => key !== 'id');
-    const headers = dbKeysInOrder.map(key => columnLabels[key]);
-    
-    const formattedData = dataToExport.map(item => {
-        const rowData: Record<string, any> = {};
-        dbKeysInOrder.forEach(key => {
-            const header = columnLabels[key];
-            let value = item[key];
-            rowData[header] = value ?? "";
-        });
-        return rowData;
-    });
+      const dbKeysInOrder = (Object.keys(columnLabels) as Array<keyof Equipment>).filter(key => key !== 'id');
+      const headers = dbKeysInOrder.map(key => columnLabels[key]);
 
-    const worksheet = XLSX.utils.json_to_sheet(formattedData);
-    
-    const colWidths = headers.map(header => ({ wch: Math.max(header.length, 20) }));
-    worksheet['!cols'] = colWidths;
+      const formattedData = dataToExport.map(item => {
+          const rowData: Record<string, any> = {};
+          dbKeysInOrder.forEach(key => {
+              const header = columnLabels[key];
+              let value = item[key];
+              rowData[header] = value ?? "";
+          });
+          return rowData;
+      });
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Danh sách thiết bị");
-    XLSX.writeFile(workbook, `Danh_sach_thiet_bi_${new Date().toISOString().slice(0,10)}.xlsx`);
+      const colWidths = headers.map(header => Math.max(header.length, 20));
+      const fileName = `Danh_sach_thiet_bi_${new Date().toISOString().slice(0,10)}.xlsx`;
+
+      await exportToExcel(formattedData, fileName, "Danh sách thiết bị", colWidths);
+
+      toast({
+        title: "Xuất dữ liệu thành công",
+        description: `Đã tạo file ${fileName}`,
+      });
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể xuất dữ liệu. Vui lòng thử lại.",
+      });
+    }
   };
 
   const departments = React.useMemo(() => Array.from(new Set(data.map((item) => item.khoa_phong_quan_ly?.trim()).filter(Boolean))), [data])

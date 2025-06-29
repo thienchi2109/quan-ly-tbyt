@@ -1,16 +1,8 @@
 "use client"
 
 import * as React from "react"
-import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip
-} from "recharts"
 import { Filter, BarChart3, MapPin, Building2, X } from "lucide-react"
+import { DynamicBarChart } from "@/components/dynamic-chart"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -294,37 +286,29 @@ export function InteractiveEquipmentChart({ className }: InteractiveEquipmentCha
             ) : (
               <div className="space-y-4">
                 {/* Chart */}
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={100}
-                        interval={0}
-                      />
-                      <YAxis />
-                      <Tooltip content={<CustomTooltip />} />
-                      
-                      {Object.entries(STATUS_COLORS).map(([key, color]) => (
-                        <Bar 
-                          key={key}
-                          dataKey={key} 
-                          fill={color}
-                          stackId="status"
-                        />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                <DynamicBarChart
+                  data={filteredData}
+                  height={400}
+                  xAxisKey="name"
+                  bars={Object.entries(STATUS_COLORS).map(([key, color]) => ({
+                    key,
+                    color,
+                    name: STATUS_LABELS[key as keyof typeof STATUS_LABELS],
+                    stackId: "status"
+                  }))}
+                  showGrid={true}
+                  showTooltip={true}
+                  showLegend={false}
+                  xAxisAngle={-45}
+                  customTooltip={CustomTooltip}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+                />
 
                 {/* Legend */}
                 <div className="flex flex-wrap gap-4 justify-center pt-4 border-t">
                   {Object.entries(STATUS_LABELS).map(([key, label]) => (
                     <div key={key} className="flex items-center gap-2">
-                      <div 
+                      <div
                         className="w-3 h-3 rounded"
                         style={{ backgroundColor: STATUS_COLORS[key as keyof typeof STATUS_COLORS] }}
                       />
@@ -359,37 +343,29 @@ export function InteractiveEquipmentChart({ className }: InteractiveEquipmentCha
             ) : (
               <div className="space-y-4">
                 {/* Chart */}
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 100 }}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
-                        dataKey="name" 
-                        angle={-45}
-                        textAnchor="end"
-                        height={100}
-                        interval={0}
-                      />
-                      <YAxis />
-                      <Tooltip content={<CustomTooltip />} />
-                      
-                      {Object.entries(STATUS_COLORS).map(([key, color]) => (
-                        <Bar 
-                          key={key}
-                          dataKey={key} 
-                          fill={color}
-                          stackId="status"
-                        />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                <DynamicBarChart
+                  data={filteredData}
+                  height={400}
+                  xAxisKey="name"
+                  bars={Object.entries(STATUS_COLORS).map(([key, color]) => ({
+                    key,
+                    color,
+                    name: STATUS_LABELS[key as keyof typeof STATUS_LABELS],
+                    stackId: "status"
+                  }))}
+                  showGrid={true}
+                  showTooltip={true}
+                  showLegend={false}
+                  xAxisAngle={-45}
+                  customTooltip={CustomTooltip}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+                />
 
                 {/* Legend */}
                 <div className="flex flex-wrap gap-4 justify-center pt-4 border-t">
                   {Object.entries(STATUS_LABELS).map(([key, label]) => (
                     <div key={key} className="flex items-center gap-2">
-                      <div 
+                      <div
                         className="w-3 h-3 rounded"
                         style={{ backgroundColor: STATUS_COLORS[key as keyof typeof STATUS_COLORS] }}
                       />
