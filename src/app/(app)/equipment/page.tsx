@@ -201,7 +201,7 @@ function DataTableFacetedFilter<TData, TValue>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
+        <Button variant="outline" size="sm" className="h-8 border-dashed touch-target-sm md:h-8">
           <PlusCircle className="mr-2 h-4 w-4" />
           {title}
           {selectedValues?.size > 0 && (
@@ -643,7 +643,7 @@ export default function EquipmentPage() {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button variant="ghost" className="h-8 w-8 p-0 touch-target-sm md:h-8 md:w-8">
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
@@ -1098,15 +1098,15 @@ export default function EquipmentPage() {
         {table.getRowModel().rows.map((row) => {
           const equipment = row.original;
           return (
-            <Card key={equipment.id} data-equipment-id={equipment.id}>
-              <CardHeader className="flex flex-row items-start justify-between pb-4">
+            <Card key={equipment.id} data-equipment-id={equipment.id} className="mobile-card-spacing">
+              <CardHeader className="flex flex-row items-start justify-between pb-4 mobile-interactive">
                 <div className="max-w-[calc(100%-40px)]">
-                  <CardTitle className="text-base font-bold leading-tight truncate">{equipment.ten_thiet_bi}</CardTitle>
-                  <CardDescription>{equipment.ma_thiet_bi}</CardDescription>
+                  <CardTitle className="heading-responsive-h4 font-bold leading-tight truncate">{equipment.ten_thiet_bi}</CardTitle>
+                  <CardDescription className="body-responsive-sm">{equipment.ma_thiet_bi}</CardDescription>
                 </div>
                 {renderActions(equipment)}
               </CardHeader>
-              <CardContent className="text-sm space-y-3">
+              <CardContent className="body-responsive-sm space-y-3 mobile-interactive">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Trạng thái</span>
                   {equipment.tinh_trang_hien_tai ? (
@@ -1389,8 +1389,8 @@ export default function EquipmentPage() {
       )}
       <Card>
         <CardHeader>
-          <CardTitle>Danh mục thiết bị</CardTitle>
-          <CardDescription>
+          <CardTitle className="heading-responsive-h2">Danh mục thiết bị</CardTitle>
+          <CardDescription className="body-responsive-sm">
             Quản lý danh sách các trang thiết bị y tế.
           </CardDescription>
         </CardHeader>
@@ -1482,7 +1482,7 @@ export default function EquipmentPage() {
               {!isMobile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-8 gap-1">
+                    <Button variant="outline" className="h-8 gap-1 touch-target-sm md:h-8">
                       Cột
                       <ChevronDown className="h-3.5 w-3.5" />
                     </Button>
@@ -1511,7 +1511,7 @@ export default function EquipmentPage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
-              <Button size="sm" variant="outline" className="h-8 gap-1" onClick={handleDownloadTemplate}>
+              <Button size="sm" variant="outline" className="h-8 gap-1 touch-target-sm md:h-8" onClick={handleDownloadTemplate}>
                 <File className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                   Mẫu
@@ -1522,7 +1522,7 @@ export default function EquipmentPage() {
             <div className="flex items-center gap-2 order-1 sm:order-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="h-8 gap-1">
+                  <Button size="sm" className="h-8 gap-1 touch-target-sm md:h-8">
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                       Thêm thiết bị

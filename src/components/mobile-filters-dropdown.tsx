@@ -28,7 +28,7 @@ export function MobileFiltersDropdown({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="h-8 gap-2">
+        <Button variant="outline" className="h-8 gap-2 touch-target-sm md:h-8">
           <Filter className="h-3.5 w-3.5" />
           Bộ lọc
           {activeFiltersCount > 0 && (
@@ -46,7 +46,7 @@ export function MobileFiltersDropdown({
               variant="ghost"
               size="sm"
               onClick={onClearFilters}
-              className="h-6 px-2 text-xs"
+              className="h-6 px-2 text-xs touch-target-sm md:h-6"
             >
               <FilterX className="h-3 w-3 mr-1" />
               Xóa

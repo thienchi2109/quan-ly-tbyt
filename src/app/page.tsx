@@ -39,12 +39,12 @@ export default function LoginPage() {
             <div className="flex justify-center mb-4">
               <Logo />
             </div>
-            <CardTitle className="text-2xl font-bold text-primary">
+            <CardTitle className="heading-responsive-h2 font-bold text-primary">
               QUẢN LÝ THIẾT BỊ Y TẾ
             </CardTitle>
-            <CardDescription>Đăng nhập vào hệ thống</CardDescription>
+            <CardDescription className="body-responsive-sm">Đăng nhập vào hệ thống</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 mobile-card-spacing">
             <div className="space-y-2">
               <Label htmlFor="username">Tên đăng nhập</Label>
               <Input
@@ -73,13 +73,13 @@ export default function LoginPage() {
           <CardFooter className="flex-col gap-4">
             <Button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90"
+              className="w-full bg-primary hover:bg-primary/90 touch-target"
               disabled={isLoading}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoading ? "Đang xác thực..." : "Đăng nhập"}
+              <span className="button-text-responsive">{isLoading ? "Đang xác thực..." : "Đăng nhập"}</span>
             </Button>
-            <div className="text-center text-xs text-muted-foreground">
+            <div className="text-center caption-responsive">
               <p>Phát triển bởi Nguyễn Thiện Chí</p>
               <p>Mọi chi tiết xin LH: thienchi2109@gmail.com</p>
             </div>
