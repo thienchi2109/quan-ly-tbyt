@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import * as XLSX from "xlsx"
 import { Download, FileSpreadsheet, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { vi } from "date-fns/locale"
+import { createMultiSheetExcel } from "@/lib/excel-utils"
 
 import {
   Dialog,
@@ -92,55 +92,30 @@ export function ExportReportDialog({
         "Giá trị": item.value || ""
       }))
 
-      // Create workbook
-      const wb = XLSX.utils.book_new()
-
-      // Create summary sheet
-      const summaryWS = XLSX.utils.aoa_to_sheet(summaryData)
-      
-      // Style the summary sheet
-      summaryWS['!cols'] = [
-        { wch: 25 }, // Column A
-        { wch: 30 }  // Column B
-      ]
-      
-      // Add summary sheet
-      XLSX.utils.book_append_sheet(wb, summaryWS, "Tổng quan")
-
-      // Create detailed data sheet
-      const detailedWS = XLSX.utils.json_to_sheet(detailedData)
-      
-      // Style the detailed sheet
-      detailedWS['!cols'] = [
-        { wch: 12 }, // Ngày
-        { wch: 15 }, // Mã thiết bị
-        { wch: 30 }, // Tên thiết bị
-        { wch: 15 }, // Model
-        { wch: 15 }, // Serial
-        { wch: 20 }, // Khoa/Phòng
-        { wch: 15 }, // Loại giao dịch
-        { wch: 20 }, // Nguồn/Hình thức
-        { wch: 25 }, // Lý do/Đích đến
-        { wch: 15 }  // Giá trị
-      ]
-
-      // Add detailed sheet
-      XLSX.utils.book_append_sheet(wb, detailedWS, "Chi tiết")
-
-      // Create statistics sheet
+      // Create statistics sheet data
       const statsData = generateStatistics(data)
-      const statsWS = XLSX.utils.json_to_sheet(statsData)
-      statsWS['!cols'] = [
-        { wch: 25 }, // Khoa/Phòng
-        { wch: 15 }, // Nhập
-        { wch: 15 }, // Xuất
-        { wch: 15 }  // Tổng
-      ]
-      XLSX.utils.book_append_sheet(wb, statsWS, "Thống kê")
 
-      // Export file
-      const finalFileName = fileName.endsWith('.xlsx') ? fileName : `${fileName}.xlsx`
-      XLSX.writeFile(wb, finalFileName)
+      // Create multi-sheet Excel file using dynamic import
+      await createMultiSheetExcel([
+        {
+          name: "Tổng quan",
+          data: summaryData,
+          type: "array",
+          columnWidths: [25, 30]
+        },
+        {
+          name: "Chi tiết",
+          data: detailedData,
+          type: "json",
+          columnWidths: [12, 15, 30, 15, 15, 20, 15, 20, 25, 15]
+        },
+        {
+          name: "Thống kê",
+          data: statsData,
+          type: "json",
+          columnWidths: [25, 15, 15, 15]
+        }
+      ], fileName)
 
       toast({
         title: "Xuất báo cáo thành công",

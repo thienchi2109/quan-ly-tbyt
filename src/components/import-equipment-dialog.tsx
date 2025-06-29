@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import * as XLSX from "xlsx"
 import { Loader2, Upload, FileCheck, AlertTriangle } from "lucide-react"
+import { readExcelFile, worksheetToJson } from "@/lib/excel-utils"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -76,7 +76,7 @@ export function ImportEquipmentDialog({ open, onOpenChange, onSuccess }: ImportE
     }
   }
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) {
       resetState()
@@ -93,43 +93,34 @@ export function ImportEquipmentDialog({ open, onOpenChange, onSuccess }: ImportE
     setSelectedFile(file)
     setError(null)
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-        try {
-            const data = e.target?.result
-            const workbook = XLSX.read(data, { type: "array", cellDates: true })
-            const sheetName = workbook.SheetNames[0]
-            const worksheet = workbook.Sheets[sheetName]
-            const json: Record<string, any>[] = XLSX.utils.sheet_to_json(worksheet)
-            
-            if (json.length === 0) {
-                setError("File không có dữ liệu. Vui lòng kiểm tra lại file của bạn.")
-                setParsedData([])
-                return
-            }
+    try {
+        const workbook = await readExcelFile(file)
+        const sheetName = workbook.SheetNames[0]
+        const worksheet = workbook.Sheets[sheetName]
+        const json: Record<string, any>[] = await worksheetToJson(worksheet)
 
-            const transformedData = json.map(row => {
-                const newRow: Partial<Equipment> = {}
-                for (const header in row) {
-                    if (Object.prototype.hasOwnProperty.call(headerToDbKeyMap, header)) {
-                        const dbKey = headerToDbKeyMap[header];
-                        // @ts-ignore
-                        newRow[dbKey] = row[header] === "" ? null : row[header]
-                    }
-                }
-                return newRow
-            })
-            setParsedData(transformedData)
-        } catch (err: any) {
-            setError("Đã có lỗi xảy ra khi đọc file: " + err.message)
+        if (json.length === 0) {
+            setError("File không có dữ liệu. Vui lòng kiểm tra lại file của bạn.")
             setParsedData([])
+            return
         }
-    }
-    reader.onerror = (err) => {
-        setError("Không thể đọc file.")
+
+        const transformedData = json.map(row => {
+            const newRow: Partial<Equipment> = {}
+            for (const header in row) {
+                if (Object.prototype.hasOwnProperty.call(headerToDbKeyMap, header)) {
+                    const dbKey = headerToDbKeyMap[header];
+                    // @ts-ignore
+                    newRow[dbKey] = row[header] === "" ? null : row[header]
+                }
+            }
+            return newRow
+        })
+        setParsedData(transformedData)
+    } catch (err: any) {
+        setError("Đã có lỗi xảy ra khi đọc file: " + err.message)
         setParsedData([])
     }
-    reader.readAsArrayBuffer(file)
   }
 
   const handleImport = async () => {

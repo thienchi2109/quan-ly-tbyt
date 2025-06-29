@@ -1,9 +1,9 @@
 "use client"
 
 import * as React from "react"
-import * as RechartsPrimitive from "recharts"
-
 import { cn } from "@/lib/utils"
+import { loadChartsLibrary } from "@/lib/chart-utils"
+import { ChartLoadingFallback } from "@/components/chart-fallbacks"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
@@ -38,13 +38,37 @@ const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     config: ChartConfig
-    children: React.ComponentProps<
-      typeof RechartsPrimitive.ResponsiveContainer
-    >["children"]
+    children: React.ReactNode
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
+  const [ResponsiveContainer, setResponsiveContainer] = React.useState<any>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    loadChartsLibrary()
+      .then((components) => {
+        setResponsiveContainer(() => components.ResponsiveContainer)
+        setIsLoading(false)
+      })
+      .catch((error) => {
+        console.error('Failed to load charts:', error)
+        setIsLoading(false)
+      })
+  }, [])
+
+  if (isLoading) {
+    return <ChartLoadingFallback height={300} />
+  }
+
+  if (!ResponsiveContainer) {
+    return (
+      <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+        Không thể tải biểu đồ
+      </div>
+    )
+  }
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -58,9 +82,9 @@ const ChartContainer = React.forwardRef<
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <RechartsPrimitive.ResponsiveContainer>
+        <ResponsiveContainer>
           {children}
-        </RechartsPrimitive.ResponsiveContainer>
+        </ResponsiveContainer>
       </div>
     </ChartContext.Provider>
   )

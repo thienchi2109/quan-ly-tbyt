@@ -39,7 +39,7 @@ export default function LoginPage() {
             <div className="flex justify-center mb-4">
               <Logo />
             </div>
-            <CardTitle className="heading-responsive-h2 font-bold text-primary">
+            <CardTitle className="heading-responsive-h3 font-bold text-primary">
               QUẢN LÝ THIẾT BỊ Y TẾ
             </CardTitle>
             <CardDescription className="body-responsive-sm">Đăng nhập vào hệ thống</CardDescription>
