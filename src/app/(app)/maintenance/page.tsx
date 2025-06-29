@@ -17,6 +17,7 @@ import { vi } from 'date-fns/locale'
 import { ArrowUpDown, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Loader2, MoreHorizontal, PlusCircle, Trash2, Save, X, AlertTriangle, Undo2, CalendarDays, Users, FileText, CheckCircle2 } from "lucide-react"
 
 import { useToast } from "@/hooks/use-toast"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { MaintenancePlan, MaintenanceTask, taskTypes, type Equipment } from "@/lib/data"
 import { supabase } from "@/lib/supabase"
 import { Badge } from "@/components/ui/badge"
@@ -47,10 +48,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Skeleton } from "@/components/ui/skeleton"
 import { AddMaintenancePlanDialog } from "@/components/add-maintenance-plan-dialog"
 import { EditMaintenancePlanDialog } from "@/components/edit-maintenance-plan-dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/contexts/auth-context"
 import { AddTasksDialog } from "@/components/add-tasks-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -61,6 +62,7 @@ export default function MaintenancePage() {
   const { toast } = useToast()
   const { user } = useAuth()
   const searchParams = useSearchParams()
+  const isMobile = useIsMobile()
   
   // State for plans
   const [plans, setPlans] = React.useState<MaintenancePlan[]>([])
@@ -376,7 +378,123 @@ export default function MaintenancePage() {
         return "outline"
     }
   }
-  
+
+  // Mobile card rendering function
+  const renderMobileCards = () => {
+    if (isLoadingPlans) {
+      return (
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i} className="mobile-card-spacing">
+              <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-2/3" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )
+    }
+
+    if (!planTable.getRowModel().rows?.length) {
+      return (
+        <Card className="mobile-card-spacing">
+          <CardContent className="flex items-center justify-center h-24">
+            <p className="text-muted-foreground text-center">Chưa có kế hoạch nào.</p>
+          </CardContent>
+        </Card>
+      )
+    }
+
+    return (
+      <div className="space-y-4">
+        {planTable.getRowModel().rows.map((row) => {
+          const plan = row.original;
+          const canManage = user && (user.role === 'admin' || user.role === 'to_qltb');
+
+          return (
+            <Card
+              key={plan.id}
+              className="mobile-card-spacing cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleSelectPlan(plan)}
+            >
+              <CardHeader className="flex flex-row items-start justify-between pb-4 mobile-interactive">
+                <div className="max-w-[calc(100%-40px)]">
+                  <CardTitle className="heading-responsive-h4 font-bold leading-tight truncate">
+                    {plan.ten_ke_hoach}
+                  </CardTitle>
+                  <CardDescription className="body-responsive-sm">
+                    Năm {plan.nam} • {plan.khoa_phong || "Tổng thể"}
+                  </CardDescription>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" className="h-8 w-8 p-0 touch-target-sm">
+                      <span className="sr-only">Mở menu</span>
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+                    <DropdownMenuItem onSelect={() => handleSelectPlan(plan)}>
+                      Xem chi tiết công việc
+                    </DropdownMenuItem>
+                    {plan.trang_thai === 'Bản nháp' && (
+                      <>
+                        <DropdownMenuSeparator />
+                        {canManage && (
+                          <DropdownMenuItem onSelect={() => setPlanToApprove(plan)}>
+                            <Check className="mr-2 h-4 w-4" />
+                            Duyệt
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onSelect={() => setEditingPlan(plan)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Sửa
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={() => setPlanToDelete(plan)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Xóa
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardHeader>
+              <CardContent className="body-responsive-sm space-y-3 mobile-interactive">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Loại công việc:</span>
+                  <Badge variant="outline">{plan.loai_cong_viec}</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Trạng thái:</span>
+                  <Badge variant={getStatusVariant(plan.trang_thai)}>{plan.trang_thai}</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Ngày phê duyệt:</span>
+                  <span className="text-right">
+                    {plan.ngay_phe_duyet
+                      ? format(parseISO(plan.ngay_phe_duyet), 'dd/MM/yyyy HH:mm', { locale: vi })
+                      : <span className="text-muted-foreground italic">Chưa duyệt</span>
+                    }
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    )
+  }
+
   const existingEquipmentIdsInDraft = React.useMemo(() => draftTasks.map(task => task.thiet_bi_id).filter((id): id is number => id !== null), [draftTasks]);
 
   const handleAddTasksFromDialog = React.useCallback((newlySelectedEquipment: Equipment[]) => {
@@ -1365,58 +1483,62 @@ export default function MaintenancePage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    {planTable.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <TableHead key={header.id}>
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {isLoadingPlans ? (
-                      Array.from({ length: 5 }).map((_, i) => (
-                        <TableRow key={i}>
-                          <TableCell colSpan={planColumns.length}>
-                            <Skeleton className="h-8 w-full" />
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : planTable.getRowModel().rows?.length ? (
-                      planTable.getRowModel().rows.map((row) => (
-                        <TableRow 
-                          key={row.id} 
-                          data-state={row.getIsSelected() && "selected"}
-                          onClick={() => handleSelectPlan(row.original)}
-                          className="cursor-pointer"
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </TableCell>
+              {isMobile ? (
+                renderMobileCards()
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      {planTable.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id}>
+                          {headerGroup.headers.map((header) => (
+                            <TableHead key={header.id}>
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                            </TableHead>
                           ))}
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={planColumns.length} className="h-24 text-center">
-                          Chưa có kế hoạch nào.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                      ))}
+                    </TableHeader>
+                    <TableBody>
+                      {isLoadingPlans ? (
+                        Array.from({ length: 5 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell colSpan={planColumns.length}>
+                              <Skeleton className="h-8 w-full" />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : planTable.getRowModel().rows?.length ? (
+                        planTable.getRowModel().rows.map((row) => (
+                          <TableRow
+                            key={row.id}
+                            data-state={row.getIsSelected() && "selected"}
+                            onClick={() => handleSelectPlan(row.original)}
+                            className="cursor-pointer"
+                          >
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id}>
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={planColumns.length} className="h-24 text-center">
+                            Chưa có kế hoạch nào.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
             <CardFooter>
                <div className="flex items-center justify-between w-full">
