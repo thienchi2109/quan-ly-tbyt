@@ -35,7 +35,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-lg w-full">
+      <div className="max-w-md w-full">
         <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-primary to-accent px-8 py-6 text-center">
