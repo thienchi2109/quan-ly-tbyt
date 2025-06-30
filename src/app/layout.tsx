@@ -2,6 +2,7 @@ import type {Metadata, Viewport} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/contexts/auth-context';
+import { LanguageProvider } from '@/contexts/language-context';
 import { QueryProvider } from '@/providers/query-provider';
 import { PWAInstallPrompt, PWAStatus } from '@/components/pwa-install-prompt';
 import { ThemeColorManager } from '@/components/theme-color-manager';
@@ -26,6 +27,7 @@ export default function RootLayout({
       {/* <head> section is now managed by Next.js metadata */}
       <body className="font-sans antialiased">
         <QueryProvider>
+        <LanguageProvider>
         <AuthProvider>
           {children}
           <Toaster />
@@ -33,6 +35,7 @@ export default function RootLayout({
           {process.env.NODE_ENV === 'development' && <PWAStatus />}
           <ThemeColorManager />
         </AuthProvider>
+        </LanguageProvider>
         </QueryProvider>
       </body>
     </html>

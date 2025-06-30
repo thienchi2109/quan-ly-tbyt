@@ -1,91 +1,120 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { User, Lock, Globe } from "lucide-react"
 import { Logo } from "@/components/icons"
-import { Loader2 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { useLanguage } from "@/contexts/language-context"
 
 export default function LoginPage() {
   const { login } = useAuth()
+  const { currentLanguage, setLanguage, t } = useLanguage()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true);
-    const success = await login(username, password);
+    setError("")
+    setIsLoading(true)
+
+    const success = await login(username, password)
     if (!success) {
-      setIsLoading(false);
+      setError(t("login.error") || "Tên đăng nhập hoặc mật khẩu không đúng")
+      setIsLoading(false)
     }
   }
 
+  const toggleLanguage = () => {
+    const newLang = currentLanguage.code === 'en'
+      ? { code: 'vi' as const, name: 'Tiếng Việt' }
+      : { code: 'en' as const, name: 'English' }
+    setLanguage(newLang)
+  }
+
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm shadow-2xl">
-        <form onSubmit={handleLogin}>
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-primary to-accent px-8 py-8 text-center">
+            <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <Logo />
             </div>
-            <CardTitle className="heading-responsive-h3 font-bold text-primary">
-              QUẢN LÝ THIẾT BỊ Y TẾ
-            </CardTitle>
-            <CardDescription className="body-responsive-sm">Đăng nhập vào hệ thống</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 mobile-card-spacing">
-            <div className="space-y-2">
-              <Label htmlFor="username">Tên đăng nhập</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Nhập tên đăng nhập"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+            <h1 className="text-2xl font-bold text-primary-foreground">QUẢN LÝ THIẾT BỊ Y TẾ</h1>
+            <p className="text-primary-foreground/80 mt-2">{t("login.subtitle") || "Đăng nhập vào hệ thống"}</p>
+          </div>
+
+          {/* Form */}
+          <div className="p-8">
+            <form onSubmit={handleLogin} className="space-y-6">
+              {error && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                  <p className="text-destructive text-sm">{error}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  <User className="h-4 w-4 inline mr-1" />
+                  {t("login.username") || "Tên đăng nhập"}
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-4 py-3 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring focus:border-ring transition-colors"
+                  placeholder={t("login.usernamePlaceholder") || "Nhập tên đăng nhập"}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  <Lock className="h-4 w-4 inline mr-1" />
+                  {t("login.password") || "Mật khẩu"}
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-input bg-background rounded-lg focus:ring-2 focus:ring-ring focus:border-ring transition-colors"
+                  placeholder={t("login.passwordPlaceholder") || "Nhập mật khẩu"}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <button
+                type="submit"
                 disabled={isLoading}
-              />
+                className="w-full bg-primary text-primary-foreground py-3 px-4 rounded-lg font-medium hover:bg-primary/90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-target"
+              >
+                {isLoading ? (t("login.signingIn") || "Đang xác thực...") : (t("login.signIn") || "Đăng nhập")}
+              </button>
+            </form>
+
+            {/* Language Toggle */}
+            <div className="mt-6 text-center">
+              <button
+                onClick={toggleLanguage}
+                className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Globe className="h-4 w-4 mr-1" />
+                {currentLanguage.code === 'en' ? 'Tiếng Việt' : 'English'}
+              </button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Mật khẩu</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Nhập mật khẩu"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-              />
+
+            {/* Footer Content */}
+            <div className="mt-6 text-center text-xs text-muted-foreground space-y-1">
+              <p>{t("footer.developedBy") || "Phát triển bởi Nguyễn Thiện Chí"}</p>
+              <p>{t("footer.contact") || "Mọi chi tiết xin LH: thienchi2109@gmail.com"}</p>
             </div>
-          </CardContent>
-          <CardFooter className="flex-col gap-4">
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90 touch-target"
-              disabled={isLoading}
-            >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <span className="button-text-responsive">{isLoading ? "Đang xác thực..." : "Đăng nhập"}</span>
-            </Button>
-            <div className="text-center caption-responsive">
-              <p>Phát triển bởi Nguyễn Thiện Chí</p>
-              <p>Mọi chi tiết xin LH: thienchi2109@gmail.com</p>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
