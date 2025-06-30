@@ -35,10 +35,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="max-w-sm w-full">
+      <div className="max-w-lg w-full">
         <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-primary to-accent px-8 py-8 text-center">
+          <div className="bg-gradient-to-r from-primary to-accent px-8 py-6 text-center">
             <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
               <Logo />
             </div>
@@ -47,8 +47,8 @@ export default function LoginPage() {
           </div>
 
           {/* Form */}
-          <div className="p-8">
-            <form onSubmit={handleLogin} className="space-y-6">
+          <div className="p-6">
+            <form onSubmit={handleLogin} className="space-y-4">
               {error && (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
                   <p className="text-destructive text-sm">{error}</p>
