@@ -8,6 +8,10 @@ export interface Equipment {
   nam_san_xuat?: number;
   noi_san_xuat?: string;
   khoa_phong_id?: number;
+  khoa_phong_quan_ly?: string;
+  vi_tri_lap_dat?: string;
+  nguoi_dang_truc_tiep_quan_ly?: string;
+  tinh_trang_hien_tai?: string;
   tinh_trang: string;
   ngay_nhap: string;
   gia_tri?: number;
@@ -34,6 +38,31 @@ export const USER_ROLES = {
 } as const;
 
 export type UserRole = keyof typeof USER_ROLES;
+
+// Usage Log interfaces
+export interface UsageLog {
+  id: number;
+  thiet_bi_id: number;
+  nguoi_su_dung_id?: number;
+  thoi_gian_bat_dau: string;
+  thoi_gian_ket_thuc?: string;
+  tinh_trang_thiet_bi?: string;
+  ghi_chu?: string;
+  trang_thai: 'dang_su_dung' | 'hoan_thanh';
+  created_at: string;
+  updated_at: string;
+
+  // Relations
+  thiet_bi?: Equipment;
+  nguoi_su_dung?: User;
+}
+
+export const USAGE_STATUS = {
+  dang_su_dung: 'Đang sử dụng',
+  hoan_thanh: 'Hoàn thành'
+} as const;
+
+export type UsageStatus = keyof typeof USAGE_STATUS;
 
 // Transfer Request interfaces
 export interface TransferRequest {

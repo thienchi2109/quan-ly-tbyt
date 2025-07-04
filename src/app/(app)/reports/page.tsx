@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 // Lazy load components to improve initial load time
 const InventoryReportTab = React.lazy(() => import("./components/inventory-report-tab").then(module => ({ default: module.InventoryReportTab })))
 const MaintenanceReportTab = React.lazy(() => import("./components/maintenance-report-tab").then(module => ({ default: module.MaintenanceReportTab })))
+const UsageAnalyticsDashboard = React.lazy(() => import("@/components/usage-analytics-dashboard").then(module => ({ default: module.UsageAnalyticsDashboard })))
 
 // Loading skeleton for tabs
 function TabSkeleton() {
@@ -79,9 +80,8 @@ export default function ReportsPage() {
           <TabsTrigger value="maintenance">
             Bảo trì / Sửa chữa
           </TabsTrigger>
-          <TabsTrigger value="utilization" disabled>
+          <TabsTrigger value="utilization">
             Sử dụng thiết bị
-            <span className="ml-1 text-xs text-muted-foreground">(Sắp ra mắt)</span>
           </TabsTrigger>
         </TabsList>
         
@@ -98,19 +98,9 @@ export default function ReportsPage() {
         </TabsContent>
         
         <TabsContent value="utilization" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Báo cáo Sử dụng thiết bị</CardTitle>
-              <CardDescription>
-                Báo cáo hiệu quả sử dụng, tình trạng hoạt động của thiết bị
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center h-96 text-muted-foreground">
-                Tính năng đang được phát triển...
-              </div>
-            </CardContent>
-          </Card>
+          <React.Suspense fallback={<TabSkeleton />}>
+            <UsageAnalyticsDashboard />
+          </React.Suspense>
         </TabsContent>
       </Tabs>
     </div>

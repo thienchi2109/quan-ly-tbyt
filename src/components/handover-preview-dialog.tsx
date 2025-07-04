@@ -261,7 +261,7 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 12px;
+            font-size: 13px;
             color: #000;
             background-color: #e5e7eb;
             line-height: 1.4;
@@ -272,8 +272,8 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
         .a4-landscape-page {
             width: 29.7cm;
             min-height: 21cm;
-            padding: 0.8cm;
-            margin: 0.5cm auto;
+            padding: 1cm 2cm 1cm 1cm;
+            margin: 1cm auto;
             background: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             position: relative;
@@ -323,8 +323,8 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
         }
         
         .font-bold { font-weight: 700; }
-        .title-main { font-size: 18px; }
-        .title-sub { font-size: 14px; }
+        .title-main { font-size: 20px; }
+        .title-sub { font-size: 16px; }
         .text-center { text-align: center; }
         .uppercase { text-transform: uppercase; }
         .italic { font-style: italic; }
@@ -338,12 +338,12 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
         .justify-around { justify-content: space-around; }
         .flex-grow { flex-grow: 1; }
         
-        .mt-3 { margin-top: 0.75rem; }
-        .mt-4 { margin-top: 1rem; }
-        .mt-8 { margin-top: 2rem; }
+        .mt-3 { margin-top: 0.4rem; }
+        .mt-4 { margin-top: 0.5rem; }
+        .mt-8 { margin-top: 1rem; }
         .ml-2 { margin-left: 0.5rem; }
         .mb-1 { margin-bottom: 0.25rem; }
-        .space-y-2 > * + * { margin-top: 0.4rem; }
+        .space-y-2 > * + * { margin-top: 0.3rem; }
         
         .w-14 { width: 3.5rem; }
         .w-full { width: 100%; }
@@ -351,35 +351,30 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 10px;
+            font-size: 13px;
         }
-        
+
         .data-table th, .data-table td {
             border: 1px solid #000;
-            padding: 3px 2px;
+            padding: 3px;
             text-align: center;
             vertical-align: middle;
             word-wrap: break-word;
         }
-        
+
         .data-table th {
             background-color: #f8f9fa;
             font-weight: bold;
         }
         
-        .data-table tbody tr {
-            height: 28px;
-            min-height: 28px;
-        }
-        
-        .data-table .col-stt { width: 4%; }
-        .data-table .col-code { width: 8%; }
-        .data-table .col-name { width: 18%; text-align: left; }
-        .data-table .col-model { width: 8%; }
-        .data-table .col-serial { width: 8%; }
-        .data-table .col-accessories { width: 16%; text-align: left; }
-        .data-table .col-condition { width: 12%; }
-        .data-table .col-note { width: 8%; }
+        .data-table .col-stt { width: 2%; }
+        .data-table .col-code { width: 7%; }
+        .data-table .col-name { width: 16%; text-align: left; }
+        .data-table .col-model { width: 10%; }
+        .data-table .col-serial { width: 10%; }
+        .data-table .col-accessories { width: 18%; text-align: center; }
+        .data-table .col-condition { width: 15%; }
+        .data-table .col-note { width: 12%; }
         
         .signature-area {
             text-align: center;
@@ -404,7 +399,7 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
                 width: 100% !important;
                 height: 100% !important;
                 margin: 0 !important;
-                padding: 0.6cm !important;
+                padding: 1cm 1.2cm 1cm 1cm !important;
                 box-shadow: none !important;
                 border: none !important;
                 page-break-inside: avoid;
@@ -415,16 +410,11 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
             }
             
             .data-table {
-                font-size: 9px;
+                font-size: 13px;
             }
-            
+
             .data-table th, .data-table td {
-                padding: 2px 1px;
-            }
-            
-            .data-table tbody tr {
-                height: 25px;
-                min-height: 25px;
+                padding: 3px;
             }
             
             .data-table thead {

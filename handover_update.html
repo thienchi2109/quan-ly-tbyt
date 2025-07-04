@@ -119,7 +119,9 @@
             font-weight: bold;
         }
 
-        /* UPDATED: Removed fixed height to allow rows to shrink naturally */
+        .data-table tbody tr {
+            /* height: 35px; */ /* UPDATED: Removed fixed height to allow rows to shrink */
+        }
 
         /* Text alignment for specific columns */
         .data-table td:nth-child(3),
@@ -443,7 +445,7 @@
 
         const updatePagination = (deviceCount) => {
             // UPDATED: Adjusted for 13px font and compact layout
-            const devicesPerPage = 13;
+            const devicesPerPage = 13; 
             const totalPages = Math.ceil(deviceCount / devicesPerPage);
             document.getElementById('total-pages').textContent = totalPages;
         };
@@ -484,7 +486,7 @@
                 // Check if the content is still hidden (meaning no data was loaded)
                 const contentIsHidden = document.getElementById('content').classList.contains('hidden');
                 const errorIsHidden = document.getElementById('error').classList.contains('hidden');
-
+                
                 if (contentIsHidden && errorIsHidden) {
                     console.log("No real data received. Loading mock data for preview.");
                     const mockData = {
