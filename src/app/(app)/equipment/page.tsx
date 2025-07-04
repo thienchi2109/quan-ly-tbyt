@@ -82,7 +82,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { type Equipment } from "@/lib/data"
+import { type Equipment } from "@/types/database"
 import { supabase, supabaseError } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -96,6 +96,9 @@ import { MobileFiltersDropdown } from "@/components/mobile-filters-dropdown"
 import { ResponsivePaginationInfo } from "@/components/responsive-pagination-info"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { exportArrayToExcel, exportToExcel } from "@/lib/excel-utils"
+import { UsageHistoryTab } from "@/components/usage-history-tab"
+import { ActiveUsageIndicator } from "@/components/active-usage-indicator"
+import { MobileUsageActions } from "@/components/mobile-usage-actions"
 
 type Attachment = {
   id: string;
@@ -1122,6 +1125,9 @@ export default function EquipmentPage() {
                 <div className="max-w-[calc(100%-40px)]">
                   <CardTitle className="heading-responsive-h4 font-bold leading-tight truncate">{equipment.ten_thiet_bi}</CardTitle>
                   <CardDescription className="body-responsive-sm">{equipment.ma_thiet_bi}</CardDescription>
+                  <div className="mt-2">
+                    <ActiveUsageIndicator equipmentId={equipment.id} />
+                  </div>
                 </div>
                 {renderActions(equipment)}
               </CardHeader>
@@ -1147,6 +1153,10 @@ export default function EquipmentPage() {
                   <span className="font-medium text-right truncate">
                     {equipment.nguoi_dang_truc_tiep_quan_ly || <span className="italic text-muted-foreground text-xs">Chưa có</span>}
                   </span>
+                </div>
+                <Separator />
+                <div className="pt-2">
+                  <MobileUsageActions equipment={equipment} />
                 </div>
               </CardContent>
             </Card>
@@ -1241,6 +1251,7 @@ export default function EquipmentPage() {
                         <TabsTrigger value="details">Thông tin chi tiết</TabsTrigger>
                         <TabsTrigger value="files">File đính kèm</TabsTrigger>
                         <TabsTrigger value="history">Lịch sử</TabsTrigger>
+                        <TabsTrigger value="usage">Nhật ký sử dụng</TabsTrigger>
                     </TabsList>
                     <TabsContent value="details" className="flex-grow overflow-hidden">
                        <ScrollArea className="h-full pr-4">
@@ -1390,6 +1401,11 @@ export default function EquipmentPage() {
                                 </div>
                             )}
                         </ScrollArea>
+                    </TabsContent>
+                    <TabsContent value="usage" className="flex-grow overflow-hidden">
+                        <div className="h-full py-4">
+                            <UsageHistoryTab equipment={selectedEquipment} />
+                        </div>
                     </TabsContent>
                 </Tabs>
                 <DialogFooter className="shrink-0 pt-4 border-t">

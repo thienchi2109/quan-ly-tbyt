@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { PlusCircle, ArrowLeftRight, Filter, RefreshCw } from "lucide-react"
+import { PlusCircle, ArrowLeftRight, Filter, RefreshCw, FileText } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { AddTransferDialog } from "@/components/add-transfer-dialog"
 import { EditTransferDialog } from "@/components/edit-transfer-dialog"
 import { TransferDetailDialog } from "@/components/transfer-detail-dialog"
+import { HandoverPreviewDialog } from "@/components/handover-preview-dialog"
 import { OverdueTransfersAlert } from "@/components/overdue-transfers-alert"
 import { 
   TransferRequest, 
@@ -71,6 +72,8 @@ export default function TransfersPage() {
   const [editingTransfer, setEditingTransfer] = React.useState<TransferRequest | null>(null)
   const [detailDialogOpen, setDetailDialogOpen] = React.useState(false)
   const [detailTransfer, setDetailTransfer] = React.useState<TransferRequest | null>(null)
+  const [handoverDialogOpen, setHandoverDialogOpen] = React.useState(false)
+  const [handoverTransfer, setHandoverTransfer] = React.useState<TransferRequest | null>(null)
 
   const fetchTransfers = React.useCallback(async () => {
     if (!supabase) {
@@ -477,6 +480,21 @@ export default function TransfersPage() {
     }
   }
 
+  // New function for generating handover sheet
+  const handleGenerateHandoverSheet = (transfer: TransferRequest) => {
+    if (!transfer.thiet_bi) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không tìm thấy thông tin thiết bị."
+      })
+      return
+    }
+
+    setHandoverTransfer(transfer)
+    setHandoverDialogOpen(true)
+  }
+
   const getStatusActions = (transfer: TransferRequest) => {
     const actions = []
     
@@ -530,7 +548,19 @@ export default function TransfersPage() {
           ))
         )) {
           if (transfer.loai_hinh === 'noi_bo') {
-            // For internal transfers - complete immediately
+            // For internal transfers - icon only handover sheet button and complete button
+            actions.push(
+              <Button
+                key="handover-sheet"
+                size="sm"
+                variant="outline"
+                className="h-6 w-6 p-0 border-blue-600 text-blue-600 hover:bg-blue-50"
+                onClick={() => handleGenerateHandoverSheet(transfer)}
+                title="Xuất phiếu bàn giao"
+              >
+                <FileText className="h-3 w-3" />
+              </Button>
+            )
             actions.push(
               <Button
                 key="complete"
@@ -607,6 +637,12 @@ export default function TransfersPage() {
         open={detailDialogOpen}
         onOpenChange={setDetailDialogOpen}
         transfer={detailTransfer}
+      />
+
+      <HandoverPreviewDialog
+        open={handoverDialogOpen}
+        onOpenChange={setHandoverDialogOpen}
+        transfer={handoverTransfer}
       />
 
       <OverdueTransfersAlert onViewTransfer={handleViewDetail} />
