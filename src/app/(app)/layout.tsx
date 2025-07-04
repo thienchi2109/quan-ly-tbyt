@@ -107,7 +107,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Dynamic nav items based on user role
   const navItems = React.useMemo(() => {
     const baseItems = [
-      { href: "/dashboard", icon: Home, label: "Dashboard" },
+      { href: "/dashboard", icon: Home, label: "Tổng quan" },
       { href: "/equipment", icon: Package, label: "Thiết bị" },
       { href: "/repair-requests", icon: Wrench, label: "Yêu cầu sửa chữa" },
       { href: "/maintenance", icon: HardHat, label: "Bảo trì" },
