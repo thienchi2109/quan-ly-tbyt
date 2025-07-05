@@ -16,9 +16,38 @@ interface AuthContextType {
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
-const SESSION_TOKEN_KEY = 'auth_session_token';
+const SESSION_TOKEN_KEY = 'secure_session_token';
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+// Utility functions for secure session management
+const generateSecureToken = (): string => {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  const token = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  const timestamp = Date.now();
+  return `${token}.${timestamp}`;
+};
+
+const validateTokenFormat = (token: string): boolean => {
+  try {
+    const [tokenPart, timestampPart] = token.split('.');
+    if (!tokenPart || !timestampPart) return false;
+    
+    const timestamp = parseInt(timestampPart);
+    const now = Date.now();
+    
+    // Check if token is expired (24 hours)
+    if (now - timestamp > 24 * 60 * 60 * 1000) {
+      return false;
+    }
+    
+    // Validate token format (64 hex characters)
+    return tokenPart.length === 64 && /^[a-f0-9]+$/.test(tokenPart);
+  } catch {
+    return false;
+  }
+};
+
+export function SecureAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const [isInitialized, setIsInitialized] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -30,34 +59,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeSession = async () => {
       try {
         const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
-
-        if (!sessionToken) {
-          setIsInitialized(true);
-          return;
-        }
-
-        // Validate session with new secure function
-        const { data, error } = await supabase.rpc('validate_session', {
-          p_session_token: sessionToken
-        });
-
-        if (error || !data || !Array.isArray(data) || data.length === 0 || !data[0].is_valid) {
+        
+        if (!sessionToken || !validateTokenFormat(sessionToken)) {
           localStorage.removeItem(SESSION_TOKEN_KEY);
           setIsInitialized(true);
           return;
         }
 
-        // Get first result from array
-        const sessionResult = data[0];
+        // Validate session with server
+        const { data, error } = await supabase.rpc('validate_session', {
+          p_session_token: sessionToken
+        });
+
+        if (error || !data || !data.is_valid) {
+          localStorage.removeItem(SESSION_TOKEN_KEY);
+          setIsInitialized(true);
+          return;
+        }
 
         // Restore user session
         const userData: User = {
-          id: sessionResult.user_id,
-          username: sessionResult.username,
+          id: data.user_id,
+          username: data.username,
           password: '', // Never store password in frontend
           full_name: '', // Will be fetched separately if needed
-          role: sessionResult.role as UserRole,
-          khoa_phong: sessionResult.khoa_phong,
+          role: data.role as UserRole,
+          khoa_phong: data.khoa_phong,
           created_at: new Date().toISOString(),
         };
 
@@ -86,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      // Use new secure authentication function
+      // Call secure authentication function
       const { data, error } = await supabase.rpc('authenticate_user', {
         p_username: username.trim(),
         p_password: password
@@ -102,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      if (!data || !Array.isArray(data) || data.length === 0 || !data[0].session_token) {
+      if (!data || !data.session_token) {
         toast({
           variant: "destructive",
           title: "Đăng nhập thất bại",
@@ -111,23 +138,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      // Get first result from array
-      const authResult = data[0];
-
       // Create user object (without password)
       const userData: User = {
-        id: authResult.id,
-        username: authResult.username,
+        id: data.id,
+        username: data.username,
         password: '', // Never store password
-        full_name: authResult.full_name,
-        role: authResult.role as UserRole,
-        khoa_phong: authResult.khoa_phong,
-        created_at: authResult.created_at,
+        full_name: data.full_name,
+        role: data.role as UserRole,
+        khoa_phong: data.khoa_phong,
+        created_at: data.created_at,
       };
 
       // Store secure session token
-      localStorage.setItem(SESSION_TOKEN_KEY, authResult.session_token);
+      localStorage.setItem(SESSION_TOKEN_KEY, data.session_token);
       setUser(userData);
+
+      // Set user context for RLS
+      await supabase.rpc('set_current_user_id', { user_id: data.id });
 
       toast({
         title: "Đăng nhập thành công",
@@ -139,38 +166,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     } catch (error: any) {
       console.error("Login error:", error);
-
-      // Fallback to old method if new method fails (backward compatibility)
-      try {
-        console.log("Trying fallback authentication method...");
-
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('nhan_vien')
-          .select('*')
-          .eq('username', username.trim())
-          .single();
-
-        if (!fallbackError && fallbackData && fallbackData.password === password) {
-          // Old method worked, create session manually
-          localStorage.setItem(SESSION_TOKEN_KEY, `fallback_${Date.now()}`);
-          setUser(fallbackData);
-
-          toast({
-            title: "Đăng nhập thành công",
-            description: `Chào mừng ${fallbackData.full_name || fallbackData.username}! (Compatibility mode)`,
-          });
-
-          router.push("/dashboard");
-          return true;
-        }
-      } catch (fallbackError) {
-        console.error("Fallback authentication also failed:", fallbackError);
-      }
-
       toast({
         variant: "destructive",
         title: "Lỗi đăng nhập",
-        description: "Tên đăng nhập hoặc mật khẩu không đúng.",
+        description: error.message || "Có lỗi xảy ra khi đăng nhập.",
       });
       return false;
     } finally {
@@ -181,17 +180,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
-
-      // Try to invalidate session on server (if using new method)
-      if (sessionToken && !sessionToken.startsWith('fallback_') && supabase) {
-        try {
-          await supabase.rpc('invalidate_session', {
-            p_session_token: sessionToken
-          });
-        } catch (invalidateError) {
-          // Ignore errors during logout - session will expire naturally
-          console.log('Session invalidation failed (non-critical):', invalidateError);
-        }
+      
+      if (sessionToken && supabase) {
+        // Invalidate session on server
+        await supabase.rpc('invalidate_session', {
+          p_session_token: sessionToken
+        });
       }
     } catch (error) {
       console.error("Logout error:", error);
@@ -203,25 +197,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Auto-logout on session expiry (only for new sessions)
+  // Auto-logout on session expiry
   React.useEffect(() => {
     if (!user) return;
 
-    const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
-    if (!sessionToken || sessionToken.startsWith('fallback_')) return;
-
     const checkSession = async () => {
+      const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
+      
+      if (!sessionToken || !validateTokenFormat(sessionToken)) {
+        await logout();
+        return;
+      }
+
       try {
         const { data } = await supabase.rpc('validate_session', {
           p_session_token: sessionToken
         });
 
-        if (!data || !Array.isArray(data) || data.length === 0 || !data[0].is_valid) {
+        if (!data || !data.is_valid) {
           await logout();
         }
       } catch (error) {
         console.error("Session validation error:", error);
-        // Don't auto-logout on network errors
+        await logout();
       }
     };
 
@@ -231,22 +229,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      isInitialized,
-      isLoading
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      isInitialized, 
+      isLoading 
     }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export function useSecureAuth() {
   const context = React.useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useSecureAuth must be used within a SecureAuthProvider');
   }
   return context;
+}
+
+// Higher-order component for route protection
+export function withAuth<P extends object>(
+  Component: React.ComponentType<P>,
+  requiredRole?: UserRole
+) {
+  return function AuthenticatedComponent(props: P) {
+    const { user, isInitialized } = useSecureAuth();
+    const router = useRouter();
+
+    React.useEffect(() => {
+      if (!isInitialized) return;
+
+      if (!user) {
+        router.push('/');
+        return;
+      }
+
+      if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
+        router.push('/dashboard');
+        return;
+      }
+    }, [user, isInitialized, router]);
+
+    if (!isInitialized || !user) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
+    return <Component {...props} />;
+  };
+}
+
+// Hook for role-based access control
+export function usePermissions() {
+  const { user } = useSecureAuth();
+
+  const hasRole = (role: UserRole): boolean => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    return user.role === role;
+  };
+
+  const hasAnyRole = (roles: UserRole[]): boolean => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    return roles.includes(user.role);
+  };
+
+  const canAccessDepartment = (department: string): boolean => {
+    if (!user) return false;
+    if (user.role === 'admin' || user.role === 'to_qltb') return true;
+    return user.khoa_phong === department;
+  };
+
+  return {
+    user,
+    hasRole,
+    hasAnyRole,
+    canAccessDepartment,
+    isAdmin: user?.role === 'admin',
+    isToQLTB: user?.role === 'to_qltb',
+    isQLTBKhoa: user?.role === 'qltb_khoa',
+    isUser: user?.role === 'user'
+  };
 }

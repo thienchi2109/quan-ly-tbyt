@@ -115,12 +115,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       { href: "/reports", icon: BarChart3, label: "Báo cáo" },
       { href: "/qr-scanner", icon: QrCode, label: "Quét QR" },
     ]
-    
-    // Add Users page only for admin
+
+    // Add admin-only pages
     if (user?.role === 'admin') {
       baseItems.push({ href: "/users", icon: Users, label: "Người dùng" })
     }
-    
+
     return baseItems
   }, [user?.role])
 

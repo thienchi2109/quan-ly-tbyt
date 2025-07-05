@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeSession = async () => {
       try {
         const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
-
+        
         if (!sessionToken) {
           setIsInitialized(true);
           return;
@@ -41,23 +41,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           p_session_token: sessionToken
         });
 
-        if (error || !data || !Array.isArray(data) || data.length === 0 || !data[0].is_valid) {
+        if (error || !data || !data.is_valid) {
           localStorage.removeItem(SESSION_TOKEN_KEY);
           setIsInitialized(true);
           return;
         }
 
-        // Get first result from array
-        const sessionResult = data[0];
-
         // Restore user session
         const userData: User = {
-          id: sessionResult.user_id,
-          username: sessionResult.username,
+          id: data.user_id,
+          username: data.username,
           password: '', // Never store password in frontend
           full_name: '', // Will be fetched separately if needed
-          role: sessionResult.role as UserRole,
-          khoa_phong: sessionResult.khoa_phong,
+          role: data.role as UserRole,
+          khoa_phong: data.khoa_phong,
           created_at: new Date().toISOString(),
         };
 
@@ -102,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      if (!data || !Array.isArray(data) || data.length === 0 || !data[0].session_token) {
+      if (!data || !data.session_token) {
         toast({
           variant: "destructive",
           title: "Đăng nhập thất bại",
@@ -111,22 +108,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      // Get first result from array
-      const authResult = data[0];
-
       // Create user object (without password)
       const userData: User = {
-        id: authResult.id,
-        username: authResult.username,
+        id: data.id,
+        username: data.username,
         password: '', // Never store password
-        full_name: authResult.full_name,
-        role: authResult.role as UserRole,
-        khoa_phong: authResult.khoa_phong,
-        created_at: authResult.created_at,
+        full_name: data.full_name,
+        role: data.role as UserRole,
+        khoa_phong: data.khoa_phong,
+        created_at: data.created_at,
       };
 
       // Store secure session token
-      localStorage.setItem(SESSION_TOKEN_KEY, authResult.session_token);
+      localStorage.setItem(SESSION_TOKEN_KEY, data.session_token);
       setUser(userData);
 
       toast({
@@ -139,11 +133,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     } catch (error: any) {
       console.error("Login error:", error);
-
+      
       // Fallback to old method if new method fails (backward compatibility)
       try {
         console.log("Trying fallback authentication method...");
-
+        
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('nhan_vien')
           .select('*')
@@ -152,21 +146,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (!fallbackError && fallbackData && fallbackData.password === password) {
           // Old method worked, create session manually
+          const sessionData = {
+            user: fallbackData,
+            timestamp: Date.now(),
+          };
+          
           localStorage.setItem(SESSION_TOKEN_KEY, `fallback_${Date.now()}`);
           setUser(fallbackData);
-
+          
           toast({
             title: "Đăng nhập thành công",
             description: `Chào mừng ${fallbackData.full_name || fallbackData.username}! (Compatibility mode)`,
           });
-
+          
           router.push("/dashboard");
           return true;
         }
       } catch (fallbackError) {
         console.error("Fallback authentication also failed:", fallbackError);
       }
-
+      
       toast({
         variant: "destructive",
         title: "Lỗi đăng nhập",
@@ -181,17 +180,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
-
+      
       // Try to invalidate session on server (if using new method)
       if (sessionToken && !sessionToken.startsWith('fallback_') && supabase) {
-        try {
-          await supabase.rpc('invalidate_session', {
-            p_session_token: sessionToken
-          });
-        } catch (invalidateError) {
-          // Ignore errors during logout - session will expire naturally
-          console.log('Session invalidation failed (non-critical):', invalidateError);
-        }
+        await supabase.rpc('invalidate_session', {
+          p_session_token: sessionToken
+        }).catch(() => {
+          // Ignore errors during logout
+        });
       }
     } catch (error) {
       console.error("Logout error:", error);
@@ -216,7 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           p_session_token: sessionToken
         });
 
-        if (!data || !Array.isArray(data) || data.length === 0 || !data[0].is_valid) {
+        if (!data || !data.is_valid) {
           await logout();
         }
       } catch (error) {
@@ -231,12 +227,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      isInitialized,
-      isLoading
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      isInitialized, 
+      isLoading 
     }}>
       {children}
     </AuthContext.Provider>
@@ -249,4 +245,73 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+}
+
+// Utility function to check if user has specific role
+export function usePermissions() {
+  const { user } = useAuth();
+
+  const hasRole = (role: UserRole): boolean => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    return user.role === role;
+  };
+
+  const hasAnyRole = (roles: UserRole[]): boolean => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    return roles.includes(user.role);
+  };
+
+  const canAccessDepartment = (department: string): boolean => {
+    if (!user) return false;
+    if (user.role === 'admin' || user.role === 'to_qltb') return true;
+    return user.khoa_phong === department;
+  };
+
+  return {
+    user,
+    hasRole,
+    hasAnyRole,
+    canAccessDepartment,
+    isAdmin: user?.role === 'admin',
+    isToQLTB: user?.role === 'to_qltb',
+    isQLTBKhoa: user?.role === 'qltb_khoa',
+    isUser: user?.role === 'user'
+  };
+}
+
+// Higher-order component for route protection
+export function withAuth<P extends object>(
+  Component: React.ComponentType<P>,
+  requiredRole?: UserRole
+) {
+  return function AuthenticatedComponent(props: P) {
+    const { user, isInitialized } = useAuth();
+    const router = useRouter();
+
+    React.useEffect(() => {
+      if (!isInitialized) return;
+
+      if (!user) {
+        router.push('/');
+        return;
+      }
+
+      if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
+        router.push('/dashboard');
+        return;
+      }
+    }, [user, isInitialized, router]);
+
+    if (!isInitialized || !user) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
+    return <Component {...props} />;
+  };
 }

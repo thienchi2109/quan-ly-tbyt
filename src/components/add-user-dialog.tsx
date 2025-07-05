@@ -108,6 +108,7 @@ export function AddUserDialog({ open, onOpenChange, onSuccess }: AddUserDialogPr
       onSuccess()
       onOpenChange(false)
     } catch (error: any) {
+      console.error('Error creating user:', error)
       toast({
         variant: "destructive",
         title: "Lỗi",
