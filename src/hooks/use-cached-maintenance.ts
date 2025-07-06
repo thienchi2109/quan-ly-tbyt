@@ -1,17 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
-
-// Query keys for caching
-export const maintenanceKeys = {
-  all: ['maintenance'] as const,
-  lists: () => [...maintenanceKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...maintenanceKeys.lists(), { filters }] as const,
-  details: () => [...maintenanceKeys.all, 'detail'] as const,
-  detail: (id: string) => [...maintenanceKeys.details(), id] as const,
-  schedules: () => [...maintenanceKeys.all, 'schedules'] as const,
-  schedule: (filters: Record<string, any>) => [...maintenanceKeys.schedules(), { filters }] as const,
-}
+import { maintenanceKeys } from '@/lib/query-keys'
 
 // Fetch maintenance schedules with filters
 export function useMaintenanceSchedules(filters?: {

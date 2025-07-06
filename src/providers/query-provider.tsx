@@ -19,8 +19,8 @@ function makeQueryClient() {
         refetchOnWindowFocus: true,
         // Refetch on network reconnect
         refetchOnReconnect: true,
-        // Background refetch interval (10 minutes)
-        refetchInterval: 10 * 60 * 1000,
+        // Background refetch interval (10 minutes) - REMOVED FOR REALTIME IMPLEMENTATION
+        // refetchInterval: 10 * 60 * 1000,
       },
       mutations: {
         // Retry failed mutations

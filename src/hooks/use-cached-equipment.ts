@@ -1,15 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
-
-// Query keys for caching
-export const equipmentKeys = {
-  all: ['equipment'] as const,
-  lists: () => [...equipmentKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...equipmentKeys.lists(), { filters }] as const,
-  details: () => [...equipmentKeys.all, 'detail'] as const,
-  detail: (id: string) => [...equipmentKeys.details(), id] as const,
-}
+import { equipmentKeys } from '@/lib/query-keys'
 
 // Fetch all equipment with filters
 export function useEquipment(filters?: {
