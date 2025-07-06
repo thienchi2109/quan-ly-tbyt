@@ -11,6 +11,48 @@ export const maintenanceKeys = {
   detail: (id: string) => [...maintenanceKeys.details(), id] as const,
   schedules: () => [...maintenanceKeys.all, 'schedules'] as const,
   schedule: (filters: Record<string, any>) => [...maintenanceKeys.schedules(), { filters }] as const,
+  plans: () => [...maintenanceKeys.all, 'plans'] as const,
+  plan: (filters: Record<string, any>) => [...maintenanceKeys.plans(), { filters }] as const,
+}
+
+// Fetch maintenance plans (ke_hoach_bao_tri)
+export function useMaintenancePlans(filters?: {
+  search?: string
+  nam?: number
+  trang_thai?: string
+}) {
+  return useQuery({
+    queryKey: maintenanceKeys.plan(filters || {}),
+    queryFn: async () => {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized')
+      }
+
+      let query = supabase
+        .from('ke_hoach_bao_tri')
+        .select('*')
+        .order('nam', { ascending: false })
+        .order('created_at', { ascending: false })
+
+      // Apply filters
+      if (filters?.search) {
+        query = query.or(`ten_ke_hoach.ilike.%${filters.search}%,mo_ta.ilike.%${filters.search}%`)
+      }
+      if (filters?.trang_thai) {
+        query = query.eq('trang_thai', filters.trang_thai)
+      }
+      if (filters?.nam) {
+        query = query.eq('nam', filters.nam)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+      return data
+    },
+    staleTime: 3 * 60 * 1000, // 3 minutes - maintenance plans don't change frequently
+    gcTime: 15 * 60 * 1000, // 15 minutes
+  })
 }
 
 // Fetch maintenance schedules with filters
@@ -131,6 +173,119 @@ export function useMaintenanceDetail(id: string | null) {
     },
     enabled: !!id,
     staleTime: 2 * 60 * 1000, // 2 minutes
+  })
+}
+
+// Create maintenance plan mutation
+export function useCreateMaintenancePlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: any) => {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized')
+      }
+
+      const { data: newPlan, error } = await supabase
+        .from('ke_hoach_bao_tri')
+        .insert(data)
+        .select()
+        .single()
+
+      if (error) throw error
+      return newPlan
+    },
+    onSuccess: () => {
+      // Invalidate all maintenance plan queries
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.plans() })
+
+      toast({
+        title: "Thành công",
+        description: "Tạo kế hoạch bảo trì thành công",
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể tạo kế hoạch bảo trì",
+        variant: "destructive",
+      })
+    },
+  })
+}
+
+// Update maintenance plan mutation
+export function useUpdateMaintenancePlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (params: { id: string; data: any }) => {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized')
+      }
+
+      const { data, error } = await supabase
+        .from('ke_hoach_bao_tri')
+        .update(params.data)
+        .eq('id', params.id)
+        .select()
+        .single()
+
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      // Invalidate maintenance plan queries
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.plans() })
+
+      toast({
+        title: "Thành công",
+        description: "Cập nhật kế hoạch bảo trì thành công",
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể cập nhật kế hoạch bảo trì",
+        variant: "destructive",
+      })
+    },
+  })
+}
+
+// Delete maintenance plan mutation
+export function useDeleteMaintenancePlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized')
+      }
+
+      const { error } = await supabase
+        .from('ke_hoach_bao_tri')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      // Invalidate all maintenance plan queries
+      queryClient.invalidateQueries({ queryKey: maintenanceKeys.plans() })
+
+      toast({
+        title: "Thành công",
+        description: "Xóa kế hoạch bảo trì thành công",
+      })
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể xóa kế hoạch bảo trì",
+        variant: "destructive",
+      })
+    },
   })
 }
 

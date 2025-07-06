@@ -31,12 +31,9 @@ export function useTransferRequests(filters?: {
         .from('yeu_cau_luan_chuyen')
         .select(`
           *,
-          thiet_bi:thiet_bi(ma_thiet_bi, ten_thiet_bi),
-          phong_ban_gui:phong_ban!yeu_cau_luan_chuyen_phong_ban_gui_fkey(ten_phong_ban),
-          phong_ban_nhan:phong_ban!yeu_cau_luan_chuyen_phong_ban_nhan_fkey(ten_phong_ban),
-          nguoi_yeu_cau:profiles!yeu_cau_luan_chuyen_nguoi_yeu_cau_fkey(ho_ten),
-          nguoi_duyet:profiles!yeu_cau_luan_chuyen_nguoi_duyet_fkey(ho_ten)
+          thiet_bi(ma_thiet_bi, ten_thiet_bi)
         `)
+        .order('created_at', { ascending: false })
 
       // Apply filters
       if (filters?.search) {
