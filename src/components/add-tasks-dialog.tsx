@@ -39,6 +39,7 @@ import { supabase } from "@/lib/supabase"
 import type { Equipment, MaintenancePlan } from "@/lib/data"
 import { ScrollArea } from "./ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import { useSearchDebounce } from "@/hooks/use-debounce"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -172,7 +173,8 @@ export function AddTasksDialog({
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [globalFilter, setGlobalFilter] = React.useState("")
+  const [searchTerm, setSearchTerm] = React.useState("")
+  const debouncedSearch = useSearchDebounce(searchTerm)
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
     "nguoi_dang_truc_tiep_quan_ly": false,
@@ -200,7 +202,7 @@ export function AddTasksDialog({
       fetchEquipment()
     } else {
         setRowSelection({})
-        setGlobalFilter("")
+        setSearchTerm("")
         setColumnFilters([])
     }
   }, [open, toast])
@@ -264,7 +266,7 @@ export function AddTasksDialog({
     state: {
       sorting,
       columnFilters,
-      globalFilter,
+      globalFilter: debouncedSearch,
       rowSelection,
       columnVisibility,
     },
@@ -273,7 +275,7 @@ export function AddTasksDialog({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: (value: string) => setSearchTerm(value),
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -302,7 +304,7 @@ export function AddTasksDialog({
   const users = React.useMemo(() => Array.from(new Set(equipment.map((item) => item.nguoi_dang_truc_tiep_quan_ly?.trim()).filter(Boolean))), [equipment])
   const locations = React.useMemo(() => Array.from(new Set(equipment.map((item) => item.vi_tri_lap_dat?.trim()).filter(Boolean))), [equipment])
   
-  const isFiltered = table.getState().columnFilters.length > 0 || (globalFilter?.length ?? 0) > 0;
+  const isFiltered = table.getState().columnFilters.length > 0 || (debouncedSearch?.length ?? 0) > 0;
   
   const totalSelectableRows = React.useMemo(
     () => table.getFilteredRowModel().rows.filter(row => row.getCanSelect()).length,
@@ -322,8 +324,8 @@ export function AddTasksDialog({
             <div className="flex items-center gap-2 flex-wrap">
                 <Input
                     placeholder="Tìm kiếm chung..."
-                    value={globalFilter ?? ""}
-                    onChange={(event) => setGlobalFilter(event.target.value)}
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
                     className="h-8 w-[150px] lg:w-[250px]"
                 />
                 <DataTableFacetedFilter
@@ -346,7 +348,7 @@ export function AddTasksDialog({
                         variant="ghost"
                         onClick={() => {
                             table.resetColumnFilters();
-                            setGlobalFilter("");
+                            setSearchTerm("");
                         }}
                         className="h-8 px-2 lg:px-3"
                     >
