@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Validate session with new secure function
-        const { data, error } = await supabase.rpc('validate_session', {
+        const { data, error } = await supabase!.rpc('validate_session', {
           p_session_token: sessionToken
         });
 
@@ -86,71 +86,103 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
 
     try {
-      // Use new secure authentication function
-      const { data, error } = await supabase.rpc('authenticate_user', {
+      // 🔐 NEW: Use enhanced dual mode authentication
+      const { data: authData, error: authError } = await supabase!.rpc('authenticate_user_dual_mode', {
         p_username: username.trim(),
         p_password: password
       });
 
-      if (error) {
-        console.error("Authentication error:", error);
-        toast({
-          variant: "destructive",
-          title: "Lỗi xác thực",
-          description: "Có lỗi xảy ra trong quá trình xác thực. Vui lòng thử lại.",
-        });
-        return false;
+      if (authError) {
+        console.error("Authentication error:", authError);
+        throw authError; // Will trigger fallback
       }
 
-      if (!data || !Array.isArray(data) || data.length === 0 || !data[0].session_token) {
+      if (!authData || !Array.isArray(authData) || authData.length === 0) {
+        console.error("No authentication data returned");
+        throw new Error("Invalid authentication response");
+      }
+
+      const authResult = authData[0];
+
+      // Check if authentication was successful
+      if (!authResult.is_authenticated) {
+        const message = authResult.authentication_mode === 'user_not_found' 
+          ? "Tên đăng nhập không tồn tại."
+          : authResult.authentication_mode === 'blocked_suspicious'
+          ? "Thông tin đăng nhập không hợp lệ."
+          : "Tên đăng nhập hoặc mật khẩu không đúng.";
+
         toast({
           variant: "destructive",
           title: "Đăng nhập thất bại",
-          description: "Tên đăng nhập hoặc mật khẩu không đúng.",
+          description: message,
         });
         return false;
       }
 
-      // Get first result from array
-      const authResult = data[0];
-
-      // Create user object (without password)
+      // 🎉 Authentication successful
       const userData: User = {
-        id: authResult.id,
+        id: authResult.user_id,
         username: authResult.username,
-        password: '', // Never store password
-        full_name: authResult.full_name,
+        password: '', // Never store password in frontend
+        full_name: authResult.full_name || '',
         role: authResult.role as UserRole,
-        khoa_phong: authResult.khoa_phong,
-        created_at: authResult.created_at,
+        khoa_phong: authResult.khoa_phong || '',
+        created_at: new Date().toISOString(),
       };
 
-      // Store secure session token
-      localStorage.setItem(SESSION_TOKEN_KEY, authResult.session_token);
+      // Create session token
+      localStorage.setItem(SESSION_TOKEN_KEY, `session_${Date.now()}`);
       setUser(userData);
 
+      const authModeText = authResult.authentication_mode === 'hashed' ? '🔐 Secure' : '⚠️ Legacy';
       toast({
         title: "Đăng nhập thành công",
-        description: `Chào mừng ${userData.full_name || userData.username}!`,
+        description: `Chào mừng ${userData.full_name || userData.username}! (${authModeText})`,
       });
 
       router.push("/dashboard");
       return true;
 
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error("Enhanced authentication failed, trying fallback:", error);
 
-      // Fallback to old method if new method fails (backward compatibility)
+      // 🔄 FALLBACK: Use direct database query for backward compatibility
       try {
         console.log("Trying fallback authentication method...");
 
-        const { data: fallbackData, error: fallbackError } = await supabase
+        const { data: fallbackData, error: fallbackError } = await supabase!
           .from('nhan_vien')
           .select('*')
           .eq('username', username.trim())
           .single();
 
-        if (!fallbackError && fallbackData && fallbackData.password === password) {
+        if (fallbackError || !fallbackData) {
+          console.error("Fallback user lookup failed:", fallbackError);
+          toast({
+            variant: "destructive",
+            title: "Đăng nhập thất bại",
+            description: "Tên đăng nhập hoặc mật khẩu không đúng.",
+          });
+          return false;
+        }
+
+        // 🚨 SECURITY: Block login attempts with suspicious strings
+        if (password === 'hashed password' || 
+            password.includes('hash') || 
+            password.includes('crypt') || 
+            password.length > 200) {
+          console.warn('Security: Blocked login attempt with suspicious password');
+          toast({
+            variant: "destructive",
+            title: "Đăng nhập thất bại",
+            description: "Thông tin đăng nhập không hợp lệ.",
+          });
+          return false;
+        }
+
+        // Check password (fallback method)
+        if (fallbackData.password === password) {
           // Old method worked, create session manually
           localStorage.setItem(SESSION_TOKEN_KEY, `fallback_${Date.now()}`);
           setUser(fallbackData);
@@ -163,16 +195,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           router.push("/dashboard");
           return true;
         }
+
+        // Password incorrect
+        toast({
+          variant: "destructive",
+          title: "Đăng nhập thất bại",
+          description: "Tên đăng nhập hoặc mật khẩu không đúng.",
+        });
+        return false;
+
       } catch (fallbackError) {
         console.error("Fallback authentication also failed:", fallbackError);
+        toast({
+          variant: "destructive",
+          title: "Lỗi đăng nhập",
+          description: "Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại.",
+        });
+        return false;
       }
-
-      toast({
-        variant: "destructive",
-        title: "Lỗi đăng nhập",
-        description: "Tên đăng nhập hoặc mật khẩu không đúng.",
-      });
-      return false;
     } finally {
       setIsLoading(false);
     }
@@ -182,17 +222,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
 
-      // Try to invalidate session on server (if using new method)
-      if (sessionToken && !sessionToken.startsWith('fallback_') && supabase) {
-        try {
-          await supabase.rpc('invalidate_session', {
-            p_session_token: sessionToken
-          });
-        } catch (invalidateError) {
-          // Ignore errors during logout - session will expire naturally
-          console.log('Session invalidation failed (non-critical):', invalidateError);
-        }
-      }
+      // Note: Session invalidation function was removed during rollback
+      // Sessions will expire naturally or be cleared on next login
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
@@ -212,7 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const checkSession = async () => {
       try {
-        const { data } = await supabase.rpc('validate_session', {
+        const { data } = await supabase!.rpc('validate_session', {
           p_session_token: sessionToken
         });
 

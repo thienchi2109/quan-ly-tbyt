@@ -39,9 +39,11 @@ export function UserManagement() {
     if (!user || user.role !== 'admin') return;
 
     try {
-      const { data, error } = await supabase.rpc('admin_get_user_status', {
-        p_admin_user_id: user.id
-      });
+      // Direct query (after rollback - admin_get_user_status function removed)
+      const { data, error } = await supabase
+        .from('nhan_vien')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setUsers(data || []);

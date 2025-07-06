@@ -77,18 +77,71 @@ export function AddUserDialog({ open, onOpenChange, onSuccess }: AddUserDialogPr
     setIsLoading(true)
 
     try {
-      const { error } = await supabase
-        .from('nhan_vien')
-        .insert({
-          username: formData.username.trim(),
-          password: formData.password,
-          full_name: formData.full_name.trim(),
-          role: formData.role,
-          khoa_phong: formData.khoa_phong.trim() || null
-        })
+      // Try to use the secure create_user function first
+      const { data, error } = await supabase.rpc('create_user', {
+        p_username: formData.username.trim(),
+        p_password: formData.password,
+        p_full_name: formData.full_name.trim(),
+        p_role: formData.role,
+        p_khoa_phong: formData.khoa_phong.trim() || null
+      })
 
-      if (error) {
-        if (error.code === '23505') { // Unique constraint violation
+      // If function doesn't exist, fall back to direct insert (temporary)
+      if (error && (
+        error.message?.includes('Could not find the function') ||
+        error.message?.includes('function create_user') ||
+        error.code === '42883' // Function does not exist error code
+      )) {
+        console.log('create_user function not found, using temporary fallback method')
+        console.log('Error details:', error)
+
+        // Validate username format manually since we don't have the function
+        const username = formData.username.trim()
+        if (!username || username.includes(' ')) {
+          toast({
+            variant: "destructive",
+            title: "Lỗi",
+            description: "Tên đăng nhập không được chứa khoảng trắng và không được để trống."
+          })
+          return
+        }
+
+        const { error: insertError } = await supabase
+          .from('nhan_vien')
+          .insert({
+            username: username,
+            password: formData.password,
+            full_name: formData.full_name.trim(),
+            role: formData.role,
+            khoa_phong: formData.khoa_phong.trim() || null
+          })
+
+        if (insertError) {
+          if (insertError.code === '23505') {
+            toast({
+              variant: "destructive",
+              title: "Lỗi",
+              description: "Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác."
+            })
+          } else {
+            throw insertError
+          }
+          return
+        }
+
+        toast({
+          title: "Thành công",
+          description: "Đã tạo tài khoản người dùng mới. (Chế độ tạm thời - vui lòng chạy script SQL để kích hoạt mã hóa mật khẩu)"
+        })
+      } else if (error) {
+        console.error('Error from create_user function:', error)
+        if (error.message?.includes('Invalid username format')) {
+          toast({
+            variant: "destructive",
+            title: "Lỗi",
+            description: "Định dạng tên đăng nhập không hợp lệ. Tên đăng nhập không được chứa khoảng trắng."
+          })
+        } else if (error.message?.includes('duplicate key value') || error.code === '23505') {
           toast({
             variant: "destructive",
             title: "Lỗi",
@@ -98,12 +151,13 @@ export function AddUserDialog({ open, onOpenChange, onSuccess }: AddUserDialogPr
           throw error
         }
         return
+      } else {
+        // Success with create_user function
+        toast({
+          title: "Thành công",
+          description: "Đã tạo tài khoản người dùng mới với mật khẩu được mã hóa."
+        })
       }
-
-      toast({
-        title: "Thành công",
-        description: "Đã tạo tài khoản người dùng mới."
-      })
 
       onSuccess()
       onOpenChange(false)

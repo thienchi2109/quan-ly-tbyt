@@ -12,7 +12,7 @@ import {
 } from "@tanstack/react-table"
 import { format, parseISO } from 'date-fns'
 import { vi } from 'date-fns/locale'
-import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Loader2, MoreHorizontal, PlusCircle, Trash2 } from "lucide-react"
+import { ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Edit, Loader2, MoreHorizontal, PlusCircle, RefreshCw, Trash2 } from "lucide-react"
 
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
@@ -69,6 +69,8 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = React.useState<User | null>(null)
   const [userToDelete, setUserToDelete] = React.useState<User | null>(null)
   const [isDeletingUser, setIsDeletingUser] = React.useState(false)
+  const [userToReset, setUserToReset] = React.useState<User | null>(null)
+  const [isResettingPassword, setIsResettingPassword] = React.useState(false)
   const isMobile = useMediaQuery("(max-width: 768px)")
 
   // Check if current user is admin
@@ -150,6 +152,32 @@ export default function UsersPage() {
     setUserToDelete(null)
   }, [userToDelete, toast, fetchUsers, currentUser])
 
+  const handleResetPassword = React.useCallback(async () => {
+    if (!userToReset || !currentUser || !supabase) return
+    setIsResettingPassword(true)
+
+    const { data, error } = await supabase.rpc('reset_password_by_admin', {
+      p_admin_user_id: currentUser.id,
+      p_target_user_id: userToReset.id,
+    })
+
+    if (error || !data) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi đặt lại mật khẩu",
+        description: error?.message || "Không thể đặt lại mật khẩu cho người dùng này.",
+      })
+    } else {
+      toast({
+        title: "Thành công",
+        description: `Đã đặt lại mật khẩu cho ${userToReset.username} thành "userqltb".`,
+      })
+    }
+    
+    setIsResettingPassword(false)
+    setUserToReset(null)
+  }, [userToReset, currentUser, toast])
+
   const getRoleVariant = (role: User["role"]) => {
     switch (role) {
       case "admin":
@@ -224,6 +252,10 @@ export default function UsersPage() {
               </DropdownMenuItem>
               {!isCurrentUser && (
                 <>
+                  <DropdownMenuItem onSelect={() => setUserToReset(user)}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Đặt lại mật khẩu
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onSelect={() => setUserToDelete(user)} 
@@ -299,6 +331,26 @@ export default function UsersPage() {
           </AlertDialogContent>
         </AlertDialog>
       )}
+
+      <AlertDialog open={!!userToReset} onOpenChange={(open) => !open && setUserToReset(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận đặt lại mật khẩu?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Hành động này sẽ đặt lại mật khẩu cho người dùng <span className="font-bold">{userToReset?.username}</span> thành mật khẩu mặc định là <span className="font-bold">"userqltb"</span>. Người dùng sẽ cần đổi mật khẩu này sau khi đăng nhập.
+              <br/>
+              Bạn có chắc chắn muốn tiếp tục không?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetPassword} disabled={isResettingPassword}>
+              {isResettingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Xác nhận
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Card>
         <CardHeader className="flex flex-row items-center">
