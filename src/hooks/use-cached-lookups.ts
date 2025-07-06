@@ -1,6 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { lookupKeys } from '@/lib/query-keys'
+
+// Query keys for lookup data
+export const lookupKeys = {
+  departments: ['departments'] as const,
+  equipmentTypes: ['equipment-types'] as const,
+  users: ['users'] as const,
+  profiles: ['profiles'] as const,
+}
 
 // Fetch departments - cached for longer periods since they rarely change
 export function useDepartments() {

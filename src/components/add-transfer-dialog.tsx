@@ -20,14 +20,15 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
-import { 
-  TRANSFER_TYPES, 
+import {
+  TRANSFER_TYPES,
   TRANSFER_PURPOSES,
   type TransferType,
   type TransferPurpose,
   type Equipment
 } from "@/types/database"
 import { Badge } from "@/components/ui/badge"
+import { useSearchDebounce } from "@/hooks/use-debounce"
 
 // Equipment interface matching database schema
 interface EquipmentWithDept {
@@ -50,7 +51,8 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
   const { user } = useAuth()
   const [isLoading, setIsLoading] = React.useState(false)
   const [allEquipment, setAllEquipment] = React.useState<EquipmentWithDept[]>([])
-  const [searchQuery, setSearchQuery] = React.useState("")
+  const [searchTerm, setSearchTerm] = React.useState("")
+  const debouncedSearch = useSearchDebounce(searchTerm)
   const [selectedEquipment, setSelectedEquipment] = React.useState<EquipmentWithDept | null>(null)
   
   const [formData, setFormData] = React.useState({
@@ -86,7 +88,7 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
       ngay_du_kien_tra: ""
     })
     setSelectedEquipment(null)
-    setSearchQuery("")
+    setSearchTerm("")
   }, [])
 
   React.useEffect(() => {
@@ -124,21 +126,21 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
 
   // Filter equipment based on search query
   const filteredEquipment = React.useMemo(() => {
-    if (!searchQuery) return [];
-    
-    if (selectedEquipment && searchQuery === `${selectedEquipment.ten_thiet_bi} (${selectedEquipment.ma_thiet_bi})`) {
+    if (!debouncedSearch) return [];
+
+    if (selectedEquipment && searchTerm === `${selectedEquipment.ten_thiet_bi} (${selectedEquipment.ma_thiet_bi})`) {
       return [];
     }
 
     return allEquipment.filter(
       (eq) =>
-        eq.ten_thiet_bi.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        eq.ma_thiet_bi.toLowerCase().includes(searchQuery.toLowerCase())
+        eq.ten_thiet_bi.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        eq.ma_thiet_bi.toLowerCase().includes(debouncedSearch.toLowerCase())
     );
-  }, [searchQuery, allEquipment, selectedEquipment]);
+  }, [debouncedSearch, allEquipment, selectedEquipment, searchTerm]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    setSearchTerm(e.target.value);
     if (selectedEquipment) {
       setSelectedEquipment(null);
       setFormData(prev => ({
@@ -151,7 +153,7 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
 
   const handleSelectEquipment = (equipment: EquipmentWithDept) => {
     setSelectedEquipment(equipment);
-    setSearchQuery(`${equipment.ten_thiet_bi} (${equipment.ma_thiet_bi})`);
+    setSearchTerm(`${equipment.ten_thiet_bi} (${equipment.ma_thiet_bi})`);
     setFormData(prev => ({
       ...prev,
       thiet_bi_id: equipment.id,
@@ -277,7 +279,7 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
               <div className="relative">
                 <Input
                   id="equipment"
-                  value={searchQuery}
+                  value={searchTerm}
                   onChange={handleSearchChange}
                   placeholder="Tìm kiếm thiết bị..."
                   disabled={isLoading}

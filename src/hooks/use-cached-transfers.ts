@@ -1,7 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
-import { transferKeys } from '@/lib/query-keys'
+
+// Query keys for caching
+export const transferKeys = {
+  all: ['transfers'] as const,
+  lists: () => [...transferKeys.all, 'list'] as const,
+  list: (filters: Record<string, any>) => [...transferKeys.lists(), { filters }] as const,
+  details: () => [...transferKeys.all, 'detail'] as const,
+  detail: (id: string) => [...transferKeys.details(), id] as const,
+}
 
 // Fetch all transfer requests with filters
 export function useTransferRequests(filters?: {

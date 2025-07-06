@@ -48,6 +48,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { useSearchDebounce } from "@/hooks/use-debounce"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import type { Column } from "@tanstack/react-table"
@@ -218,7 +219,8 @@ export default function RepairRequestsPage() {
     { id: "ngay_yeu_cau", desc: true },
   ]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const debouncedSearch = useSearchDebounce(searchTerm);
   
   React.useEffect(() => {
     if (editingRequest) {
@@ -868,11 +870,11 @@ export default function RepairRequestsPage() {
     state: {
       sorting,
       columnFilters,
-      globalFilter,
+      globalFilter: debouncedSearch,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: (value: string) => setSearchTerm(value),
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -881,7 +883,7 @@ export default function RepairRequestsPage() {
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  const isFiltered = table.getState().columnFilters.length > 0 || globalFilter.length > 0;
+  const isFiltered = table.getState().columnFilters.length > 0 || debouncedSearch.length > 0;
 
   return (
     <>
@@ -1140,8 +1142,8 @@ export default function RepairRequestsPage() {
                   <div className="flex flex-1 items-center space-x-2">
                       <Input
                           placeholder="Tìm thiết bị, mô tả..."
-                          value={globalFilter}
-                          onChange={(event) => setGlobalFilter(event.target.value)}
+                          value={searchTerm}
+                          onChange={(event) => setSearchTerm(event.target.value)}
                           className="h-8 w-[150px] lg:w-[250px] touch-target-sm md:h-8"
                       />
                       <DataTableFacetedFilter
@@ -1154,7 +1156,7 @@ export default function RepairRequestsPage() {
                               variant="ghost"
                               onClick={() => {
                                 table.resetColumnFilters();
-                                setGlobalFilter("");
+                                setSearchTerm("");
                               }}
                               className="h-8 px-2 lg:px-3 touch-target-sm md:h-8"
                           >

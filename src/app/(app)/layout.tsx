@@ -42,7 +42,6 @@ import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import { NotificationBellDialog } from "@/components/notification-bell-dialog"
 import { USER_ROLES } from "@/types/database"
 import { supabase } from "@/lib/supabase"
-import { RealtimeManager } from "@/components/realtime-manager"
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -51,6 +50,59 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isMobileSheetOpen, setIsMobileSheetOpen] = React.useState(false)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = React.useState(false)
   const { user, logout, isInitialized } = useAuth()
+
+  // Simple data fetching for notifications
+  const [repairRequests, setRepairRequests] = React.useState<any[]>([])
+  const [transferRequests, setTransferRequests] = React.useState<any[]>([])
+
+  React.useEffect(() => {
+    if (!supabase || !user) return;
+    
+    // Fetch repair requests with simple query - use ngay_yeu_cau for ordering
+    const fetchRepairRequests = async () => {
+      try {
+        console.log('Fetching repair requests...');
+        const { data, error } = await supabase!
+          .from('yeu_cau_sua_chua')
+          .select('*')
+          .order('ngay_yeu_cau', { ascending: false });
+        
+        console.log('Repair requests result:', { data, error });
+        if (!error && data) {
+          console.log('Setting repair requests:', data);
+          setRepairRequests(data);
+        } else if (error) {
+          console.error('Repair requests error:', error);
+        }
+      } catch (err) {
+        console.error('Error fetching repair requests:', err);
+      }
+    };
+
+    // Fetch transfer requests with simple query - use created_at for ordering
+    const fetchTransferRequests = async () => {
+      try {
+        console.log('Fetching transfer requests...');
+        const { data, error } = await supabase!
+          .from('yeu_cau_luan_chuyen')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        console.log('Transfer requests result:', { data, error });
+        if (!error && data) {
+          console.log('Setting transfer requests:', data);
+          setTransferRequests(data);
+        } else if (error) {
+          console.error('Transfer requests error:', error);
+        }
+      } catch (err) {
+        console.error('Error fetching transfer requests:', err);
+      }
+    };
+
+    fetchRepairRequests();
+    fetchTransferRequests();
+  }, [user]);
 
   // Dynamic nav items based on user role
   const navItems = React.useMemo(() => {
@@ -95,7 +147,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         open={isChangePasswordOpen}
         onOpenChange={setIsChangePasswordOpen}
       />
-      <RealtimeManager />
       <div className={cn("grid min-h-screen w-full transition-all pt-14 pb-16 md:pt-0 md:pb-0", isSidebarOpen ? "md:grid-cols-[220px_1fr]" : "md:grid-cols-[72px_1fr]")}>
         <div className="hidden border-r bg-muted/40 md:block">
           <div className="flex h-full max-h-screen flex-col">
@@ -186,7 +237,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
             
             {/* Notification Bell */}
-            <NotificationBellDialog />
+            <NotificationBellDialog 
+              allRepairRequests={repairRequests} 
+              allTransferRequests={transferRequests}
+            />
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

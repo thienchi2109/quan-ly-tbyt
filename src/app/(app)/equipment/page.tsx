@@ -99,6 +99,7 @@ import { exportArrayToExcel, exportToExcel } from "@/lib/excel-utils"
 import { UsageHistoryTab } from "@/components/usage-history-tab"
 import { ActiveUsageIndicator } from "@/components/active-usage-indicator"
 import { MobileUsageActions } from "@/components/mobile-usage-actions"
+import { useSearchDebounce } from "@/hooks/use-debounce"
 
 type Attachment = {
   id: string;
@@ -294,7 +295,8 @@ export default function EquipmentPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [globalFilter, setGlobalFilter] = React.useState("")
+  const [searchTerm, setSearchTerm] = React.useState("")
+  const debouncedSearch = useSearchDebounce(searchTerm)
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
   const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false)
   const [selectedEquipment, setSelectedEquipment] = React.useState<Equipment | null>(null);
@@ -995,14 +997,14 @@ export default function EquipmentPage() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: (value: string) => setSearchTerm(value),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-      globalFilter,
+      globalFilter: debouncedSearch,
     },
   })
   
@@ -1436,8 +1438,8 @@ export default function EquipmentPage() {
             <div className="w-full">
               <Input
                 placeholder="Tìm kiếm chung..."
-                value={globalFilter ?? ""}
-                onChange={(event) => setGlobalFilter(event.target.value)}
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 className="h-8 w-full"
               />
             </div>

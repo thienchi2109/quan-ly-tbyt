@@ -18,6 +18,25 @@ const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 const SESSION_TOKEN_KEY = 'auth_session_token';
 
+// Safe Base64 encode/decode for Unicode characters
+const safeBase64Encode = (str: string): string => {
+  try {
+    return btoa(unescape(encodeURIComponent(str)));
+  } catch (error) {
+    console.error('Base64 encode error:', error);
+    return btoa(str); // Fallback
+  }
+};
+
+const safeBase64Decode = (str: string): string => {
+  try {
+    return decodeURIComponent(escape(atob(str)));
+  } catch (error) {
+    console.error('Base64 decode error:', error);
+    return atob(str); // Fallback
+  }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<User | null>(null);
   const [isInitialized, setIsInitialized] = React.useState(false);
@@ -37,31 +56,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Validate session with new secure function
-        const { data, error } = await supabase!.rpc('validate_session', {
-          p_session_token: sessionToken
-        });
+        // Decode and validate session token
+        try {
+          const sessionData = JSON.parse(safeBase64Decode(sessionToken));
 
-        if (error || !data || !Array.isArray(data) || data.length === 0 || !data[0].is_valid) {
+          // Check if session has expired
+          if (Date.now() > sessionData.expires_at) {
+            localStorage.removeItem(SESSION_TOKEN_KEY);
+            setIsInitialized(true);
+            return;
+          }
+
+          // Restore user session from token
+          const userData: User = {
+            id: sessionData.user_id,
+            username: sessionData.username,
+            password: '', // Never store password in frontend
+            full_name: sessionData.full_name || '',
+            role: sessionData.role as UserRole,
+            khoa_phong: sessionData.khoa_phong,
+            created_at: new Date().toISOString(),
+          };
+
+          setUser(userData);
+        } catch (tokenError) {
+          // Invalid token format
           localStorage.removeItem(SESSION_TOKEN_KEY);
           setIsInitialized(true);
           return;
         }
-
-        // Get first result from array
-        const sessionResult = data[0];
-
-        // Restore user session
-        const userData: User = {
-          id: sessionResult.user_id,
-          username: sessionResult.username,
-          password: '', // Never store password in frontend
-          full_name: '', // Will be fetched separately if needed
-          role: sessionResult.role as UserRole,
-          khoa_phong: sessionResult.khoa_phong,
-          created_at: new Date().toISOString(),
-        };
-
-        setUser(userData);
       } catch (error) {
         console.error("Session initialization failed:", error);
         localStorage.removeItem(SESSION_TOKEN_KEY);
@@ -131,18 +154,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         created_at: new Date().toISOString(),
       };
 
-      // Create session token
-      localStorage.setItem(SESSION_TOKEN_KEY, `session_${Date.now()}`);
+      // Create real session token with 3-hour expiration
+      const sessionData = {
+        user_id: userData.id,
+        username: userData.username,
+        role: userData.role,
+        khoa_phong: userData.khoa_phong,
+        full_name: userData.full_name,
+        created_at: Date.now(),
+        expires_at: Date.now() + (3 * 60 * 60 * 1000) // 3 hours in milliseconds
+      };
+
+      // Safe Base64 encode for Unicode characters
+      const sessionToken = safeBase64Encode(JSON.stringify(sessionData));
+      localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
       setUser(userData);
 
       const authModeText = authResult.authentication_mode === 'hashed' ? '🔐 Secure' : '⚠️ Legacy';
-      toast({
-        title: "Đăng nhập thành công",
+        toast({
+          title: "Đăng nhập thành công",
         description: `Chào mừng ${userData.full_name || userData.username}! (${authModeText})`,
-      });
+        });
 
-      router.push("/dashboard");
-      return true;
+        router.push("/dashboard");
+        return true;
 
     } catch (error: any) {
       console.error("Enhanced authentication failed, trying fallback:", error);
@@ -206,12 +241,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       } catch (fallbackError) {
         console.error("Fallback authentication also failed:", fallbackError);
-        toast({
-          variant: "destructive",
-          title: "Lỗi đăng nhập",
+      toast({
+        variant: "destructive",
+        title: "Lỗi đăng nhập",
           description: "Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại.",
-        });
-        return false;
+      });
+      return false;
       }
     } finally {
       setIsLoading(false);
@@ -234,32 +269,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Auto-logout on session expiry (only for new sessions)
+  // Auto-logout on session expiry with user notification
   React.useEffect(() => {
     if (!user) return;
 
     const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
-    if (!sessionToken || sessionToken.startsWith('fallback_')) return;
+    if (!sessionToken) return;
 
-    const checkSession = async () => {
+    const checkSession = () => {
       try {
-        const { data } = await supabase!.rpc('validate_session', {
-          p_session_token: sessionToken
-        });
+        const sessionData = JSON.parse(safeBase64Decode(sessionToken));
 
-        if (!data || !Array.isArray(data) || data.length === 0 || !data[0].is_valid) {
-          await logout();
+        // Check if session will expire in next 5 minutes
+        const timeUntilExpiry = sessionData.expires_at - Date.now();
+        const fiveMinutes = 5 * 60 * 1000;
+
+        if (timeUntilExpiry <= 0) {
+          // Session expired - logout with notification
+          toast({
+            variant: "destructive",
+            title: "Phiên làm việc đã hết hạn",
+            description: "Bạn đã được đăng xuất tự động sau 3 tiếng. Vui lòng đăng nhập lại.",
+            duration: 5000,
+          });
+          logout();
+        } else if (timeUntilExpiry <= fiveMinutes) {
+          // Warn user about upcoming expiry
+          const minutesLeft = Math.ceil(timeUntilExpiry / (60 * 1000));
+          toast({
+            title: "Phiên làm việc sắp hết hạn",
+            description: `Phiên làm việc sẽ hết hạn trong ${minutesLeft} phút. Vui lòng lưu công việc.`,
+            duration: 4000,
+          });
         }
       } catch (error) {
         console.error("Session validation error:", error);
-        // Don't auto-logout on network errors
+        // Invalid token - logout
+        logout();
       }
     };
 
-    // Check session every 5 minutes
-    const interval = setInterval(checkSession, 5 * 60 * 1000);
+    // Check immediately
+    checkSession();
+
+    // Check session every minute for more responsive expiry handling
+    const interval = setInterval(checkSession, 60 * 1000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, toast]);
 
   return (
     <AuthContext.Provider value={{

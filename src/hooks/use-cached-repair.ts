@@ -1,7 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
-import { repairKeys } from '@/lib/query-keys'
+
+// Query keys for caching
+export const repairKeys = {
+  all: ['repair'] as const,
+  lists: () => [...repairKeys.all, 'list'] as const,
+  list: (filters: Record<string, any>) => [...repairKeys.lists(), { filters }] as const,
+  details: () => [...repairKeys.all, 'detail'] as const,
+  detail: (id: string) => [...repairKeys.details(), id] as const,
+}
 
 // Fetch repair requests with filters
 export function useRepairRequests(filters?: {
