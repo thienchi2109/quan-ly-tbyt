@@ -37,6 +37,7 @@ interface HandoverData {
   reason: string
   requestCode: string
   giverName: string
+  directorName: string
   receiverName: string
   device: {
     code: string
@@ -66,9 +67,10 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
         handoverDate: new Date().toLocaleDateString('vi-VN'),
         reason: formatValue(transfer.ly_do_luan_chuyen),
         requestCode: formatValue(transfer.ma_yeu_cau),
-        giverName: transfer.khoa_phong_hien_tai === "Tổ QLTB" 
-          ? "Đại diện Tổ QLTB" 
+        giverName: transfer.khoa_phong_hien_tai === "Tổ QLTB"
+          ? "Đại diện Tổ QLTB"
           : `Đại diện ${transfer.khoa_phong_hien_tai}`,
+        directorName: "", // Default empty for manual entry
         receiverName: transfer.khoa_phong_nhan === "Tổ QLTB"
           ? "Đại diện Tổ QLTB"
           : `Đại diện ${transfer.khoa_phong_nhan}`,
@@ -149,6 +151,7 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
     if (!data.reason?.trim()) missingFields.push('Lý do bàn giao')
     if (!data.giverName?.trim()) missingFields.push('Đại diện bên giao')
     if (!data.receiverName?.trim()) missingFields.push('Đại diện bên nhận')
+    // Note: directorName is optional, not required for validation
     
     return {
       isValid: missingFields.length === 0,
@@ -546,6 +549,12 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
                         <div class="font-bold">${data.giverName}</div>
                     </div>
                     <div class="signature-area">
+                        <p class="font-bold">Ban Giám đốc</p>
+                        <p class="italic">(Ký, ghi rõ họ tên)</p>
+                        <div class="signature-space"></div>
+                        <div class="font-bold">${data.directorName}</div>
+                    </div>
+                    <div class="signature-area">
                         <p class="font-bold">Đại diện bên nhận</p>
                         <p class="italic">(Ký, ghi rõ họ tên)</p>
                         <div class="signature-space"></div>
@@ -676,13 +685,22 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="giverName">Đại diện bên giao</Label>
                   <Input
                     id="giverName"
                     value={handoverData.giverName}
                     onChange={(e) => handleInputChange('giverName', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="directorName">Ban Giám đốc</Label>
+                  <Input
+                    id="directorName"
+                    value={handoverData.directorName}
+                    onChange={(e) => handleInputChange('directorName', e.target.value)}
+                    placeholder="Tên Ban Giám đốc (tùy chọn)"
                   />
                 </div>
                 <div className="space-y-2">
@@ -733,6 +751,7 @@ export function HandoverPreviewDialog({ open, onOpenChange, transfer }: Handover
                   <div><span className="font-medium">Ngày:</span> {handoverData.handoverDate}</div>
                   <div className="md:col-span-2"><span className="font-medium">Lý do:</span> {handoverData.reason}</div>
                   <div><span className="font-medium">Bên giao:</span> {handoverData.giverName}</div>
+                  <div><span className="font-medium">Ban Giám đốc:</span> {handoverData.directorName || 'Chưa nhập'}</div>
                   <div><span className="font-medium">Bên nhận:</span> {handoverData.receiverName}</div>
                 </div>
               </div>

@@ -95,6 +95,25 @@ ON thiet_bi (ngay_nhap);
 CREATE INDEX IF NOT EXISTS idx_thiet_bi_ngay_dua_vao_su_dung
 ON thiet_bi (ngay_dua_vao_su_dung);
 
+-- =====================================================
+-- 6. EQUIPMENT HISTORY INDEXES
+-- =====================================================
+
+-- Equipment history filtering and sorting
+CREATE INDEX IF NOT EXISTS idx_lich_su_thiet_bi_thiet_bi_id
+ON lich_su_thiet_bi (thiet_bi_id);
+
+CREATE INDEX IF NOT EXISTS idx_lich_su_thiet_bi_ngay_thuc_hien
+ON lich_su_thiet_bi (ngay_thuc_hien);
+
+-- Composite index for equipment history queries (most common pattern)
+CREATE INDEX IF NOT EXISTS idx_lich_su_thiet_bi_equipment_date
+ON lich_su_thiet_bi (thiet_bi_id, ngay_thuc_hien DESC);
+
+-- Event type filtering for history
+CREATE INDEX IF NOT EXISTS idx_lich_su_thiet_bi_loai_su_kien
+ON lich_su_thiet_bi (loai_su_kien);
+
 -- Audit trail indexes
 -- NOTE: SKIPPED - created_at/updated_at columns may not exist in current schema
 -- CREATE INDEX IF NOT EXISTS idx_thiet_bi_created_at
@@ -168,6 +187,7 @@ COMMENT ON INDEX idx_thiet_bi_search_text IS 'Composite GIN index for full-text 
 -- COMMENT ON INDEX idx_thiet_bi_ma_thiet_bi_exact IS 'B-tree index for exact QR code lookups'; -- SKIPPED - using existing unique constraint
 COMMENT ON INDEX idx_thiet_bi_dept_status IS 'Composite index for department and status filtering';
 COMMENT ON INDEX idx_thiet_bi_status_maintenance IS 'Composite index for status and maintenance date filtering';
+COMMENT ON INDEX idx_lich_su_thiet_bi_equipment_date IS 'Composite index for equipment history queries with date sorting';
 COMMENT ON VIEW thiet_bi_index_usage IS 'Monitor index usage statistics for thiet_bi table';
 
 -- =====================================================
@@ -231,6 +251,18 @@ USAGE EXAMPLES:
    SELECT * FROM thiet_bi
    WHERE gia_goc IS NULL OR gia_goc = 0
    -- Uses: idx_thiet_bi_gia_goc
+
+10. Equipment History Query (Equipment Detail Dialog):
+    SELECT * FROM lich_su_thiet_bi
+    WHERE thiet_bi_id = 123
+    ORDER BY ngay_thuc_hien DESC
+    -- Uses: idx_lich_su_thiet_bi_equipment_date
+
+11. History by Event Type:
+    SELECT * FROM lich_su_thiet_bi
+    WHERE loai_su_kien = 'Luân chuyển'
+    ORDER BY ngay_thuc_hien DESC
+    -- Uses: idx_lich_su_thiet_bi_loai_su_kien
 */
 
 -- =====================================================

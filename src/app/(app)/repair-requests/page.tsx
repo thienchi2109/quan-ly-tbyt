@@ -33,6 +33,14 @@ import {
 } from "@/components/ui/table"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { supabase, supabaseError } from "@/lib/supabase"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
@@ -40,7 +48,6 @@ import { ArrowUpDown, Calendar as CalendarIcon, Check, ChevronDown, ChevronLeft,
 import { format, parseISO } from "date-fns"
 import { vi } from 'date-fns/locale'
 import { cn } from "@/lib/utils"
-import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/contexts/auth-context"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -49,7 +56,6 @@ import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useSearchDebounce } from "@/hooks/use-debounce"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import type { Column } from "@tanstack/react-table"
 import { RepairRequestAlert } from "@/components/repair-request-alert"
@@ -73,6 +79,8 @@ export type RepairRequestWithEquipment = {
     nguoi_yeu_cau: string | null;
     ngay_duyet: string | null;
     ngay_hoan_thanh: string | null;
+    don_vi_thuc_hien: 'noi_bo' | 'thue_ngoai' | null;
+    ten_don_vi_thue: string | null;
     thiet_bi: {
         ten_thiet_bi: string;
         ma_thiet_bi: string;
@@ -182,6 +190,10 @@ function DataTableFacetedFilter<TData, TValue>({
 }
 
 const requestStatuses = ['Chờ xử lý', 'Đã duyệt', 'Hoàn thành', 'Không HT'];
+const repairUnits = [
+  { label: 'Nội bộ', value: 'noi_bo' },
+  { label: 'Thuê ngoài', value: 'thue_ngoai' }
+];
 
 export default function RepairRequestsPage() {
   const { toast } = useToast()
@@ -199,6 +211,8 @@ export default function RepairRequestsPage() {
   const [issueDescription, setIssueDescription] = React.useState("")
   const [repairItems, setRepairItems] = React.useState("")
   const [desiredDate, setDesiredDate] = React.useState<Date>()
+  const [repairUnit, setRepairUnit] = React.useState<'noi_bo' | 'thue_ngoai'>('noi_bo')
+  const [externalCompanyName, setExternalCompanyName] = React.useState("")
   
   // Edit/Delete state
   const [editingRequest, setEditingRequest] = React.useState<RepairRequestWithEquipment | null>(null);
@@ -210,6 +224,8 @@ export default function RepairRequestsPage() {
   const [editIssueDescription, setEditIssueDescription] = React.useState("");
   const [editRepairItems, setEditRepairItems] = React.useState("");
   const [editDesiredDate, setEditDesiredDate] = React.useState<Date | undefined>();
+  const [editRepairUnit, setEditRepairUnit] = React.useState<'noi_bo' | 'thue_ngoai'>('noi_bo');
+  const [editExternalCompanyName, setEditExternalCompanyName] = React.useState("");
 
   // UI state
   const [showRequestsList, setShowRequestsList] = React.useState(false);
@@ -227,10 +243,12 @@ export default function RepairRequestsPage() {
       setEditIssueDescription(editingRequest.mo_ta_su_co);
       setEditRepairItems(editingRequest.hang_muc_sua_chua || "");
       setEditDesiredDate(
-        editingRequest.ngay_mong_muon_hoan_thanh 
-        ? parseISO(editingRequest.ngay_mong_muon_hoan_thanh) 
+        editingRequest.ngay_mong_muon_hoan_thanh
+        ? parseISO(editingRequest.ngay_mong_muon_hoan_thanh)
         : undefined
       );
+      setEditRepairUnit(editingRequest.don_vi_thuc_hien || 'noi_bo');
+      setEditExternalCompanyName(editingRequest.ten_don_vi_thue || "");
     }
   }, [editingRequest]);
 
@@ -266,6 +284,8 @@ export default function RepairRequestsPage() {
             nguoi_yeu_cau,
             ngay_duyet,
             ngay_hoan_thanh,
+            don_vi_thuc_hien,
+            ten_don_vi_thue,
             thiet_bi (
                 ten_thiet_bi,
                 ma_thiet_bi,
@@ -390,6 +410,17 @@ export default function RepairRequestsPage() {
         })
         return
     }
+
+    // Validate external company name when repair unit is external
+    if (repairUnit === 'thue_ngoai' && !externalCompanyName.trim()) {
+        toast({
+            variant: "destructive",
+            title: "Thiếu thông tin",
+            description: "Vui lòng nhập tên đơn vị được thuê sửa chữa.",
+        })
+        return
+    }
+
     if (!user) {
         toast({ variant: "destructive", title: "Lỗi", description: "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại." });
         return;
@@ -406,6 +437,8 @@ export default function RepairRequestsPage() {
         ngay_mong_muon_hoan_thanh: desiredDate ? format(desiredDate, "yyyy-MM-dd") : null,
         nguoi_yeu_cau: user.full_name || user.username,
         trang_thai: 'Chờ xử lý',
+        don_vi_thuc_hien: repairUnit,
+        ten_don_vi_thue: repairUnit === 'thue_ngoai' ? externalCompanyName.trim() : null,
       });
 
     if (error) {
@@ -425,6 +458,8 @@ export default function RepairRequestsPage() {
       setIssueDescription("")
       setRepairItems("")
       setDesiredDate(undefined)
+      setRepairUnit('noi_bo')
+      setExternalCompanyName("")
       // Invalidate cache and refetch requests
       invalidateCacheAndRefetch()
     }
@@ -524,6 +559,13 @@ export default function RepairRequestsPage() {
       toast({ variant: "destructive", title: "Thiếu thông tin", description: "Mô tả sự cố và hạng mục không được để trống." });
       return;
     }
+
+    // Validate external company name when repair unit is external
+    if (editRepairUnit === 'thue_ngoai' && !editExternalCompanyName.trim()) {
+      toast({ variant: "destructive", title: "Thiếu thông tin", description: "Vui lòng nhập tên đơn vị được thuê sửa chữa." });
+      return;
+    }
+
     setIsEditSubmitting(true);
     const { error } = await supabase
       .from('yeu_cau_sua_chua')
@@ -531,6 +573,8 @@ export default function RepairRequestsPage() {
         mo_ta_su_co: editIssueDescription,
         hang_muc_sua_chua: editRepairItems,
         ngay_mong_muon_hoan_thanh: editDesiredDate ? format(editDesiredDate, "yyyy-MM-dd") : null,
+        don_vi_thuc_hien: editRepairUnit,
+        ten_don_vi_thue: editRepairUnit === 'thue_ngoai' ? editExternalCompanyName.trim() : null,
       })
       .eq('id', editingRequest.id);
 
@@ -601,10 +645,10 @@ export default function RepairRequestsPage() {
           <script src="https://cdn.tailwindcss.com"></script>
           <style>
               body { font-family: 'Times New Roman', Times, serif; font-size: 14px; color: #000; line-height: 1.2; background-color: #e5e7eb; }
-              .a4-page { width: 21cm; min-height: 29.7cm; padding: 1.5cm 2cm; margin: 1cm auto; background: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-              .form-input-line, .form-textarea { font-family: inherit; font-size: inherit; border: none; border-bottom: 1px dotted #000; background-color: transparent; padding: 2px 1px; outline: none; width: 100%; }
-              .form-textarea { resize: none; }
-              .form-input-line:focus, .form-textarea:focus { border-bottom-style: solid; }
+              .a4-page { width: 21cm; min-height: 29.7cm; padding: 1.5cm 2cm; margin: 1cm auto; background: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); position: relative; }
+              .form-input-line { font-family: inherit; font-size: inherit; border: none; border-bottom: 1px dotted #000; background-color: transparent; padding: 2px 1px; outline: none; text-align: center; }
+              .form-textarea { font-family: inherit; font-size: inherit; border: 1px dotted #000; background-color: transparent; padding: 8px; outline: none; width: 100%; resize: none; }
+              .form-input-line:focus, .form-textarea:focus { border-style: solid; }
               h1, h2, h3, .font-bold { font-weight: 700; }
               .title-main { font-size: 20px; }
               .title-sub { font-size: 16px; }
@@ -612,12 +656,17 @@ export default function RepairRequestsPage() {
               .signature-space { height: 50px; }
               .signature-name-input { border: none; background-color: transparent; text-align: center; font-weight: 700; width: 200px; }
               .signature-name-input:focus { outline: none; }
+              .page-break { page-break-before: always; }
+              .print-footer { position: absolute; bottom: 0; left: 0; right: 0; }
               @media print {
                   body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: #e5e7eb !important; }
-                  .a4-page { width: 21cm !important; height: 29.7cm !important; margin: 0 !important; padding: 1.5cm 2cm !important; box-shadow: none !important; border: none !important; position: absolute; top: 0; left: 0; }
+                  .a4-page { width: 21cm !important; height: 29.7cm !important; margin: 0 !important; padding: 1.5cm 2cm !important; box-shadow: none !important; border: none !important; position: relative !important; }
+                  .page-break { page-break-before: always !important; }
+                  .print-footer { position: absolute !important; bottom: 1.5cm !important; left: 2cm !important; right: 2cm !important; width: calc(100% - 4cm) !important; }
                   body > *:not(.a4-page) { display: none; }
                   .form-input-line, .form-textarea, input[type="date"] { border-bottom: 1px dotted #000 !important; }
                   .signature-name-input { border: none !important; }
+                  .form-textarea { border: 1px dotted #000 !important; }
               }
           </style>
       </head>
@@ -642,9 +691,9 @@ export default function RepairRequestsPage() {
               <section>
                   <h3 class="font-bold">I. THÔNG TIN THIẾT BỊ</h3>
                   <div class="space-y-4 mt-3">
-                      <div class="flex items-baseline">
+                      <div>
                           <label for="device-name" class="whitespace-nowrap">Tên thiết bị:</label>
-                          <input type="text" id="device-name" class="form-input-line ml-2" value="${formatValue(request.thiet_bi.ten_thiet_bi)}">
+                          <input type="text" id="device-name" class="form-input-line ml-2 w-full" value="${formatValue(request.thiet_bi.ten_thiet_bi)}">
                       </div>
                       <div class="grid grid-cols-3 gap-x-8">
                           <div class="flex items-baseline">
@@ -672,6 +721,16 @@ export default function RepairRequestsPage() {
                           <label for="completion-date" class="whitespace-nowrap">Ngày mong muốn hoàn thành (nếu có):</label>
                           <input type="date" id="completion-date" class="form-input-line ml-2" value="${formatValue(request.ngay_mong_muon_hoan_thanh)}">
                       </div>
+                      <div class="flex items-baseline">
+                          <label for="repair-unit" class="whitespace-nowrap">Đơn vị thực hiện:</label>
+                          <input type="text" id="repair-unit" class="form-input-line ml-2" value="${request.don_vi_thuc_hien === 'noi_bo' ? 'Nội bộ' : 'Thuê ngoài'}" readonly>
+                      </div>
+                      ${request.don_vi_thuc_hien === 'thue_ngoai' && request.ten_don_vi_thue ? `
+                      <div class="flex items-baseline">
+                          <label for="external-company" class="whitespace-nowrap">Tên đơn vị được thuê:</label>
+                          <input type="text" id="external-company" class="form-input-line ml-2" value="${formatValue(request.ten_don_vi_thue)}" readonly>
+                      </div>
+                      ` : ''}
                   </div>
               </section>
               <div class="mt-8">
@@ -723,7 +782,66 @@ export default function RepairRequestsPage() {
               <footer class="mt-12 flex justify-between items-center text-xs text-gray-500">
                   <span>QLTB-BM.07</span>
                   <span>BH.01 (05/2024)</span>
-                  <span>Trang: 1/1</span>
+                  <span>Trang: 1/2</span>
+              </footer>
+          </div>
+
+          <!-- Page 2: Repair Result Form -->
+          <div class="a4-page page-break">
+              <div class="content-body">
+                  <!-- Header -->
+                  <header class="text-center mb-8">
+                      <div class="flex items-center">
+                          <div class="text-center">
+                              <img src="https://i.postimg.cc/W1ym4T74/cdc-logo-150.png" alt="Logo CDC" class="w-[70px] mx-auto mb-1" onerror="this.onerror=null;this.src='https://placehold.co/100x100/e2e8f0/e2e8f0?text=Logo';">
+                          </div>
+                          <div class="flex-grow">
+                              <h2 class="title-sub uppercase font-bold">TRUNG TÂM KIỂM SOÁT BỆNH TẬT THÀNH PHỐ CẦN THƠ</h2>
+                              <h1 class="title-main uppercase mt-4 font-bold">KẾT QUẢ SỬA CHỮA THIẾT BỊ</h1>
+                          </div>
+                          <div class="w-16"></div> <!-- Spacer -->
+                      </div>
+                  </header>
+
+                  <!-- Main Content -->
+                  <main class="mt-8">
+                      <h3 class="title-main font-bold">III. KẾT QUẢ, TÌNH TRẠNG THIẾT BỊ SAU KHI XỬ LÝ</h3>
+                      <div class="mt-4">
+                          <textarea class="form-textarea" rows="5" placeholder="Nhập kết quả và tình trạng thiết bị..."></textarea>
+                      </div>
+                  </main>
+
+                  <!-- Signature section -->
+                  <section class="mt-8">
+                       <div class="flex justify-end mb-4">
+                           <p class="italic">
+                              Cần Thơ, ngày <input type="text" class="form-input-line w-12" value="${day}">
+                              tháng <input type="text" class="form-input-line w-12" value="${month}">
+                              năm <input type="text" class="form-input-line w-20" value="${year}">
+                          </p>
+                      </div>
+                       <div class="flex justify-around">
+                          <div class="signature-area w-1/2">
+                              <p class="font-bold">Tổ TTBYT</p>
+                              <p class="italic">(Ký, ghi rõ họ, tên)</p>
+                              <div class="signature-space"></div>
+                              <input type="text" class="signature-name-input" placeholder="(Họ và tên)">
+                          </div>
+                          <div class="signature-area w-1/2">
+                               <p class="font-bold">Người đề nghị</p>
+                               <p class="italic">(Ký, ghi rõ họ, tên)</p>
+                               <div class="signature-space"></div>
+                               <input type="text" class="signature-name-input" placeholder="(Họ và tên)" value="${formatValue(request.nguoi_yeu_cau)}">
+                          </div>
+                      </div>
+                  </section>
+              </div>
+
+              <!-- Footer -->
+              <footer class="print-footer flex justify-between items-center text-xs">
+                  <span>QLTB-BM.07</span>
+                  <span>BH.01 (05/2024)</span>
+                  <span>Trang: 2/2</span>
               </footer>
           </div>
       </body>
@@ -849,6 +967,26 @@ export default function RepairRequestsPage() {
       filterFn: (row, id, value) => value.includes(row.getValue(id)),
     },
     {
+      accessorKey: "don_vi_thuc_hien",
+      header: "Đơn vị thực hiện",
+      cell: ({ row }) => {
+        const request = row.original
+        return (
+          <div className="flex flex-col gap-1">
+            <Badge variant={request.don_vi_thuc_hien === 'noi_bo' ? 'default' : 'secondary'} className="self-start">
+              {request.don_vi_thuc_hien === 'noi_bo' ? 'Nội bộ' : 'Thuê ngoài'}
+            </Badge>
+            {request.don_vi_thuc_hien === 'thue_ngoai' && request.ten_don_vi_thue && (
+              <div className="text-xs text-muted-foreground max-w-xs truncate">
+                {request.ten_don_vi_thue}
+              </div>
+            )}
+          </div>
+        )
+      },
+      filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    },
+    {
       accessorKey: "ngay_yeu_cau",
       header: ({ column }) => (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
@@ -944,6 +1082,33 @@ export default function RepairRequestsPage() {
                   </PopoverContent>
                 </Popover>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-repair-unit">Đơn vị thực hiện</Label>
+                <Select value={editRepairUnit} onValueChange={(value: 'noi_bo' | 'thue_ngoai') => setEditRepairUnit(value)}>
+                  <SelectTrigger className="touch-target">
+                    <SelectValue placeholder="Chọn đơn vị thực hiện" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="noi_bo">Nội bộ</SelectItem>
+                    <SelectItem value="thue_ngoai">Thuê ngoài</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {editRepairUnit === 'thue_ngoai' && (
+                <div className="space-y-2">
+                  <Label htmlFor="edit-external-company">Tên đơn vị được thuê</Label>
+                  <Input
+                    id="edit-external-company"
+                    placeholder="Nhập tên đơn vị được thuê sửa chữa..."
+                    value={editExternalCompanyName}
+                    onChange={(e) => setEditExternalCompanyName(e.target.value)}
+                    required
+                    className="touch-target"
+                  />
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setEditingRequest(null)} disabled={isEditSubmitting} className="touch-target">Hủy</Button>
@@ -1081,6 +1246,34 @@ export default function RepairRequestsPage() {
                           </PopoverContent>
                       </Popover>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="repair-unit">Đơn vị thực hiện</Label>
+                  <Select value={repairUnit} onValueChange={(value: 'noi_bo' | 'thue_ngoai') => setRepairUnit(value)}>
+                    <SelectTrigger className="touch-target">
+                      <SelectValue placeholder="Chọn đơn vị thực hiện" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="noi_bo">Nội bộ</SelectItem>
+                      <SelectItem value="thue_ngoai">Thuê ngoài</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {repairUnit === 'thue_ngoai' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="external-company">Tên đơn vị được thuê</Label>
+                    <Input
+                      id="external-company"
+                      placeholder="Nhập tên đơn vị được thuê sửa chữa..."
+                      value={externalCompanyName}
+                      onChange={(e) => setExternalCompanyName(e.target.value)}
+                      required
+                      className="touch-target"
+                    />
+                  </div>
+                )}
+
                 <Button type="submit" className="w-full touch-target" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
@@ -1150,6 +1343,11 @@ export default function RepairRequestsPage() {
                           column={table.getColumn("trang_thai")}
                           title="Trạng thái"
                           options={requestStatuses.map(s => ({label: s, value: s}))}
+                      />
+                      <DataTableFacetedFilter
+                          column={table.getColumn("don_vi_thuc_hien")}
+                          title="Đơn vị thực hiện"
+                          options={repairUnits}
                       />
                       {isFiltered && (
                           <Button

@@ -34,6 +34,10 @@ import {
   Trash2,
   Loader2,
   Wrench,
+  Settings,
+  ArrowRightLeft,
+  CheckCircle,
+  Calendar,
 } from "lucide-react"
 import Link from 'next/link'
 import { useRouter, useSearchParams } from "next/navigation"
@@ -114,9 +118,22 @@ type HistoryItem = {
     loai_su_kien: string;
     mo_ta: string;
     chi_tiet: {
+      // Repair request fields
       mo_ta_su_co?: string;
       hang_muc_sua_chua?: string;
       nguoi_yeu_cau?: string;
+      // Maintenance fields
+      cong_viec_id?: number;
+      thang?: number;
+      ten_ke_hoach?: string;
+      khoa_phong?: string;
+      nam?: number;
+      // Transfer fields
+      ma_yeu_cau?: string;
+      loai_hinh?: string;
+      khoa_phong_hien_tai?: string;
+      khoa_phong_nhan?: string;
+      don_vi_nhan?: string;
     } | null;
   };
 
@@ -1208,9 +1225,21 @@ export default function EquipmentPage() {
     switch (eventType) {
         case 'Sửa chữa':
             return <Wrench className="h-4 w-4 text-muted-foreground" />;
-        // Add more cases for other event types like 'Bảo trì' later
+        case 'Bảo trì':
+        case 'Bảo trì định kỳ':
+        case 'Bảo trì dự phòng':
+            return <Settings className="h-4 w-4 text-muted-foreground" />;
+        case 'Luân chuyển':
+        case 'Luân chuyển nội bộ':
+        case 'Luân chuyển bên ngoài':
+            return <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />;
+        case 'Hiệu chuẩn':
+        case 'Kiểm định':
+            return <CheckCircle className="h-4 w-4 text-muted-foreground" />;
+        case 'Thanh lý':
+            return <Trash2 className="h-4 w-4 text-muted-foreground" />;
         default:
-            return <Wrench className="h-4 w-4 text-muted-foreground" />;
+            return <Calendar className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -1393,9 +1422,23 @@ export default function EquipmentPage() {
                                                 </div>
                                                 <div className="mt-2 ml-10 p-3 rounded-md bg-muted/50 border">
                                                     <p className="text-sm font-medium">{item.mo_ta}</p>
+
+                                                    {/* Repair request details */}
                                                     {item.chi_tiet?.mo_ta_su_co && <p className="text-sm text-muted-foreground mt-1">Sự cố: {item.chi_tiet.mo_ta_su_co}</p>}
                                                     {item.chi_tiet?.hang_muc_sua_chua && <p className="text-sm text-muted-foreground">Hạng mục: {item.chi_tiet.hang_muc_sua_chua}</p>}
                                                     {item.chi_tiet?.nguoi_yeu_cau && <p className="text-sm text-muted-foreground">Người yêu cầu: {item.chi_tiet.nguoi_yeu_cau}</p>}
+
+                                                    {/* Maintenance details */}
+                                                    {item.chi_tiet?.ten_ke_hoach && <p className="text-sm text-muted-foreground mt-1">Kế hoạch: {item.chi_tiet.ten_ke_hoach}</p>}
+                                                    {item.chi_tiet?.thang && <p className="text-sm text-muted-foreground">Tháng: {item.chi_tiet.thang}/{item.chi_tiet.nam}</p>}
+
+                                                    {/* Transfer details */}
+                                                    {item.chi_tiet?.ma_yeu_cau && <p className="text-sm text-muted-foreground mt-1">Mã yêu cầu: {item.chi_tiet.ma_yeu_cau}</p>}
+                                                    {item.chi_tiet?.loai_hinh && <p className="text-sm text-muted-foreground">Loại hình: {item.chi_tiet.loai_hinh === 'noi_bo' ? 'Nội bộ' : item.chi_tiet.loai_hinh === 'ben_ngoai' ? 'Bên ngoài' : 'Thanh lý'}</p>}
+                                                    {item.chi_tiet?.khoa_phong_hien_tai && item.chi_tiet?.khoa_phong_nhan && (
+                                                        <p className="text-sm text-muted-foreground">Từ: {item.chi_tiet.khoa_phong_hien_tai} → {item.chi_tiet.khoa_phong_nhan}</p>
+                                                    )}
+                                                    {item.chi_tiet?.don_vi_nhan && <p className="text-sm text-muted-foreground">Đơn vị nhận: {item.chi_tiet.don_vi_nhan}</p>}
                                                 </div>
                                             </div>
                                         </div>

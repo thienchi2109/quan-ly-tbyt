@@ -326,6 +326,12 @@
                         <div id="giver-name" class="font-bold"></div>
                     </div>
                     <div class="signature-area">
+                        <p class="font-bold">Ban Giám đốc</p>
+                        <p class="italic">(Ký, ghi rõ họ tên)</p>
+                        <div class="signature-space"></div>
+                        <div id="director-name" class="font-bold"></div>
+                    </div>
+                    <div class="signature-area">
                         <p class="font-bold">Đại diện bên nhận</p>
                         <p class="italic">(Ký, ghi rõ họ tên)</p>
                         <div class="signature-space"></div>
@@ -393,6 +399,7 @@
 
                 // Populate signature names
                 document.getElementById('giver-name').textContent = formatValue(data.giverName);
+                document.getElementById('director-name').textContent = formatValue(data.directorName);
                 document.getElementById('receiver-name').textContent = formatValue(data.receiverName);
 
                 // Populate devices table

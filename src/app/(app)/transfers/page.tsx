@@ -405,7 +405,8 @@ export default function TransfersPage() {
             don_vi_nhan: transfer.don_vi_nhan,
           },
           yeu_cau_id: transfer.id,
-          nguoi_thuc_hien_id: user?.id
+          nguoi_thuc_hien_id: user?.id,
+          ngay_thuc_hien: new Date().toISOString()
         });
 
       if (historyError) {
