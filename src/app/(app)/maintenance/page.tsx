@@ -56,6 +56,22 @@ import { useAuth } from "@/contexts/auth-context"
 import { AddTasksDialog } from "@/components/add-tasks-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+
+// Memoized component để tránh re-render khi typing
+const NotesInput = React.memo(({ taskId, value, onChange }: {
+  taskId: number;
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  return (
+    <Input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-8"
+      autoFocus
+    />
+  );
+});
 import { BulkScheduleDialog } from "@/components/bulk-schedule-dialog"
 import { useMaintenancePlans, useCreateMaintenancePlan, useUpdateMaintenancePlan, useDeleteMaintenancePlan, maintenanceKeys } from "@/hooks/use-cached-maintenance"
 import { useQueryClient } from "@tanstack/react-query"
@@ -890,16 +906,18 @@ export default function MaintenancePage() {
             const meta = table.options.meta as any;
             const { editingTaskId, editingTaskData, handleTaskDataChange } = meta;
             const isEditing = editingTaskId === row.original.id;
-            return isEditing ? (
-                 <Input
-                    key={`input-ghi-chu-${row.original.id}`}
+
+            if (!isEditing) {
+                return row.original.ghi_chu;
+            }
+
+            return (
+                <NotesInput
+                    taskId={row.original.id}
                     value={editingTaskData?.ghi_chu || ""}
-                    onChange={(e) => handleTaskDataChange('ghi_chu', e.target.value)}
-                    className="h-8"
+                    onChange={(value) => handleTaskDataChange('ghi_chu', value)}
                 />
-            ) : (
-                row.original.ghi_chu
-            )
+            );
         },
         size: 200,
     },
@@ -939,7 +957,7 @@ export default function MaintenancePage() {
         },
         size: 100,
     }
-  ], [isPlanApproved, canCompleteTask, editingTaskId, editingTaskData, handleCancelEdit, handleSaveTask, handleStartEdit, handleMarkAsCompleted, completionStatus, isLoadingCompletion, isCompletingTask]);
+  ], [isPlanApproved, canCompleteTask, editingTaskId, handleCancelEdit, handleSaveTask, handleStartEdit, handleMarkAsCompleted, completionStatus, isLoadingCompletion, isCompletingTask]);
 
   const handleSaveAllChanges = React.useCallback(async () => {
     if (!supabase || !selectedPlan || !hasChanges) return;
@@ -1268,6 +1286,36 @@ export default function MaintenancePage() {
     }
   }, [selectedPlan, tasks, toast, user]);
 
+  const tableMeta = React.useMemo(() => ({
+    editingTaskId,
+    editingTaskData,
+    isPlanApproved,
+    setTaskToDelete,
+    handleTaskDataChange,
+    handleSaveTask,
+    handleCancelEdit,
+    handleStartEdit,
+    completionStatus,
+    isLoadingCompletion,
+    handleMarkAsCompleted,
+    isCompletingTask,
+    canCompleteTask,
+  }), [
+    editingTaskId,
+    editingTaskData,
+    isPlanApproved,
+    setTaskToDelete,
+    handleTaskDataChange,
+    handleSaveTask,
+    handleCancelEdit,
+    handleStartEdit,
+    completionStatus,
+    isLoadingCompletion,
+    handleMarkAsCompleted,
+    isCompletingTask,
+    canCompleteTask,
+  ]);
+
   const taskTable = useReactTable({
     data: draftTasks,
     columns: taskColumns,
@@ -1280,21 +1328,7 @@ export default function MaintenancePage() {
       pagination: taskPagination,
       rowSelection: taskRowSelection,
     },
-    meta: {
-        editingTaskId,
-        editingTaskData,
-        isPlanApproved,
-        setTaskToDelete,
-        handleTaskDataChange,
-        handleSaveTask,
-        handleCancelEdit,
-        handleStartEdit,
-        completionStatus,
-        isLoadingCompletion,
-        handleMarkAsCompleted,
-        isCompletingTask,
-        canCompleteTask,
-    }
+    meta: tableMeta
   });
 
   const handleBulkScheduleApply = React.useCallback((months: Record<string, boolean>) => {
