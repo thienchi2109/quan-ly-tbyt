@@ -1,4 +1,4 @@
-# Firebase Studio
+# Hệ thống quản lý thiết bị y tế
 
 This is a NextJS starter in Firebase Studio.
 
