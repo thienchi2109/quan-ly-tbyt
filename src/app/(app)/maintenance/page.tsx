@@ -57,16 +57,22 @@ import { AddTasksDialog } from "@/components/add-tasks-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { BulkScheduleDialog } from "@/components/bulk-schedule-dialog"
+import { useMaintenancePlans, useCreateMaintenancePlan, useUpdateMaintenancePlan, useDeleteMaintenancePlan, maintenanceKeys } from "@/hooks/use-cached-maintenance"
+import { useQueryClient } from "@tanstack/react-query"
 
 export default function MaintenancePage() {
   const { toast } = useToast()
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const isMobile = useIsMobile()
-  
-  // State for plans
-  const [plans, setPlans] = React.useState<MaintenancePlan[]>([])
-  const [isLoadingPlans, setIsLoadingPlans] = React.useState(true)
+  const queryClient = useQueryClient()
+
+  // ✅ Use cached hooks for data fetching, keep manual mutations for now
+  const { data: plans = [], isLoading: isLoadingPlans, refetch: refetchPlans } = useMaintenancePlans()
+  // TODO: Migrate to cached mutations later
+  // const createMaintenancePlan = useCreateMaintenancePlan()
+  // const updateMaintenancePlan = useUpdateMaintenancePlan()
+  // const deleteMaintenancePlan = useDeleteMaintenancePlan()
   const [isAddPlanDialogOpen, setIsAddPlanDialogOpen] = React.useState(false)
   const [planSorting, setPlanSorting] = React.useState<SortingState>([])
   const [editingPlan, setEditingPlan] = React.useState<MaintenancePlan | null>(null)
@@ -119,28 +125,7 @@ export default function MaintenancePage() {
     return JSON.stringify(tasks) !== JSON.stringify(draftTasks);
   }, [tasks, draftTasks]);
 
-  const fetchPlans = React.useCallback(async () => {
-    setIsLoadingPlans(true)
-    if (!supabase) {
-      toast({ variant: "destructive", title: "Lỗi", description: "Không thể kết nối đến cơ sở dữ liệu." })
-      setIsLoadingPlans(false)
-      return
-    }
-
-    const { data, error } = await supabase
-      .from("ke_hoach_bao_tri")
-      .select("*")
-      .order("nam", { ascending: false })
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      toast({ variant: "destructive", title: "Lỗi tải kế hoạch", description: error.message })
-      setPlans([])
-    } else {
-      setPlans(data as MaintenancePlan[])
-    }
-    setIsLoadingPlans(false)
-  }, [toast])
+  // ✅ Remove manual fetchPlans - now handled by cached hook
 
   const fetchPlanDetails = React.useCallback(async (plan: MaintenancePlan) => {
     if (!supabase) return;
@@ -226,9 +211,7 @@ export default function MaintenancePage() {
     }
   }, [draftTasks, selectedPlan, hasChanges, getDraftCacheKey]);
 
-  React.useEffect(() => {
-    fetchPlans()
-  }, [fetchPlans])
+  // ✅ Remove useEffect for fetchPlans - data loaded automatically by cached hook
 
   React.useEffect(() => {
     if (selectedPlan) {
@@ -307,7 +290,7 @@ export default function MaintenancePage() {
       toast({ variant: "destructive", title: "Lỗi duyệt kế hoạch", description: error.message, });
     } else {
       toast({ title: "Thành công", description: "Kế hoạch đã được duyệt." });
-      fetchPlans();
+      refetchPlans(); // ✅ Use cached hook refetch
       if (selectedPlan && selectedPlan.id === planToApprove.id) {
         const updatedPlan = { ...selectedPlan, trang_thai: 'Đã duyệt' as const, ngay_phe_duyet: new Date().toISOString() };
         setSelectedPlan(updatedPlan);
@@ -315,7 +298,7 @@ export default function MaintenancePage() {
     }
     setPlanToApprove(null);
     setIsApprovingPlan(false);
-  }, [toast, fetchPlans, selectedPlan]);
+  }, [toast, refetchPlans, selectedPlan]); // ✅ Use refetchPlans
 
 
   const handleDeletePlan = React.useCallback(async () => {
@@ -332,7 +315,7 @@ export default function MaintenancePage() {
     } else {
       toast({ title: "Đã xóa", description: "Kế hoạch đã được xóa thành công." });
       localStorage.removeItem(getDraftCacheKey(planToDelete.id));
-      fetchPlans();
+      refetchPlans(); // ✅ Use cached hook refetch
       if (selectedPlan && selectedPlan.id === planToDelete.id) {
         setSelectedPlan(null);
         setActiveTab("plans");
@@ -341,7 +324,7 @@ export default function MaintenancePage() {
 
     setIsDeletingPlan(false);
     setPlanToDelete(null);
-  }, [planToDelete, toast, fetchPlans, selectedPlan, getDraftCacheKey]);
+  }, [planToDelete, toast, refetchPlans, selectedPlan, getDraftCacheKey]); // ✅ Use refetchPlans
 
   const handleCancelAllChanges = React.useCallback(() => {
     setDraftTasks(tasks);
@@ -1354,12 +1337,12 @@ export default function MaintenancePage() {
       <AddMaintenancePlanDialog
         open={isAddPlanDialogOpen}
         onOpenChange={setIsAddPlanDialogOpen}
-        onSuccess={fetchPlans}
+        onSuccess={refetchPlans} // ✅ Use cached hook refetch
       />
       <EditMaintenancePlanDialog
         open={!!editingPlan}
         onOpenChange={(open) => !open && setEditingPlan(null)}
-        onSuccess={fetchPlans}
+        onSuccess={refetchPlans} // ✅ Use cached hook refetch
         plan={editingPlan}
       />
       {planToApprove && (

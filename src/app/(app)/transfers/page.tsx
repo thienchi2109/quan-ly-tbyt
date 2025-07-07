@@ -16,6 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/contexts/auth-context"
+import { useTransferRequests, useCreateTransferRequest, useUpdateTransferRequest, useApproveTransferRequest, transferKeys } from "@/hooks/use-cached-transfers"
+import { useQueryClient } from "@tanstack/react-query"
 import { AddTransferDialog } from "@/components/add-transfer-dialog"
 import { EditTransferDialog } from "@/components/edit-transfer-dialog"
 import { TransferDetailDialog } from "@/components/transfer-detail-dialog"
@@ -64,8 +66,14 @@ const KANBAN_COLUMNS: { status: TransferStatus; title: string; description: stri
 export default function TransfersPage() {
   const { toast } = useToast()
   const { user } = useAuth()
-  const [isLoading, setIsLoading] = React.useState(true)
-  const [transfers, setTransfers] = React.useState<TransferRequest[]>([])
+  const queryClient = useQueryClient()
+
+  // ✅ Use cached hooks instead of manual state
+  const { data: transfers = [], isLoading, refetch: refetchTransfers } = useTransferRequests()
+  const createTransferRequest = useCreateTransferRequest()
+  const updateTransferRequest = useUpdateTransferRequest()
+  const approveTransferRequest = useApproveTransferRequest()
+
   const [isRefreshing, setIsRefreshing] = React.useState(false)
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
@@ -75,66 +83,13 @@ export default function TransfersPage() {
   const [handoverDialogOpen, setHandoverDialogOpen] = React.useState(false)
   const [handoverTransfer, setHandoverTransfer] = React.useState<TransferRequest | null>(null)
 
-  const fetchTransfers = React.useCallback(async () => {
-    if (!supabase) {
-      toast({
-        variant: "destructive",
-        title: "Lỗi",
-        description: "Không thể kết nối đến cơ sở dữ liệu."
-      })
-      setIsLoading(false)
-      return
-    }
+  // ✅ Remove manual fetchTransfers - now handled by cached hook
 
-    try {
-      const { data, error } = await supabase
-        .from('yeu_cau_luan_chuyen')
-        .select(`
-          *,
-          thiet_bi:thiet_bi_id (
-            id,
-            ma_thiet_bi,
-            ten_thiet_bi,
-            model,
-            serial
-          ),
-          nguoi_yeu_cau:nguoi_yeu_cau_id (
-            id,
-            full_name,
-            username
-          ),
-          nguoi_duyet:nguoi_duyet_id (
-            id,
-            full_name,
-            username
-          )
-        `)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        throw error
-      }
-
-      setTransfers(data as TransferRequest[])
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Lỗi tải danh sách yêu cầu",
-        description: error.message
-      })
-    } finally {
-      setIsLoading(false)
-      setIsRefreshing(false)
-    }
-  }, [toast])
-
-  React.useEffect(() => {
-    fetchTransfers()
-  }, [fetchTransfers])
+  // ✅ Remove useEffect for fetchTransfers - data loaded automatically by cached hook
 
   const handleRefresh = () => {
     setIsRefreshing(true)
-    fetchTransfers()
+    refetchTransfers().finally(() => setIsRefreshing(false)) // ✅ Use cached hook refetch
   }
 
   const getTransfersByStatus = (status: TransferStatus) => {
@@ -198,7 +153,7 @@ export default function TransfersPage() {
         description: "Đã xóa yêu cầu luân chuyển."
       })
 
-      fetchTransfers()
+      refetchTransfers() // ✅ Use cached hook refetch
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -238,7 +193,7 @@ export default function TransfersPage() {
         description: "Đã duyệt yêu cầu luân chuyển."
       })
 
-      fetchTransfers()
+      refetchTransfers() // ✅ Use cached hook refetch
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -277,7 +232,7 @@ export default function TransfersPage() {
         description: "Đã bắt đầu luân chuyển thiết bị."
       })
 
-      fetchTransfers()
+      refetchTransfers() // ✅ Use cached hook refetch
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -317,7 +272,7 @@ export default function TransfersPage() {
         description: "Đã bàn giao thiết bị cho đơn vị bên ngoài."
       })
 
-      fetchTransfers()
+      refetchTransfers() // ✅ Use cached hook refetch
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -358,7 +313,7 @@ export default function TransfersPage() {
         description: "Đã xác nhận hoàn trả thiết bị từ đơn vị bên ngoài."
       })
 
-      fetchTransfers()
+      refetchTransfers() // ✅ Use cached hook refetch
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -470,7 +425,7 @@ export default function TransfersPage() {
           : "Đã xác nhận hoàn trả thiết bị."
       })
 
-      fetchTransfers()
+      refetchTransfers() // ✅ Use cached hook refetch
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -623,13 +578,13 @@ export default function TransfersPage() {
       <AddTransferDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onSuccess={fetchTransfers}
+        onSuccess={refetchTransfers} // ✅ Use cached hook refetch
       />
 
       <EditTransferDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
-        onSuccess={fetchTransfers}
+        onSuccess={refetchTransfers} // ✅ Use cached hook refetch
         transfer={editingTransfer}
       />
 
