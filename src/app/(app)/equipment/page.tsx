@@ -86,7 +86,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { type Equipment } from "@/types/database"
+import { type Equipment } from "@/lib/data"
 import { supabase, supabaseError } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -260,7 +260,7 @@ function DataTableFacetedFilter<TData, TValue>({
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[200px]" align="start">
+      <DropdownMenuContent className="w-[200px] max-h-[300px] overflow-y-auto" align="start">
         <DropdownMenuLabel>{title}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {options.map((option) => {
@@ -319,6 +319,7 @@ export default function EquipmentPage() {
   const [selectedEquipment, setSelectedEquipment] = React.useState<Equipment | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
   const [editingEquipment, setEditingEquipment] = React.useState<Equipment | null>(null)
+  const [currentTab, setCurrentTab] = React.useState<string>("details")
   const isMobile = useIsMobile();
 
   // State for attachments
@@ -332,6 +333,12 @@ export default function EquipmentPage() {
   // State for history
   const [history, setHistory] = React.useState<HistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+
+  // State to preserve pagination during data reload
+  const [preservePageState, setPreservePageState] = React.useState<{
+    pageIndex: number;
+    pageSize: number;
+  } | null>(null);
 
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
     id: false,
@@ -866,6 +873,13 @@ export default function EquipmentPage() {
         setSelectedEquipment(equipmentToHighlight)
         setIsDetailModalOpen(true)
         
+        // Set tab from URL parameter
+        if (tabParam && ['details', 'files', 'history', 'usage'].includes(tabParam)) {
+          setCurrentTab(tabParam)
+        } else {
+          setCurrentTab('details')
+        }
+        
         // Clear URL params after opening modal
         router.replace('/equipment', { scroll: false })
         
@@ -1028,6 +1042,33 @@ export default function EquipmentPage() {
       globalFilter: debouncedSearch,
     },
   })
+  
+  // Restore table state after data reload
+  React.useEffect(() => {
+    if (preservePageState && !isLoading && data.length > 0) {
+      // Add small delay to ensure table is fully rendered
+      setTimeout(() => {
+        table.setPageIndex(preservePageState.pageIndex);
+        table.setPageSize(preservePageState.pageSize);
+        setPreservePageState(null); // Clear after restore
+      }, 150);
+    }
+  }, [preservePageState, isLoading, data.length, table]);
+  
+  // Enhanced onDataMutationSuccess that preserves table state
+  const onDataMutationSuccessWithStatePreservation = React.useCallback(() => {
+    // Save current table state before reload
+    const currentState = table.getState();
+    const stateToSave = {
+      pageIndex: currentState.pagination.pageIndex,
+      pageSize: currentState.pagination.pageSize,
+    };
+    
+    setPreservePageState(stateToSave);
+    
+    // Call original function
+    onDataMutationSuccess();
+  }, [table, onDataMutationSuccess]);
   
   const handleExportData = async () => {
     const rowsToExport = table.getFilteredRowModel().rows;
@@ -1252,12 +1293,12 @@ export default function EquipmentPage() {
        <AddEquipmentDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onSuccess={onDataMutationSuccess}
+        onSuccess={onDataMutationSuccessWithStatePreservation}
       />
       <ImportEquipmentDialog
         open={isImportDialogOpen}
         onOpenChange={setIsImportDialogOpen}
-        onSuccess={onDataMutationSuccess}
+        onSuccess={onDataMutationSuccessWithStatePreservation}
       />
       <EditEquipmentDialog
         open={!!editingEquipment}
@@ -1268,7 +1309,7 @@ export default function EquipmentPage() {
         }}
         onSuccess={() => {
           setEditingEquipment(null);
-          onDataMutationSuccess();
+          onDataMutationSuccessWithStatePreservation();
         }}
         equipment={editingEquipment}
       />
@@ -1281,7 +1322,7 @@ export default function EquipmentPage() {
                         Mã thiết bị: {selectedEquipment.ma_thiet_bi}
                     </DialogDescription>
                 </DialogHeader>
-                <Tabs defaultValue="details" className="flex-grow flex flex-col overflow-hidden">
+                <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow flex flex-col overflow-hidden">
                     <TabsList className="shrink-0">
                         <TabsTrigger value="details">Thông tin chi tiết</TabsTrigger>
                         <TabsTrigger value="files">File đính kèm</TabsTrigger>

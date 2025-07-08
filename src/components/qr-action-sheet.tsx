@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Eye, History, Wrench, Settings, X, Search } from "lucide-react"
+import { Eye, History, Wrench, Settings, X, Search, ClipboardList } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import type { Equipment } from "@/lib/data"
 import { useToast } from "@/hooks/use-toast"
@@ -217,6 +217,24 @@ export function QRActionSheet({ qrCode, onClose, onAction }: QRActionSheetProps)
                 <h4 className="font-semibold">Hành động có thể thực hiện:</h4>
                 
                 <div className="grid gap-3">
+                  <Button 
+                    variant="default" 
+                    className="justify-start h-auto p-4"
+                    onClick={() => handleActionClick('usage-log')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-foreground">
+                        <ClipboardList className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <div className="font-semibold">Ghi nhật ký sử dụng thiết bị</div>
+                        <div className="text-sm text-primary-foreground/80">
+                          Theo dõi và ghi nhận quá trình sử dụng thiết bị
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+
                   <Button 
                     variant="outline" 
                     className="justify-start h-auto p-4"

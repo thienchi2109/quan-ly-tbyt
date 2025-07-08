@@ -72,6 +72,7 @@ export default function QRScannerPage() {
     toast({
       title: "Quét thành công!",
       description: `Đã quét mã: ${result}`,
+      duration: 3000,
     })
   }
 
@@ -84,6 +85,12 @@ export default function QRScannerPage() {
 
     try {
       switch (action) {
+        case 'usage-log':
+          if (equipment) {
+            router.push(`/equipment?highlight=${equipment.id}&tab=usage`)
+          }
+          break
+          
         case 'view-details':
           if (equipment) {
             router.push(`/equipment?highlight=${equipment.id}`)
@@ -196,9 +203,19 @@ export default function QRScannerPage() {
                   </Button>
                 </div>
 
-                <div className="bg-muted/50 rounded-lg p-6">
+                <div className="space-y-6 mobile-card-spacing">
                   <h3 className="heading-responsive-h3 font-semibold mb-4">Chức năng có sẵn</h3>
                   <div className="grid gap-4 text-left">
+                    <div className="flex items-start gap-3">
+                      <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                      <div>
+                        <strong>Ghi nhật ký sử dụng thiết bị:</strong>
+                        <p className="caption-responsive">
+                          Theo dõi và ghi nhận quá trình sử dụng thiết bị trực tiếp
+                        </p>
+                      </div>
+                    </div>
+                    
                     <div className="flex items-start gap-3">
                       <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
                       <div>
