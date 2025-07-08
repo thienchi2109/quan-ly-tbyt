@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
+import { useRealtimeSubscription } from './use-realtime-subscription'
 
 // Query keys for caching
 export const maintenanceKeys = {
@@ -21,6 +22,45 @@ export function useMaintenancePlans(filters?: {
   nam?: number
   trang_thai?: string
 }) {
+  // Setup realtime subscription for maintenance plans changes
+  useRealtimeSubscription({
+    table: 'ke_hoach_bao_tri',
+    queryKeys: [
+      maintenanceKeys.all,
+      maintenanceKeys.plans(),
+    ],
+    showNotifications: true,
+    onInsert: (payload) => {
+      console.log('🆕 [Maintenance Plans] New maintenance plan:', payload.new)
+    },
+    onUpdate: (payload) => {
+      console.log('📝 [Maintenance Plans] Maintenance plan updated:', payload.new)
+    },
+    onDelete: (payload) => {
+      console.log('🗑️ [Maintenance Plans] Maintenance plan deleted:', payload.old)
+    }
+  })
+
+  // Setup realtime subscription for maintenance tasks
+  useRealtimeSubscription({
+    table: 'cong_viec_bao_tri',
+    queryKeys: [
+      maintenanceKeys.all,
+      maintenanceKeys.schedules(),
+      maintenanceKeys.lists(),
+    ],
+    showNotifications: true,
+    onInsert: (payload) => {
+      console.log('🆕 [Maintenance Tasks] New maintenance task:', payload.new)
+    },
+    onUpdate: (payload) => {
+      console.log('📝 [Maintenance Tasks] Maintenance task updated:', payload.new)
+    },
+    onDelete: (payload) => {
+      console.log('🗑️ [Maintenance Tasks] Maintenance task deleted:', payload.old)
+    }
+  })
+
   return useQuery({
     queryKey: maintenanceKeys.plan(filters || {}),
     queryFn: async () => {
@@ -50,8 +90,8 @@ export function useMaintenancePlans(filters?: {
       if (error) throw error
       return data
     },
-    staleTime: 3 * 60 * 1000, // 3 minutes - maintenance plans don't change frequently
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 15 * 60 * 1000, // Tăng lên 15 phút vì có realtime
+    gcTime: 45 * 60 * 1000, // Tăng lên 45 phút vì có realtime
   })
 }
 
@@ -101,8 +141,8 @@ export function useMaintenanceSchedules(filters?: {
       if (error) throw error
       return data
     },
-    staleTime: 3 * 60 * 1000, // 3 minutes - maintenance schedules don't change frequently
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 15 * 60 * 1000, // Tăng lên 15 phút vì có realtime
+    gcTime: 45 * 60 * 1000, // Tăng lên 45 phút vì có realtime
   })
 }
 
@@ -143,8 +183,8 @@ export function useMaintenanceHistory(filters?: {
       if (error) throw error
       return data
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes - history data changes less frequently
-    gcTime: 20 * 60 * 1000, // 20 minutes
+    staleTime: 20 * 60 * 1000, // Tăng lên 20 phút vì có realtime
+    gcTime: 60 * 60 * 1000, // Tăng lên 60 phút vì có realtime
   })
 }
 
@@ -172,7 +212,7 @@ export function useMaintenanceDetail(id: string | null) {
       return data
     },
     enabled: !!id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 15 * 60 * 1000, // Tăng lên 15 phút vì có realtime
   })
 }
 
@@ -196,8 +236,8 @@ export function useCreateMaintenancePlan() {
       return newPlan
     },
     onSuccess: () => {
-      // Invalidate all maintenance plan queries
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.plans() })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
 
       toast({
         title: "Thành công",
@@ -235,8 +275,8 @@ export function useUpdateMaintenancePlan() {
       return data
     },
     onSuccess: () => {
-      // Invalidate maintenance plan queries
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.plans() })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
 
       toast({
         title: "Thành công",
@@ -271,8 +311,8 @@ export function useDeleteMaintenancePlan() {
       if (error) throw error
     },
     onSuccess: () => {
-      // Invalidate all maintenance plan queries
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.plans() })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
 
       toast({
         title: "Thành công",
@@ -309,8 +349,8 @@ export function useCreateMaintenanceSchedule() {
       return newSchedule
     },
     onSuccess: () => {
-      // Invalidate all maintenance queries
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",
@@ -348,10 +388,8 @@ export function useUpdateMaintenanceSchedule() {
       return data
     },
     onSuccess: (data) => {
-      // Invalidate maintenance queries
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.schedules() })
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() })
-      // Update specific maintenance detail cache
+      // Với realtime, cache sẽ được tự động invalidate
+      // Chỉ cần update optimistic cache
       queryClient.setQueryData(maintenanceKeys.detail(data.id), data)
       
       toast({
@@ -403,8 +441,8 @@ export function useCompleteMaintenance() {
       return data
     },
     onSuccess: () => {
-      // Invalidate all maintenance queries
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",
@@ -439,8 +477,8 @@ export function useDeleteMaintenanceSchedule() {
       if (error) throw error
     },
     onSuccess: () => {
-      // Invalidate all maintenance queries
-      queryClient.invalidateQueries({ queryKey: maintenanceKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",

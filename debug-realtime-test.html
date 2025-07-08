@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Realtime Debug Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Realtime Debug Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+    
+    <script>
+        // Replace with your actual Supabase credentials
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL'
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            realtime: {
+                params: {
+                    eventsPerSecond: 10,
+                },
+            },
+        })
+        
+        const statusDiv = document.getElementById('status')
+        const messagesDiv = document.getElementById('messages')
+        
+        function addMessage(msg) {
+            const div = document.createElement('div')
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`
+            messagesDiv.appendChild(div)
+            console.log(msg)
+        }
+        
+        // Test realtime subscription
+        addMessage('🔄 Starting realtime test...')
+        
+        const channel = supabase
+            .channel('test-thiet-bi')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'thiet_bi'
+                },
+                (payload) => {
+                    addMessage(`🎯 REALTIME EVENT: ${payload.eventType}`)
+                    addMessage(`📄 Data: ${JSON.stringify(payload, null, 2)}`)
+                    statusDiv.innerHTML = '✅ Realtime Working!'
+                    statusDiv.style.color = 'green'
+                }
+            )
+            .subscribe((status) => {
+                addMessage(`📡 Subscription status: ${status}`)
+                if (status === 'SUBSCRIBED') {
+                    statusDiv.innerHTML = '✅ Subscribed - Waiting for changes...'
+                    statusDiv.style.color = 'blue'
+                    addMessage('✅ Successfully subscribed to thiet_bi table')
+                    addMessage('🧪 Now try updating equipment in your app!')
+                } else if (status === 'CHANNEL_ERROR') {
+                    statusDiv.innerHTML = '❌ Subscription Error'
+                    statusDiv.style.color = 'red'
+                    addMessage('❌ Failed to subscribe')
+                }
+            })
+    </script>
+</body>
+</html> 

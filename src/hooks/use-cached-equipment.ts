@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
+import { useRealtimeSubscription } from './use-realtime-subscription'
 
 // Query keys for caching
 export const equipmentKeys = {
@@ -18,6 +19,25 @@ export function useEquipment(filters?: {
   trang_thai?: string
   loai_thiet_bi?: string
 }) {
+  // Setup realtime subscription for equipment changes
+  useRealtimeSubscription({
+    table: 'thiet_bi',
+    queryKeys: [
+      equipmentKeys.all,
+      equipmentKeys.lists(),
+    ],
+    showNotifications: true,
+    onInsert: (payload) => {
+      console.log('🆕 [Equipment] New equipment added:', payload.new)
+    },
+    onUpdate: (payload) => {
+      console.log('📝 [Equipment] Equipment updated:', payload.new)
+    },
+    onDelete: (payload) => {
+      console.log('🗑️ [Equipment] Equipment deleted:', payload.old)
+    }
+  })
+
   return useQuery({
     queryKey: equipmentKeys.list(filters || {}),
     queryFn: async () => {
@@ -52,13 +72,29 @@ export function useEquipment(filters?: {
       if (error) throw error
       return data
     },
-    staleTime: 3 * 60 * 1000, // 3 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000, // Tăng lên 10 phút vì có realtime
+    gcTime: 30 * 60 * 1000, // Tăng lên 30 phút vì có realtime
   })
 }
 
 // Fetch single equipment details
 export function useEquipmentDetail(id: string | null) {
+  // Setup realtime subscription for specific equipment details
+  useRealtimeSubscription({
+    table: 'thiet_bi',
+    queryKeys: [
+      equipmentKeys.detail(id || ''),
+      equipmentKeys.all
+    ],
+    filter: id ? `id=eq.${id}` : undefined,
+    enabled: !!id,
+    onUpdate: (payload) => {
+      if (payload.new.id === id) {
+        console.log('📝 [Equipment Detail] Equipment detail updated:', payload.new)
+      }
+    }
+  })
+
   return useQuery({
     queryKey: equipmentKeys.detail(id || ''),
     queryFn: async () => {
@@ -86,7 +122,7 @@ export function useEquipmentDetail(id: string | null) {
       return data
     },
     enabled: !!id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 15 * 60 * 1000, // Tăng lên 15 phút vì có realtime
   })
 }
 
@@ -111,9 +147,8 @@ export function useUpdateEquipment() {
       return data
     },
     onSuccess: (data) => {
-      // Invalidate and refetch equipment lists
-      queryClient.invalidateQueries({ queryKey: equipmentKeys.lists() })
-      // Update specific equipment detail cache
+      // Với realtime, cache sẽ được tự động invalidate
+      // Chỉ cần update optimistic cache
       queryClient.setQueryData(equipmentKeys.detail(data.id), data)
       
       toast({
@@ -151,8 +186,8 @@ export function useCreateEquipment() {
       return newEquipment
     },
     onSuccess: () => {
-      // Invalidate all equipment queries to refetch data
-      queryClient.invalidateQueries({ queryKey: equipmentKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",
@@ -187,8 +222,8 @@ export function useDeleteEquipment() {
       if (error) throw error
     },
     onSuccess: () => {
-      // Invalidate all equipment queries
-      queryClient.invalidateQueries({ queryKey: equipmentKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 import { type UsageLog } from '@/types/database'
+import { useRealtimeSubscription } from './use-realtime-subscription'
 
 // Query keys for caching
 export const usageLogKeys = {
@@ -16,6 +17,27 @@ export const usageLogKeys = {
 
 // Fetch usage logs for specific equipment
 export function useEquipmentUsageLogs(equipmentId: string | null) {
+  // Setup realtime subscription for usage logs changes
+  useRealtimeSubscription({
+    table: 'nhat_ky_su_dung',
+    queryKeys: [
+      usageLogKeys.all,
+      usageLogKeys.equipment(equipmentId || ''),
+      usageLogKeys.active(),
+    ],
+    showNotifications: false, // Không hiển thị notification cho usage logs
+    onInsert: (payload) => {
+      console.log('🆕 [Usage Logs] New usage session:', payload.new)
+    },
+    onUpdate: (payload) => {
+      console.log('📝 [Usage Logs] Usage session updated:', payload.new)
+    },
+    onDelete: (payload) => {
+      console.log('🗑️ [Usage Logs] Usage session deleted:', payload.old)
+    },
+    enabled: !!equipmentId
+  })
+
   return useQuery({
     queryKey: usageLogKeys.equipment(equipmentId || ''),
     queryFn: async () => {
@@ -37,7 +59,7 @@ export function useEquipmentUsageLogs(equipmentId: string | null) {
       return data as UsageLog[]
     },
     enabled: !!equipmentId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 5 * 60 * 1000, // Tăng lên 5 phút vì có realtime
   })
 }
 
@@ -63,7 +85,7 @@ export function useActiveUsageLogs() {
       if (error) throw error
       return data as UsageLog[]
     },
-    staleTime: 10 * 1000, // 10 seconds for active sessions
+    staleTime: 2 * 60 * 1000, // Tăng lên 2 phút vì có realtime
   })
 }
 
@@ -113,9 +135,8 @@ export function useStartUsageSession() {
       return result
     },
     onSuccess: (data) => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: usageLogKeys.active() })
-      queryClient.invalidateQueries({ queryKey: usageLogKeys.equipment(data.thiet_bi_id.toString()) })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",
@@ -163,9 +184,8 @@ export function useEndUsageSession() {
       return result
     },
     onSuccess: (data) => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: usageLogKeys.active() })
-      queryClient.invalidateQueries({ queryKey: usageLogKeys.equipment(data.thiet_bi_id.toString()) })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",
@@ -200,8 +220,8 @@ export function useDeleteUsageLog() {
       if (error) throw error
     },
     onSuccess: () => {
-      // Invalidate all usage log queries
-      queryClient.invalidateQueries({ queryKey: usageLogKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",

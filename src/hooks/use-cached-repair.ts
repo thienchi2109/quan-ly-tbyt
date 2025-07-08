@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
+import { useRealtimeSubscription } from './use-realtime-subscription'
 
 // Query keys for caching
 export const repairKeys = {
@@ -20,6 +21,25 @@ export function useRepairRequests(filters?: {
   dateFrom?: string
   dateTo?: string
 }) {
+  // Setup realtime subscription for repair changes
+  useRealtimeSubscription({
+    table: 'yeu_cau_sua_chua',
+    queryKeys: [
+      repairKeys.all,
+      repairKeys.lists(),
+    ],
+    showNotifications: true,
+    onInsert: (payload) => {
+      console.log('🆕 [Repair] New repair request:', payload.new)
+    },
+    onUpdate: (payload) => {
+      console.log('📝 [Repair] Repair request updated:', payload.new)
+    },
+    onDelete: (payload) => {
+      console.log('🗑️ [Repair] Repair request deleted:', payload.old)
+    }
+  })
+
   return useQuery({
     queryKey: repairKeys.list(filters || {}),
     queryFn: async () => {
@@ -58,8 +78,8 @@ export function useRepairRequests(filters?: {
       if (error) throw error
       return data
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000, // Tăng lên 10 phút vì có realtime
+    gcTime: 30 * 60 * 1000, // Tăng lên 30 phút vì có realtime
   })
 }
 
@@ -88,7 +108,7 @@ export function useRepairRequestDetail(id: string | null) {
       return data
     },
     enabled: !!id,
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 15 * 60 * 1000, // Tăng lên 15 phút vì có realtime
   })
 }
 
@@ -112,8 +132,8 @@ export function useCreateRepairRequest() {
       return newRepair
     },
     onSuccess: () => {
-      // Invalidate all repair queries
-      queryClient.invalidateQueries({ queryKey: repairKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",
@@ -151,9 +171,8 @@ export function useUpdateRepairRequest() {
       return data
     },
     onSuccess: (data) => {
-      // Invalidate repair queries
-      queryClient.invalidateQueries({ queryKey: repairKeys.lists() })
-      // Update specific repair detail cache
+      // Với realtime, cache sẽ được tự động invalidate
+      // Chỉ cần update optimistic cache
       queryClient.setQueryData(repairKeys.detail(data.id), data)
       
       toast({
@@ -196,8 +215,8 @@ export function useAssignRepairRequest() {
       return data
     },
     onSuccess: () => {
-      // Invalidate repair queries
-      queryClient.invalidateQueries({ queryKey: repairKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",
@@ -248,8 +267,8 @@ export function useCompleteRepairRequest() {
       return data
     },
     onSuccess: () => {
-      // Invalidate repair queries
-      queryClient.invalidateQueries({ queryKey: repairKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",
@@ -284,8 +303,8 @@ export function useDeleteRepairRequest() {
       if (error) throw error
     },
     onSuccess: () => {
-      // Invalidate all repair queries
-      queryClient.invalidateQueries({ queryKey: repairKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",

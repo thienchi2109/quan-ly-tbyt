@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
+import { useRealtimeSubscription } from './use-realtime-subscription'
 
 // Query keys for caching
 export const transferKeys = {
@@ -20,6 +21,25 @@ export function useTransferRequests(filters?: {
   dateFrom?: string
   dateTo?: string
 }) {
+  // Setup realtime subscription for transfer changes
+  useRealtimeSubscription({
+    table: 'yeu_cau_luan_chuyen',
+    queryKeys: [
+      transferKeys.all,
+      transferKeys.lists(),
+    ],
+    showNotifications: true,
+    onInsert: (payload) => {
+      console.log('🆕 [Transfers] New transfer request:', payload.new)
+    },
+    onUpdate: (payload) => {
+      console.log('📝 [Transfers] Transfer request updated:', payload.new)
+    },
+    onDelete: (payload) => {
+      console.log('🗑️ [Transfers] Transfer request deleted:', payload.old)
+    }
+  })
+
   return useQuery({
     queryKey: transferKeys.list(filters || {}),
     queryFn: async () => {
@@ -60,8 +80,8 @@ export function useTransferRequests(filters?: {
       if (error) throw error
       return data
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 8 * 60 * 1000, // 8 minutes
+    staleTime: 10 * 60 * 1000, // Tăng lên 10 phút vì có realtime
+    gcTime: 30 * 60 * 1000, // Tăng lên 30 phút vì có realtime
   })
 }
 
@@ -92,7 +112,7 @@ export function useTransferRequestDetail(id: string | null) {
       return data
     },
     enabled: !!id,
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 15 * 60 * 1000, // Tăng lên 15 phút vì có realtime
   })
 }
 
@@ -116,8 +136,8 @@ export function useCreateTransferRequest() {
       return newTransfer
     },
     onSuccess: () => {
-      // Invalidate all transfer queries to refetch data
-      queryClient.invalidateQueries({ queryKey: transferKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",
@@ -155,9 +175,8 @@ export function useUpdateTransferRequest() {
       return data
     },
     onSuccess: (data) => {
-      // Invalidate and refetch transfer lists
-      queryClient.invalidateQueries({ queryKey: transferKeys.lists() })
-      // Update specific transfer detail cache
+      // Với realtime, cache sẽ được tự động invalidate
+      // Chỉ cần update optimistic cache
       queryClient.setQueryData(transferKeys.detail(data.id), data)
       
       toast({
@@ -201,8 +220,8 @@ export function useApproveTransferRequest() {
       return data
     },
     onSuccess: (data) => {
-      // Invalidate transfer queries
-      queryClient.invalidateQueries({ queryKey: transferKeys.all })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",
@@ -244,9 +263,8 @@ export function useCompleteTransferRequest() {
       return data
     },
     onSuccess: (data) => {
-      // Invalidate transfer and equipment queries
-      queryClient.invalidateQueries({ queryKey: transferKeys.all })
-      queryClient.invalidateQueries({ queryKey: ['equipment'] })
+      // Với realtime, cache sẽ được tự động invalidate
+      // Không cần manual invalidation nữa
       
       toast({
         title: "Thành công",

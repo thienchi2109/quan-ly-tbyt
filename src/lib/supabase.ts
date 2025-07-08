@@ -10,7 +10,23 @@ if (!supabaseUrl || !supabaseAnonKey) {
   supabaseError = "Vui lòng cấu hình biến môi trường Supabase trong file .env.local (xem hướng dẫn ở các bước trước).";
 } else {
     try {
-        supabase = createClient(supabaseUrl, supabaseAnonKey)
+        supabase = createClient(supabaseUrl, supabaseAnonKey, {
+          realtime: {
+            params: {
+              eventsPerSecond: 10,
+            },
+          },
+          // Tối ưu hóa cho realtime subscriptions
+          global: {
+            headers: {
+              'x-my-custom-header': 'QLTBYT-CDC-CANTHO',
+            },
+          },
+          // Cấu hình database schema cho realtime
+          db: {
+            schema: 'public',
+          },
+        })
     } catch (e: any) {
         supabaseError = "Lỗi khởi tạo Supabase client: " + e.message;
     }
