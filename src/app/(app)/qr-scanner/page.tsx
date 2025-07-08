@@ -72,6 +72,7 @@ export default function QRScannerPage() {
     toast({
       title: "Quét thành công!",
       description: `Đã quét mã: ${result}`,
+      duration: 3000,
     })
   }
 

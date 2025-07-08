@@ -86,7 +86,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { type Equipment } from "@/types/database"
+import { type Equipment } from "@/lib/data"
 import { supabase, supabaseError } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -260,7 +260,7 @@ function DataTableFacetedFilter<TData, TValue>({
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[200px]" align="start">
+      <DropdownMenuContent className="w-[200px] max-h-[300px] overflow-y-auto" align="start">
         <DropdownMenuLabel>{title}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {options.map((option) => {
