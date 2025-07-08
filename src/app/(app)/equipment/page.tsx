@@ -319,6 +319,7 @@ export default function EquipmentPage() {
   const [selectedEquipment, setSelectedEquipment] = React.useState<Equipment | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = React.useState(false);
   const [editingEquipment, setEditingEquipment] = React.useState<Equipment | null>(null)
+  const [currentTab, setCurrentTab] = React.useState<string>("details")
   const isMobile = useIsMobile();
 
   // State for attachments
@@ -866,6 +867,13 @@ export default function EquipmentPage() {
         setSelectedEquipment(equipmentToHighlight)
         setIsDetailModalOpen(true)
         
+        // Set tab from URL parameter
+        if (tabParam && ['details', 'files', 'history', 'usage'].includes(tabParam)) {
+          setCurrentTab(tabParam)
+        } else {
+          setCurrentTab('details')
+        }
+        
         // Clear URL params after opening modal
         router.replace('/equipment', { scroll: false })
         
@@ -1281,7 +1289,7 @@ export default function EquipmentPage() {
                         Mã thiết bị: {selectedEquipment.ma_thiet_bi}
                     </DialogDescription>
                 </DialogHeader>
-                <Tabs defaultValue="details" className="flex-grow flex flex-col overflow-hidden">
+                <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow flex flex-col overflow-hidden">
                     <TabsList className="shrink-0">
                         <TabsTrigger value="details">Thông tin chi tiết</TabsTrigger>
                         <TabsTrigger value="files">File đính kèm</TabsTrigger>
