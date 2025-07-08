@@ -334,52 +334,11 @@ export default function EquipmentPage() {
   const [history, setHistory] = React.useState<HistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
 
-  // State to preserve table state during data reload
-  const [pendingTableState, setPendingTableState] = React.useState<{
-    pagination?: { pageIndex: number; pageSize: number };
-    columnFilters?: ColumnFiltersState;
-    searchTerm?: string;
-    sorting?: SortingState;
+  // State to preserve pagination during data reload
+  const [preservePageState, setPreservePageState] = React.useState<{
+    pageIndex: number;
+    pageSize: number;
   } | null>(null);
-
-  // Function to save current table state
-  const saveTableState = React.useCallback(() => {
-    // Don't depend on table object, use current state values directly
-    return {
-      pagination: {
-        pageIndex: 0, // Will be updated later by table reference
-        pageSize: 10, // Will be updated later by table reference
-      },
-      columnFilters: columnFilters,
-      searchTerm: searchTerm,
-      sorting: sorting,
-    };
-  }, [columnFilters, searchTerm, sorting]);
-
-  // Function to restore table state
-  const restoreTableState = React.useCallback((stateToRestore: any) => {
-    if (!stateToRestore) return;
-    
-    // Restore with a small delay to ensure data is loaded
-    setTimeout(() => {
-      if (stateToRestore.pagination) {
-        table?.setPageIndex(stateToRestore.pagination.pageIndex || 0);
-        table?.setPageSize(stateToRestore.pagination.pageSize || 10);
-      }
-      if (stateToRestore.columnFilters) {
-        setColumnFilters(stateToRestore.columnFilters);
-      }
-      if (stateToRestore.searchTerm !== undefined) {
-        setSearchTerm(stateToRestore.searchTerm);
-      }
-      if (stateToRestore.sorting) {
-        setSorting(stateToRestore.sorting);
-      }
-      
-      // Clear pending state after restoration
-      setPendingTableState(null);
-    }, 100);
-  }, [table]);
 
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
     id: false,
@@ -1084,6 +1043,28 @@ export default function EquipmentPage() {
     },
   })
   
+  // Restore table state after data reload
+  React.useEffect(() => {
+    if (preservePageState && !isLoading && data.length > 0) {
+      table.setPageIndex(preservePageState.pageIndex);
+      table.setPageSize(preservePageState.pageSize);
+      setPreservePageState(null); // Clear after restore
+    }
+  }, [preservePageState, isLoading, data.length, table]);
+  
+  // Enhanced onDataMutationSuccess that preserves table state
+  const onDataMutationSuccessWithStatePreservation = React.useCallback(() => {
+    // Save current table state before reload
+    const currentState = table.getState();
+    setPreservePageState({
+      pageIndex: currentState.pagination.pageIndex,
+      pageSize: currentState.pagination.pageSize,
+    });
+    
+    // Call original function
+    onDataMutationSuccess();
+  }, [table, onDataMutationSuccess]);
+  
   const handleExportData = async () => {
     const rowsToExport = table.getFilteredRowModel().rows;
     if (rowsToExport.length === 0) {
@@ -1307,12 +1288,12 @@ export default function EquipmentPage() {
        <AddEquipmentDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onSuccess={onDataMutationSuccess}
+        onSuccess={onDataMutationSuccessWithStatePreservation}
       />
       <ImportEquipmentDialog
         open={isImportDialogOpen}
         onOpenChange={setIsImportDialogOpen}
-        onSuccess={onDataMutationSuccess}
+        onSuccess={onDataMutationSuccessWithStatePreservation}
       />
       <EditEquipmentDialog
         open={!!editingEquipment}
@@ -1323,7 +1304,7 @@ export default function EquipmentPage() {
         }}
         onSuccess={() => {
           setEditingEquipment(null);
-          onDataMutationSuccess();
+          onDataMutationSuccessWithStatePreservation();
         }}
         equipment={editingEquipment}
       />
