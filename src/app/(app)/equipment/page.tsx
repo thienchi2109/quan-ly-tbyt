@@ -1046,13 +1046,10 @@ export default function EquipmentPage() {
   // Restore table state after data reload
   React.useEffect(() => {
     if (preservePageState && !isLoading && data.length > 0) {
-      console.log('🔄 Restoring table state:', preservePageState);
-      
       // Add small delay to ensure table is fully rendered
       setTimeout(() => {
         table.setPageIndex(preservePageState.pageIndex);
         table.setPageSize(preservePageState.pageSize);
-        console.log('✅ Table state restored to page:', preservePageState.pageIndex + 1);
         setPreservePageState(null); // Clear after restore
       }, 150);
     }
@@ -1067,7 +1064,6 @@ export default function EquipmentPage() {
       pageSize: currentState.pagination.pageSize,
     };
     
-    console.log('💾 Saving table state before reload:', stateToSave);
     setPreservePageState(stateToSave);
     
     // Call original function
