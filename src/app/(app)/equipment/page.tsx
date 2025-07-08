@@ -1046,9 +1046,15 @@ export default function EquipmentPage() {
   // Restore table state after data reload
   React.useEffect(() => {
     if (preservePageState && !isLoading && data.length > 0) {
-      table.setPageIndex(preservePageState.pageIndex);
-      table.setPageSize(preservePageState.pageSize);
-      setPreservePageState(null); // Clear after restore
+      console.log('🔄 Restoring table state:', preservePageState);
+      
+      // Add small delay to ensure table is fully rendered
+      setTimeout(() => {
+        table.setPageIndex(preservePageState.pageIndex);
+        table.setPageSize(preservePageState.pageSize);
+        console.log('✅ Table state restored to page:', preservePageState.pageIndex + 1);
+        setPreservePageState(null); // Clear after restore
+      }, 150);
     }
   }, [preservePageState, isLoading, data.length, table]);
   
@@ -1056,10 +1062,13 @@ export default function EquipmentPage() {
   const onDataMutationSuccessWithStatePreservation = React.useCallback(() => {
     // Save current table state before reload
     const currentState = table.getState();
-    setPreservePageState({
+    const stateToSave = {
       pageIndex: currentState.pagination.pageIndex,
       pageSize: currentState.pagination.pageSize,
-    });
+    };
+    
+    console.log('💾 Saving table state before reload:', stateToSave);
+    setPreservePageState(stateToSave);
     
     // Call original function
     onDataMutationSuccess();
