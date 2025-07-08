@@ -90,7 +90,7 @@ export function TransferDetailDialog({ open, onOpenChange, transfer }: TransferD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="h-5 w-5" />
@@ -101,7 +101,7 @@ export function TransferDetailDialog({ open, onOpenChange, transfer }: TransferD
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-grow">
+        <ScrollArea className="max-h-[calc(90vh-120px)] mt-4">
           <div className="space-y-6 pr-4">
             {/* Basic Information */}
             <div className="space-y-4">
@@ -344,4 +344,5 @@ export function TransferDetailDialog({ open, onOpenChange, transfer }: TransferD
       </DialogContent>
     </Dialog>
   )
-} 
+}
+ 

@@ -61,11 +61,12 @@ export function useInventoryData(
       const toDate = format(dateRange.to, 'yyyy-MM-dd')
 
       // Fetch imported equipment (from manual input and excel import)
+      // Use created_at to track when equipment records were added to the system
       let equipmentQuery = supabase
         .from('thiet_bi')
         .select('*')
-        .gte('ngay_nhap', fromDate)
-        .lte('ngay_nhap', toDate)
+        .gte('created_at', fromDate)
+        .lte('created_at', toDate)
 
       if (selectedDepartment !== 'all') {
         equipmentQuery = equipmentQuery.eq('khoa_phong_quan_ly', selectedDepartment)
@@ -119,21 +120,21 @@ export function useInventoryData(
 
       if (liquidationError) throw liquidationError
 
-      // Process imported equipment
+      // Process imported equipment (filtering already done in query)
       const importedItems: InventoryItem[] = (importedEquipment || []).map(item => ({
-        id: item.id,
-        ma_thiet_bi: item.ma_thiet_bi,
-        ten_thiet_bi: item.ten_thiet_bi,
-        model: item.model,
-        serial: item.serial,
-        khoa_phong_quan_ly: item.khoa_phong_quan_ly,
-        ngay_nhap: item.ngay_nhap,
-        created_at: item.created_at || item.ngay_nhap,
-        type: 'import' as const,
-        source: 'manual' as const, // We'll enhance this later to detect excel imports
-        quantity: 1,
-        value: item.gia_goc
-      }))
+          id: item.id,
+          ma_thiet_bi: item.ma_thiet_bi,
+          ten_thiet_bi: item.ten_thiet_bi,
+          model: item.model,
+          serial: item.serial,
+          khoa_phong_quan_ly: item.khoa_phong_quan_ly,
+          ngay_nhap: item.created_at, // Use created_at as the import date for reports
+          created_at: item.created_at,
+          type: 'import' as const,
+          source: 'manual' as const, // We'll enhance this later to detect excel imports
+          quantity: 1,
+          value: item.gia_goc
+        }))
 
       // Process exported equipment from transfers
       const exportedFromTransfers: InventoryItem[] = (transferredEquipment || [])

@@ -50,6 +50,8 @@ import { useAuth } from "@/contexts/auth-context"
 import { AddUserDialog } from "@/components/add-user-dialog"
 import { EditUserDialog } from "@/components/edit-user-dialog"
 import { USER_ROLES, type User } from "@/types/database"
+import { Input } from "@/components/ui/input"
+import { useSearchDebounce } from "@/hooks/use-debounce"
 
 export default function UsersPage() {
   const { toast } = useToast()
@@ -63,6 +65,8 @@ export default function UsersPage() {
     pageIndex: 0,
     pageSize: 10,
   })
+  const [globalFilter, setGlobalFilter] = React.useState('')
+  const debouncedSearch = useSearchDebounce(globalFilter)
 
   // State for dialogs
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
@@ -282,9 +286,11 @@ export default function UsersPage() {
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       pagination,
+      globalFilter: debouncedSearch,
     },
   })
 
@@ -353,19 +359,29 @@ export default function UsersPage() {
       </AlertDialog>
 
       <Card>
-        <CardHeader className="flex flex-row items-center">
-          <div className="grid gap-2">
-            <CardTitle>Quản lý Người dùng</CardTitle>
-            <CardDescription>
-              Tạo, chỉnh sửa và xóa tài khoản người dùng. Chỉ quản trị viên mới có quyền truy cập.
-            </CardDescription>
+        <CardHeader>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            <div className="grid gap-2">
+              <CardTitle>Quản lý Người dùng</CardTitle>
+              <CardDescription>
+                Tạo, chỉnh sửa và xóa tài khoản người dùng. Chỉ quản trị viên mới có quyền truy cập.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2 md:ml-auto">
+              <Input
+                placeholder="Tìm kiếm người dùng..."
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                className="h-8 w-full md:w-64"
+              />
+              <Button size="sm" className="h-8 gap-1" onClick={() => setIsAddDialogOpen(true)}>
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  Thêm người dùng
+                </span>
+              </Button>
+            </div>
           </div>
-          <Button size="sm" className="h-8 gap-1 ml-auto" onClick={() => setIsAddDialogOpen(true)}>
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Thêm người dùng
-            </span>
-          </Button>
         </CardHeader>
         <CardContent>
           {isMobile ? (
@@ -385,7 +401,7 @@ export default function UsersPage() {
                 ))
               ) : (
                 <div className="text-center text-muted-foreground py-8">
-                  Chưa có người dùng nào.
+                  Không tìm thấy người dùng nào.
                 </div>
               )}
             </div>
@@ -430,7 +446,7 @@ export default function UsersPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={columns.length} className="h-24 text-center">
-                        Chưa có người dùng nào.
+                        Không tìm thấy người dùng nào.
                       </TableCell>
                     </TableRow>
                   )}

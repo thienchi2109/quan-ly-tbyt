@@ -631,6 +631,10 @@ export default function EquipmentPage() {
                       <label class="text-base font-semibold w-40 shrink-0">Ngày hết hạn:</label>
                       <div class="form-input-line"></div>
                   </div>
+                  <div class="flex items-baseline">
+                      <label class="text-base font-semibold w-40 shrink-0">Tình trạng hiện tại:</label>
+                      <div class="form-input-line font-medium">${formatValue(equipment.tinh_trang_hien_tai)}</div>
+                  </div>
               </main>
               <div class="mt-4 flex items-center justify-between gap-4 border-t-2 border-gray-300 pt-3">
                   <div class="flex flex-col items-center">
