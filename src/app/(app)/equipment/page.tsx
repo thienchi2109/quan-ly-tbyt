@@ -334,6 +334,53 @@ export default function EquipmentPage() {
   const [history, setHistory] = React.useState<HistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
 
+  // State to preserve table state during data reload
+  const [pendingTableState, setPendingTableState] = React.useState<{
+    pagination?: { pageIndex: number; pageSize: number };
+    columnFilters?: ColumnFiltersState;
+    searchTerm?: string;
+    sorting?: SortingState;
+  } | null>(null);
+
+  // Function to save current table state
+  const saveTableState = React.useCallback(() => {
+    // Don't depend on table object, use current state values directly
+    return {
+      pagination: {
+        pageIndex: 0, // Will be updated later by table reference
+        pageSize: 10, // Will be updated later by table reference
+      },
+      columnFilters: columnFilters,
+      searchTerm: searchTerm,
+      sorting: sorting,
+    };
+  }, [columnFilters, searchTerm, sorting]);
+
+  // Function to restore table state
+  const restoreTableState = React.useCallback((stateToRestore: any) => {
+    if (!stateToRestore) return;
+    
+    // Restore with a small delay to ensure data is loaded
+    setTimeout(() => {
+      if (stateToRestore.pagination) {
+        table?.setPageIndex(stateToRestore.pagination.pageIndex || 0);
+        table?.setPageSize(stateToRestore.pagination.pageSize || 10);
+      }
+      if (stateToRestore.columnFilters) {
+        setColumnFilters(stateToRestore.columnFilters);
+      }
+      if (stateToRestore.searchTerm !== undefined) {
+        setSearchTerm(stateToRestore.searchTerm);
+      }
+      if (stateToRestore.sorting) {
+        setSorting(stateToRestore.sorting);
+      }
+      
+      // Clear pending state after restoration
+      setPendingTableState(null);
+    }, 100);
+  }, [table]);
+
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
     id: false,
     ma_thiet_bi: true,           // Mã thiết bị ✅
