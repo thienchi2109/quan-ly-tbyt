@@ -72,7 +72,7 @@ export function useMaintenanceSchedules(filters?: {
       }
 
       let query = supabase
-        .from('lich_bao_tri')
+        .from('cong_viec_bao_tri')
         .select(`
           *,
           thiet_bi:thiet_bi(ma_thiet_bi, ten_thiet_bi, phong_ban:phong_ban(ten_phong_ban)),
@@ -87,7 +87,7 @@ export function useMaintenanceSchedules(filters?: {
         query = query.eq('trang_thai', filters.trang_thai)
       }
       if (filters?.loai_bao_tri) {
-        query = query.eq('loai_bao_tri', filters.loai_bao_tri)
+        query = query.eq('loai_cong_viec', filters.loai_bao_tri)
       }
       if (filters?.dateFrom) {
         query = query.gte('ngay_bao_tri', filters.dateFrom)
@@ -120,7 +120,7 @@ export function useMaintenanceHistory(filters?: {
       }
 
       let query = supabase
-        .from('lich_bao_tri')
+        .from('cong_viec_bao_tri')
         .select(`
           *,
           thiet_bi:thiet_bi(ma_thiet_bi, ten_thiet_bi),
@@ -159,7 +159,7 @@ export function useMaintenanceDetail(id: string | null) {
       }
       
       const { data, error } = await supabase
-        .from('lich_bao_tri')
+        .from('cong_viec_bao_tri')
         .select(`
           *,
           thiet_bi:thiet_bi(*),
@@ -306,7 +306,7 @@ export function useCreateMaintenanceSchedule() {
       }
 
       const { data: newSchedule, error } = await supabase
-        .from('lich_bao_tri')
+        .from('cong_viec_bao_tri')
         .insert(data)
         .select()
         .single()
@@ -322,13 +322,13 @@ export function useCreateMaintenanceSchedule() {
 
       toast({
         title: "Thành công",
-        description: "Tạo lịch bảo trì thành công",
+        description: "Tạo công việc bảo trì thành công",
       })
     },
     onError: (error: any) => {
       toast({
         title: "Lỗi",
-        description: error.message || "Không thể tạo lịch bảo trì",
+        description: error.message || "Không thể tạo công việc bảo trì",
         variant: "destructive",
       })
     },
@@ -346,7 +346,7 @@ export function useUpdateMaintenanceSchedule() {
       }
 
       const { data, error } = await supabase
-        .from('lich_bao_tri')
+        .from('cong_viec_bao_tri')
         .update(params.data)
         .eq('id', params.id)
         .select()
@@ -366,13 +366,13 @@ export function useUpdateMaintenanceSchedule() {
 
       toast({
         title: "Thành công",
-        description: "Cập nhật lịch bảo trì thành công",
+        description: "Cập nhật công việc bảo trì thành công",
       })
     },
     onError: (error: any) => {
       toast({
         title: "Lỗi",
-        description: error.message || "Không thể cập nhật lịch bảo trì",
+        description: error.message || "Không thể cập nhật công việc bảo trì",
         variant: "destructive",
       })
     },
@@ -396,7 +396,7 @@ export function useCompleteMaintenance() {
       }
 
       const { data, error } = await supabase
-        .from('lich_bao_tri')
+        .from('cong_viec_bao_tri')
         .update({
           trang_thai: 'hoan_thanh',
           ngay_hoan_thanh: new Date().toISOString(),
@@ -444,7 +444,7 @@ export function useDeleteMaintenanceSchedule() {
       }
 
       const { error } = await supabase
-        .from('lich_bao_tri')
+        .from('cong_viec_bao_tri')
         .delete()
         .eq('id', id)
 
@@ -458,13 +458,13 @@ export function useDeleteMaintenanceSchedule() {
 
       toast({
         title: "Thành công",
-        description: "Xóa lịch bảo trì thành công",
+        description: "Xóa công việc bảo trì thành công",
       })
     },
     onError: (error: any) => {
       toast({
         title: "Lỗi",
-        description: error.message || "Không thể xóa lịch bảo trì",
+        description: error.message || "Không thể xóa công việc bảo trì",
         variant: "destructive",
       })
     },

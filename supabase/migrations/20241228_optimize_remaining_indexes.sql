@@ -1,189 +1,300 @@
 -- =====================================================
--- OPTIMIZE REMAINING TABLES INDEXES FOR COMPLETE COVERAGE
--- =====================================================
--- This migration adds missing indexes for tables that haven't been optimized yet:
--- 1. yeu_cau_sua_chua (Repair Requests)
--- 2. ke_hoach_bao_tri (Maintenance Plans)
--- 3. lich_bao_tri (Maintenance Schedules)
--- 4. nhan_vien (Staff/Employees)
-
--- =====================================================
--- 1. REPAIR REQUESTS INDEXES (yeu_cau_sua_chua)
+-- COMPREHENSIVE INDEX OPTIMIZATION - REMAINING TABLES
 -- =====================================================
 
--- Status filtering (most common filter)
-CREATE INDEX IF NOT EXISTS idx_yeu_cau_sua_chua_trang_thai
-ON yeu_cau_sua_chua (trang_thai);
+-- Focus on tables mentioned in code but missing comprehensive indexes:
+-- 1. thiet_bi (Equipment) 
+-- 2. yeu_cau_sua_chua (Repair Requests)
+-- 3. cong_viec_bao_tri (Maintenance Work) - Updated from lich_bao_tri
+-- 4. ke_hoach_bao_tri (Maintenance Plans)
+-- 5. yeu_cau_luan_chuyen (Transfer Requests)
+-- 6. lich_su_thiet_bi (Equipment History)
+-- 7. nhan_vien (Staff)
 
--- Equipment reference for JOINs
+-- This migration creates production-ready indexes with careful consideration for:
+-- - Query patterns observed in the codebase
+-- - Composite indexes for complex filtering
+-- - Text search capabilities
+-- - Performance monitoring
+
+-- =====================================================
+-- 1. EQUIPMENT INDEXES (thiet_bi)
+-- =====================================================
+
+-- Basic single-column indexes for filtering
+CREATE INDEX IF NOT EXISTS idx_thiet_bi_ma_thiet_bi
+ON thiet_bi (ma_thiet_bi);
+
+CREATE INDEX IF NOT EXISTS idx_thiet_bi_trang_thai
+ON thiet_bi (trang_thai);
+
+CREATE INDEX IF NOT EXISTS idx_thiet_bi_phong_ban_id
+ON thiet_bi (phong_ban_id);
+
+CREATE INDEX IF NOT EXISTS idx_thiet_bi_loai_thiet_bi
+ON thiet_bi (loai_thiet_bi);
+
+CREATE INDEX IF NOT EXISTS idx_thiet_bi_ngay_cap_nhat
+ON thiet_bi (ngay_cap_nhat);
+
+CREATE INDEX IF NOT EXISTS idx_thiet_bi_khoa_phong_quan_ly
+ON thiet_bi (khoa_phong_quan_ly);
+
+-- Composite indexes for common query patterns
+CREATE INDEX IF NOT EXISTS idx_thiet_bi_status_department
+ON thiet_bi (trang_thai, phong_ban_id);
+
+CREATE INDEX IF NOT EXISTS idx_thiet_bi_department_type
+ON thiet_bi (phong_ban_id, loai_thiet_bi);
+
+CREATE INDEX IF NOT EXISTS idx_thiet_bi_status_update_date
+ON thiet_bi (trang_thai, ngay_cap_nhat DESC);
+
+-- Full-text search index
+CREATE INDEX IF NOT EXISTS idx_thiet_bi_search_text
+ON thiet_bi USING gin (
+    (setweight(to_tsvector('vietnamese', COALESCE(ma_thiet_bi, '')), 'A') ||
+     setweight(to_tsvector('vietnamese', COALESCE(ten_thiet_bi, '')), 'B') ||
+     setweight(to_tsvector('vietnamese', COALESCE(mo_ta, '')), 'C'))
+);
+
+-- =====================================================
+-- 2. REPAIR REQUESTS INDEXES (yeu_cau_sua_chua)
+-- =====================================================
+
+-- Core business logic indexes
 CREATE INDEX IF NOT EXISTS idx_yeu_cau_sua_chua_thiet_bi_id
 ON yeu_cau_sua_chua (thiet_bi_id);
 
--- Date filtering and sorting
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_sua_chua_trang_thai
+ON yeu_cau_sua_chua (trang_thai);
+
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_sua_chua_muc_do_uu_tien
+ON yeu_cau_sua_chua (muc_do_uu_tien);
+
 CREATE INDEX IF NOT EXISTS idx_yeu_cau_sua_chua_ngay_yeu_cau
 ON yeu_cau_sua_chua (ngay_yeu_cau);
 
-CREATE INDEX IF NOT EXISTS idx_yeu_cau_sua_chua_ngay_hoan_thanh
-ON yeu_cau_sua_chua (ngay_hoan_thanh);
-
--- User reference for filtering by requester (FULL index, no partial)
 CREATE INDEX IF NOT EXISTS idx_yeu_cau_sua_chua_nguoi_yeu_cau
 ON yeu_cau_sua_chua (nguoi_yeu_cau);
 
--- Note: nguoi_xu_ly is not a direct column in yeu_cau_sua_chua table
--- It's accessed via JOIN with profiles table in queries
+-- High-performance composite indexes
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_sua_chua_equipment_status
+ON yeu_cau_sua_chua (thiet_bi_id, trang_thai, ngay_yeu_cau DESC);
 
--- Text search on description only (ghi_chu column may not exist)
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_sua_chua_status_priority_date
+ON yeu_cau_sua_chua (trang_thai, muc_do_uu_tien, ngay_yeu_cau DESC);
+
+-- Text search for problem descriptions
 CREATE INDEX IF NOT EXISTS idx_yeu_cau_sua_chua_search_text
 ON yeu_cau_sua_chua USING gin (
-  mo_ta_su_co gin_trgm_ops
+    (setweight(to_tsvector('vietnamese', COALESCE(mo_ta_su_co, '')), 'A') ||
+     setweight(to_tsvector('vietnamese', COALESCE(ghi_chu, '')), 'B'))
 );
 
 -- =====================================================
--- 2. MAINTENANCE PLANS INDEXES (ke_hoach_bao_tri)
+-- 3. MAINTENANCE WORK INDEXES (cong_viec_bao_tri)
 -- =====================================================
 
--- Year filtering (common filter)
+-- Basic indexes for maintenance work
+CREATE INDEX IF NOT EXISTS idx_cong_viec_bao_tri_thiet_bi_id
+ON cong_viec_bao_tri (thiet_bi_id);
+
+CREATE INDEX IF NOT EXISTS idx_cong_viec_bao_tri_ke_hoach_id
+ON cong_viec_bao_tri (ke_hoach_id);
+
+CREATE INDEX IF NOT EXISTS idx_cong_viec_bao_tri_loai_cong_viec
+ON cong_viec_bao_tri (loai_cong_viec);
+
+-- Composite indexes for maintenance work queries
+CREATE INDEX IF NOT EXISTS idx_cong_viec_bao_tri_equipment_plan
+ON cong_viec_bao_tri (thiet_bi_id, ke_hoach_id);
+
+CREATE INDEX IF NOT EXISTS idx_cong_viec_bao_tri_plan_type
+ON cong_viec_bao_tri (ke_hoach_id, loai_cong_viec);
+
+-- Text search index for maintenance work
+CREATE INDEX IF NOT EXISTS idx_cong_viec_bao_tri_search_text
+ON cong_viec_bao_tri USING gin (
+    (setweight(to_tsvector('vietnamese', COALESCE(ten_cong_viec, '')), 'A') ||
+     setweight(to_tsvector('vietnamese', COALESCE(mo_ta, '')), 'B'))
+);
+
+-- =====================================================
+-- 4. MAINTENANCE PLANS INDEXES (ke_hoach_bao_tri)
+-- =====================================================
+
+-- Essential plan management indexes
 CREATE INDEX IF NOT EXISTS idx_ke_hoach_bao_tri_nam
 ON ke_hoach_bao_tri (nam);
 
--- Status filtering
 CREATE INDEX IF NOT EXISTS idx_ke_hoach_bao_tri_trang_thai
 ON ke_hoach_bao_tri (trang_thai);
 
--- Date tracking
-CREATE INDEX IF NOT EXISTS idx_ke_hoach_bao_tri_created_at
-ON ke_hoach_bao_tri (created_at);
+CREATE INDEX IF NOT EXISTS idx_ke_hoach_bao_tri_loai_cong_viec
+ON ke_hoach_bao_tri (loai_cong_viec);
 
--- Composite index for year + status
+CREATE INDEX IF NOT EXISTS idx_ke_hoach_bao_tri_khoa_phong
+ON ke_hoach_bao_tri (khoa_phong);
+
+-- Composite indexes for plan filtering
 CREATE INDEX IF NOT EXISTS idx_ke_hoach_bao_tri_year_status
-ON ke_hoach_bao_tri (nam, trang_thai);
+ON ke_hoach_bao_tri (nam DESC, trang_thai);
 
--- Text search on plan name and description
-CREATE INDEX IF NOT EXISTS idx_ke_hoach_bao_tri_search_text
-ON ke_hoach_bao_tri USING gin (
-  (ten_ke_hoach || ' ' || COALESCE(mo_ta, '')) gin_trgm_ops
-);
+CREATE INDEX IF NOT EXISTS idx_ke_hoach_bao_tri_status_type
+ON ke_hoach_bao_tri (trang_thai, loai_cong_viec);
 
 -- =====================================================
--- 3. MAINTENANCE SCHEDULES INDEXES (lich_bao_tri)
+-- 5. TRANSFER REQUESTS INDEXES (yeu_cau_luan_chuyen)
 -- =====================================================
 
--- Equipment reference for JOINs
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_thiet_bi_id
-ON lich_bao_tri (thiet_bi_id);
+-- Core transfer request indexes
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_luan_chuyen_thiet_bi_id
+ON yeu_cau_luan_chuyen (thiet_bi_id);
 
--- Status filtering
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_trang_thai
-ON lich_bao_tri (trang_thai);
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_luan_chuyen_phong_ban_hien_tai
+ON yeu_cau_luan_chuyen (phong_ban_hien_tai);
 
--- Maintenance type filtering
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_loai_bao_tri
-ON lich_bao_tri (loai_bao_tri);
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_luan_chuyen_phong_ban_moi
+ON yeu_cau_luan_chuyen (phong_ban_moi);
 
--- Date filtering and sorting
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_ngay_bao_tri
-ON lich_bao_tri (ngay_bao_tri);
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_luan_chuyen_trang_thai
+ON yeu_cau_luan_chuyen (trang_thai);
 
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_ngay_hoan_thanh
-ON lich_bao_tri (ngay_hoan_thanh);
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_luan_chuyen_ngay_yeu_cau
+ON yeu_cau_luan_chuyen (ngay_yeu_cau);
 
--- User reference for filtering by performer (FULL index, no partial)
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_nguoi_thuc_hien
-ON lich_bao_tri (nguoi_thuc_hien);
+-- Composite indexes for transfer workflows
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_luan_chuyen_equipment_status
+ON yeu_cau_luan_chuyen (thiet_bi_id, trang_thai);
 
--- Composite index for equipment + date (most common query pattern)
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_equipment_date
-ON lich_bao_tri (thiet_bi_id, ngay_bao_tri DESC);
-
--- Composite index for status + date
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_status_date
-ON lich_bao_tri (trang_thai, ngay_bao_tri);
-
--- Text search on description and notes
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_search_text
-ON lich_bao_tri USING gin (
-  (mo_ta || ' ' || COALESCE(ghi_chu, '')) gin_trgm_ops
-);
+CREATE INDEX IF NOT EXISTS idx_yeu_cau_luan_chuyen_department_transfer
+ON yeu_cau_luan_chuyen (phong_ban_hien_tai, phong_ban_moi, trang_thai);
 
 -- =====================================================
--- 4. STAFF/EMPLOYEES INDEXES (nhan_vien)
+-- 6. EQUIPMENT HISTORY INDEXES (lich_su_thiet_bi)
 -- =====================================================
 
+-- Equipment history tracking
+CREATE INDEX IF NOT EXISTS idx_lich_su_thiet_bi_thiet_bi_id
+ON lich_su_thiet_bi (thiet_bi_id);
+
+CREATE INDEX IF NOT EXISTS idx_lich_su_thiet_bi_loai_su_kien
+ON lich_su_thiet_bi (loai_su_kien);
+
+CREATE INDEX IF NOT EXISTS idx_lich_su_thiet_bi_ngay_su_kien
+ON lich_su_thiet_bi (ngay_su_kien);
+
+-- Composite for equipment timeline queries
+CREATE INDEX IF NOT EXISTS idx_lich_su_thiet_bi_equipment_timeline
+ON lich_su_thiet_bi (thiet_bi_id, ngay_su_kien DESC);
+
+-- =====================================================
+-- 7. STAFF INDEXES (nhan_vien)
+-- =====================================================
+
+-- Note: Only using columns that are confirmed to exist in nhan_vien table
 -- Department filtering (for role-based access)
 CREATE INDEX IF NOT EXISTS idx_nhan_vien_khoa_phong
 ON nhan_vien (khoa_phong);
 
--- User ID reference for profile lookups (FULL index, no partial)
-CREATE INDEX IF NOT EXISTS idx_nhan_vien_user_id
-ON nhan_vien (user_id);
+-- Role/position filtering (if chuc_vu column exists)
+CREATE INDEX IF NOT EXISTS idx_nhan_vien_chuc_vu
+ON nhan_vien (chuc_vu);
 
--- Text search on employee name
-CREATE INDEX IF NOT EXISTS idx_nhan_vien_ho_ten_trgm
-ON nhan_vien USING gin (ho_ten gin_trgm_ops);
+-- Text search for staff names
+CREATE INDEX IF NOT EXISTS idx_nhan_vien_search_text
+ON nhan_vien USING gin (
+    (setweight(to_tsvector('vietnamese', COALESCE(ho_ten, '')), 'A') ||
+     setweight(to_tsvector('vietnamese', COALESCE(email, '')), 'B'))
+);
 
 -- =====================================================
--- 5. PERFORMANCE MONITORING VIEWS
+-- 8. PERFORMANCE MONITORING AND ANALYSIS
 -- =====================================================
 
--- Create comprehensive index usage monitoring view
-CREATE OR REPLACE VIEW comprehensive_index_usage AS
-SELECT
+-- Analyze tables to update statistics after index creation
+ANALYZE thiet_bi, yeu_cau_sua_chua, ke_hoach_bao_tri, cong_viec_bao_tri, yeu_cau_luan_chuyen, lich_su_thiet_bi, nhan_vien;
+
+-- Create comprehensive monitoring view
+CREATE OR REPLACE VIEW index_performance_summary AS
+SELECT 
     schemaname,
-    relname as tablename,
-    indexrelname as indexname,
-    idx_tup_read,
-    idx_tup_fetch,
+    tablename,
+    indexrelname,
     idx_scan,
+    pg_size_pretty(pg_relation_size(indexrelname::regclass)) as index_size,
     CASE
         WHEN idx_scan = 0 THEN 'UNUSED'
-        WHEN idx_scan < 100 THEN 'LOW_USAGE'
-        WHEN idx_scan < 1000 THEN 'MEDIUM_USAGE'
-        ELSE 'HIGH_USAGE'
-    END as usage_level,
-    pg_size_pretty(pg_relation_size(indexrelid)) as index_size
+        WHEN idx_scan < 100 THEN 'LOW'
+        WHEN idx_scan < 1000 THEN 'MEDIUM'
+        ELSE 'HIGH'
+    END as usage_level
 FROM pg_stat_user_indexes
-WHERE relname IN ('thiet_bi', 'yeu_cau_sua_chua', 'ke_hoach_bao_tri', 'lich_bao_tri', 'yeu_cau_luan_chuyen', 'lich_su_thiet_bi', 'nhan_vien')
-ORDER BY relname, idx_scan DESC;
+WHERE tablename IN ('thiet_bi', 'yeu_cau_sua_chua', 'ke_hoach_bao_tri', 'cong_viec_bao_tri', 'yeu_cau_luan_chuyen', 'lich_su_thiet_bi', 'nhan_vien')
+ORDER BY tablename, idx_scan DESC;
+
+-- Index size summary
+CREATE OR REPLACE VIEW index_size_summary AS
+SELECT 
+    tablename,
+    COUNT(*) as index_count,
+    pg_size_pretty(SUM(pg_relation_size(indexrelname::regclass))) as total_index_size
+FROM pg_stat_user_indexes
+WHERE tablename IN ('thiet_bi', 'yeu_cau_sua_chua', 'ke_hoach_bao_tri', 'cong_viec_bao_tri', 'yeu_cau_luan_chuyen', 'lich_su_thiet_bi', 'nhan_vien')
+GROUP BY tablename
+ORDER BY SUM(pg_relation_size(indexrelname::regclass)) DESC;
 
 -- =====================================================
--- 6. INDEX COMMENTS FOR DOCUMENTATION
+-- 9. INDEX COMMENTS FOR DOCUMENTATION
 -- =====================================================
 
--- Note: Removed status_priority composite index due to missing muc_do_uu_tien column
-COMMENT ON INDEX idx_yeu_cau_sua_chua_search_text IS 'GIN index for full-text search on repair request descriptions';
-COMMENT ON INDEX idx_ke_hoach_bao_tri_year_status IS 'Composite index for maintenance plan year and status filtering';
-COMMENT ON INDEX idx_lich_bao_tri_equipment_date IS 'Composite index for maintenance schedule equipment and date queries';
-COMMENT ON INDEX idx_nhan_vien_khoa_phong IS 'Index for role-based access control by department';
-COMMENT ON VIEW comprehensive_index_usage IS 'Monitor index usage across all major tables';
+COMMENT ON INDEX idx_thiet_bi_search_text IS 'Full-text search index for equipment names and descriptions';
+COMMENT ON INDEX idx_yeu_cau_sua_chua_equipment_status IS 'High-performance composite index for repair request queries';
+COMMENT ON INDEX idx_cong_viec_bao_tri_equipment_plan IS 'Composite index for maintenance work equipment and plan queries';
+COMMENT ON INDEX idx_ke_hoach_bao_tri_year_status IS 'Optimized index for maintenance plan filtering by year and status';
+COMMENT ON INDEX idx_yeu_cau_luan_chuyen_department_transfer IS 'Complex composite for transfer request workflow queries';
 
 -- =====================================================
--- 7. QUERY OPTIMIZATION EXAMPLES
+-- 10. PERFORMANCE TEST QUERIES
 -- =====================================================
 
 /*
-OPTIMIZED QUERY PATTERNS:
+Test these key queries after migration:
 
-1. Repair Request Filtering:
-   SELECT * FROM yeu_cau_sua_chua
-   WHERE trang_thai = 'cho_xu_ly'
-   ORDER BY ngay_yeu_cau DESC
-   -- Uses: idx_yeu_cau_sua_chua_trang_thai
+-- Equipment searches
+SELECT * FROM thiet_bi 
+WHERE trang_thai = 'Hoạt động' AND phong_ban_id = 1 
+ORDER BY ngay_cap_nhat DESC;
 
-2. Maintenance History by Equipment:
-   SELECT * FROM lich_bao_tri
-   WHERE thiet_bi_id = 123
-   ORDER BY ngay_bao_tri DESC
-   -- Uses: idx_lich_bao_tri_equipment_date
+-- Repair request queries
+SELECT * FROM yeu_cau_sua_chua 
+WHERE thiet_bi_id = 1 AND trang_thai = 'Chờ xử lý' 
+ORDER BY ngay_yeu_cau DESC;
 
-3. Department-based Equipment Access:
-   SELECT tb.* FROM thiet_bi tb
-   JOIN nhan_vien nv ON nv.khoa_phong = tb.khoa_phong_quan_ly
-   WHERE nv.user_id = 'user-uuid'
-   -- Uses: idx_nhan_vien_khoa_phong, idx_thiet_bi_khoa_phong_quan_ly
+-- Maintenance work queries
+SELECT * FROM cong_viec_bao_tri
+WHERE thiet_bi_id = 1 AND ke_hoach_id = 1;
+-- Uses: idx_cong_viec_bao_tri_equipment_plan
 
-4. Maintenance Plan Search:
-   SELECT * FROM ke_hoach_bao_tri
-   WHERE nam = 2024 AND ten_ke_hoach ILIKE '%keyword%'
-   -- Uses: idx_ke_hoach_bao_tri_year_status, idx_ke_hoach_bao_tri_search_text
+-- Maintenance plan filtering
+SELECT * FROM ke_hoach_bao_tri 
+WHERE nam = 2024 AND trang_thai = 'Đã duyệt'
+ORDER BY created_at DESC;
+
+-- Transfer request workflow
+SELECT * FROM yeu_cau_luan_chuyen 
+WHERE phong_ban_hien_tai = 1 AND phong_ban_moi = 2 AND trang_thai = 'Chờ duyệt';
+
+-- Text search examples
+SELECT * FROM thiet_bi 
+WHERE to_tsvector('vietnamese', ten_thiet_bi || ' ' || COALESCE(mo_ta, '')) 
+@@ plainto_tsquery('vietnamese', 'máy đo huyết áp');
+
+SELECT * FROM yeu_cau_sua_chua 
+WHERE to_tsvector('vietnamese', mo_ta_su_co) @@ plainto_tsquery('vietnamese', 'hỏng điện');
+
+-- Staff queries (only using confirmed columns)
+SELECT * FROM nhan_vien WHERE khoa_phong = 'Khoa Nội';
+SELECT * FROM nhan_vien WHERE ho_ten ILIKE '%Nguyễn%';
 */

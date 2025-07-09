@@ -49,42 +49,35 @@ CREATE INDEX IF NOT EXISTS idx_ke_hoach_bao_tri_created_at
 ON ke_hoach_bao_tri (created_at);
 
 -- =====================================================
--- 3. MAINTENANCE SCHEDULES INDEXES (lich_bao_tri)
+-- 3. MAINTENANCE WORK INDEXES (cong_viec_bao_tri)
 -- =====================================================
 
 -- Equipment reference
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_thiet_bi_id
-ON lich_bao_tri (thiet_bi_id);
+CREATE INDEX IF NOT EXISTS idx_cong_viec_bao_tri_thiet_bi_id
+ON cong_viec_bao_tri (thiet_bi_id);
 
--- Status filtering
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_trang_thai
-ON lich_bao_tri (trang_thai);
+-- Plan reference
+CREATE INDEX IF NOT EXISTS idx_cong_viec_bao_tri_ke_hoach_id
+ON cong_viec_bao_tri (ke_hoach_id);
 
--- Maintenance date
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_ngay_bao_tri
-ON lich_bao_tri (ngay_bao_tri);
+-- Work type filtering
+CREATE INDEX IF NOT EXISTS idx_cong_viec_bao_tri_loai_cong_viec
+ON cong_viec_bao_tri (loai_cong_viec);
 
--- Completion date
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_ngay_hoan_thanh
-ON lich_bao_tri (ngay_hoan_thanh);
-
--- Composite index for equipment + date queries
-CREATE INDEX IF NOT EXISTS idx_lich_bao_tri_equipment_date
-ON lich_bao_tri (thiet_bi_id, ngay_bao_tri DESC);
+-- Composite index for equipment + plan queries
+CREATE INDEX IF NOT EXISTS idx_cong_viec_bao_tri_equipment_plan
+ON cong_viec_bao_tri (thiet_bi_id, ke_hoach_id);
 
 -- =====================================================
 -- 4. STAFF INDEXES (nhan_vien)
 -- =====================================================
 
 -- Department filtering (for role-based access)
+-- Note: Only using columns that are confirmed to exist
 CREATE INDEX IF NOT EXISTS idx_nhan_vien_khoa_phong
 ON nhan_vien (khoa_phong);
 
--- User ID reference (confirmed from code)
-CREATE INDEX IF NOT EXISTS idx_nhan_vien_user_id
-ON nhan_vien (user_id);
-
--- Name search
+-- Name search (confirmed column)
 CREATE INDEX IF NOT EXISTS idx_nhan_vien_ho_ten_trgm
 ON nhan_vien USING gin (ho_ten gin_trgm_ops);
 
@@ -106,7 +99,7 @@ SELECT
         ELSE 'HIGH_USAGE'
     END as usage_level
 FROM pg_stat_user_indexes
-WHERE relname IN ('yeu_cau_sua_chua', 'lich_bao_tri', 'ke_hoach_bao_tri', 'nhan_vien')
+WHERE relname IN ('yeu_cau_sua_chua', 'cong_viec_bao_tri', 'ke_hoach_bao_tri', 'nhan_vien')
 ORDER BY relname, idx_scan DESC;
 
 -- =====================================================
@@ -114,7 +107,7 @@ ORDER BY relname, idx_scan DESC;
 -- =====================================================
 
 COMMENT ON INDEX idx_yeu_cau_sua_chua_mo_ta_trgm IS 'GIN index for text search on repair request descriptions';
-COMMENT ON INDEX idx_lich_bao_tri_equipment_date IS 'Composite index for maintenance schedule queries';
+COMMENT ON INDEX idx_cong_viec_bao_tri_equipment_plan IS 'Composite index for maintenance work queries';
 COMMENT ON INDEX idx_nhan_vien_khoa_phong IS 'Index for role-based access control';
 COMMENT ON VIEW safe_index_usage IS 'Monitor usage of safe indexes';
 
@@ -128,8 +121,8 @@ To verify these indexes work, run:
 -- Check repair request filtering
 EXPLAIN ANALYZE SELECT * FROM yeu_cau_sua_chua WHERE trang_thai = 'Chờ xử lý';
 
--- Check maintenance schedule by equipment
-EXPLAIN ANALYZE SELECT * FROM lich_bao_tri WHERE thiet_bi_id = 1 ORDER BY ngay_bao_tri DESC;
+-- Check maintenance work by equipment
+EXPLAIN ANALYZE SELECT * FROM cong_viec_bao_tri WHERE thiet_bi_id = 1 AND ke_hoach_id = 1;
 
 -- Check department filtering
 EXPLAIN ANALYZE SELECT * FROM nhan_vien WHERE khoa_phong = 'Khoa Nội';
