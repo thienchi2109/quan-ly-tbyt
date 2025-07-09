@@ -114,7 +114,9 @@ export function useCreateRepairRequest() {
     onSuccess: () => {
       // Invalidate all repair queries
       queryClient.invalidateQueries({ queryKey: repairKeys.all })
-      
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
       toast({
         title: "Thành công",
         description: "Tạo yêu cầu sửa chữa thành công",
@@ -155,7 +157,9 @@ export function useUpdateRepairRequest() {
       queryClient.invalidateQueries({ queryKey: repairKeys.lists() })
       // Update specific repair detail cache
       queryClient.setQueryData(repairKeys.detail(data.id), data)
-      
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
       toast({
         title: "Thành công",
         description: "Cập nhật yêu cầu sửa chữa thành công",
@@ -286,7 +290,9 @@ export function useDeleteRepairRequest() {
     onSuccess: () => {
       // Invalidate all repair queries
       queryClient.invalidateQueries({ queryKey: repairKeys.all })
-      
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
       toast({
         title: "Thành công",
         description: "Xóa yêu cầu sửa chữa thành công",

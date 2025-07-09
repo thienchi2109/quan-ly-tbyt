@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/contexts/auth-context';
 import { LanguageProvider } from '@/contexts/language-context';
 import { QueryProvider } from '@/providers/query-provider';
+import { RealtimeProvider } from '@/contexts/realtime-context';
 import { PWAInstallPrompt, PWAStatus } from '@/components/pwa-install-prompt';
 import { ThemeColorManager } from '@/components/theme-color-manager';
 
@@ -27,15 +28,17 @@ export default function RootLayout({
       {/* <head> section is now managed by Next.js metadata */}
       <body className="font-sans antialiased">
         <QueryProvider>
-        <LanguageProvider>
-        <AuthProvider>
-          {children}
-          <Toaster />
-          <PWAInstallPrompt />
-          {process.env.NODE_ENV === 'development' && <PWAStatus />}
-          <ThemeColorManager />
-        </AuthProvider>
-        </LanguageProvider>
+          <RealtimeProvider>
+            <LanguageProvider>
+            <AuthProvider>
+              {children}
+              <Toaster />
+              <PWAInstallPrompt />
+              {process.env.NODE_ENV === 'development' && <PWAStatus />}
+              <ThemeColorManager />
+            </AuthProvider>
+            </LanguageProvider>
+          </RealtimeProvider>
         </QueryProvider>
       </body>
     </html>

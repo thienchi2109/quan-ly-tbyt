@@ -40,6 +40,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import { NotificationBellDialog } from "@/components/notification-bell-dialog"
+import { RealtimeStatus } from "@/components/realtime-status"
 import { USER_ROLES } from "@/types/database"
 import { supabase } from "@/lib/supabase"
 
@@ -236,12 +237,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {/* Can add a search bar here if needed */}
             </div>
             
+            {/* Realtime Status */}
+            <RealtimeStatus variant="icon" />
+
             {/* Notification Bell */}
-            <NotificationBellDialog 
-              allRepairRequests={repairRequests} 
+            <NotificationBellDialog
+              allRepairRequests={repairRequests}
               allTransferRequests={transferRequests}
             />
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full touch-target">

@@ -198,6 +198,8 @@ export function useCreateMaintenancePlan() {
     onSuccess: () => {
       // Invalidate all maintenance plan queries
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.plans() })
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
 
       toast({
         title: "Thành công",
@@ -237,6 +239,8 @@ export function useUpdateMaintenancePlan() {
     onSuccess: () => {
       // Invalidate maintenance plan queries
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.plans() })
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
 
       toast({
         title: "Thành công",
@@ -273,6 +277,8 @@ export function useDeleteMaintenancePlan() {
     onSuccess: () => {
       // Invalidate all maintenance plan queries
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.plans() })
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
 
       toast({
         title: "Thành công",
@@ -311,7 +317,9 @@ export function useCreateMaintenanceSchedule() {
     onSuccess: () => {
       // Invalidate all maintenance queries
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.all })
-      
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
       toast({
         title: "Thành công",
         description: "Tạo lịch bảo trì thành công",
@@ -353,7 +361,9 @@ export function useUpdateMaintenanceSchedule() {
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.lists() })
       // Update specific maintenance detail cache
       queryClient.setQueryData(maintenanceKeys.detail(data.id), data)
-      
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
       toast({
         title: "Thành công",
         description: "Cập nhật lịch bảo trì thành công",
@@ -405,7 +415,9 @@ export function useCompleteMaintenance() {
     onSuccess: () => {
       // Invalidate all maintenance queries
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.all })
-      
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
       toast({
         title: "Thành công",
         description: "Hoàn thành bảo trì thành công",
@@ -441,7 +453,9 @@ export function useDeleteMaintenanceSchedule() {
     onSuccess: () => {
       // Invalidate all maintenance queries
       queryClient.invalidateQueries({ queryKey: maintenanceKeys.all })
-      
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
       toast({
         title: "Thành công",
         description: "Xóa lịch bảo trì thành công",

@@ -21,6 +21,7 @@ export function useEquipment(filters?: {
   return useQuery({
     queryKey: equipmentKeys.list(filters || {}),
     queryFn: async () => {
+      console.log('[useEquipment] Fetching equipment data with filters:', filters)
       if (!supabase) {
         throw new Error('Supabase client not initialized')
       }
@@ -54,6 +55,8 @@ export function useEquipment(filters?: {
     },
     staleTime: 3 * 60 * 1000, // 3 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Refetch when component mounts
   })
 }
 
@@ -115,7 +118,9 @@ export function useUpdateEquipment() {
       queryClient.invalidateQueries({ queryKey: equipmentKeys.lists() })
       // Update specific equipment detail cache
       queryClient.setQueryData(equipmentKeys.detail(data.id), data)
-      
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
       toast({
         title: "Thành công",
         description: "Cập nhật thiết bị thành công",
@@ -153,7 +158,9 @@ export function useCreateEquipment() {
     onSuccess: () => {
       // Invalidate all equipment queries to refetch data
       queryClient.invalidateQueries({ queryKey: equipmentKeys.all })
-      
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
       toast({
         title: "Thành công",
         description: "Thêm thiết bị thành công",
@@ -189,7 +196,9 @@ export function useDeleteEquipment() {
     onSuccess: () => {
       // Invalidate all equipment queries
       queryClient.invalidateQueries({ queryKey: equipmentKeys.all })
-      
+      // Invalidate dashboard stats to update KPI cards
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
       toast({
         title: "Thành công",
         description: "Xóa thiết bị thành công",

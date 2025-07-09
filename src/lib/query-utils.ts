@@ -8,6 +8,7 @@ export class CacheManager {
   invalidateEquipment() {
     this.queryClient.invalidateQueries({ queryKey: ['equipment'] })
     this.queryClient.invalidateQueries({ queryKey: ['reports'] })
+    this.queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
   }
 
   // Invalidate transfer-related caches
@@ -21,12 +22,14 @@ export class CacheManager {
   invalidateMaintenance() {
     this.queryClient.invalidateQueries({ queryKey: ['maintenance'] })
     this.queryClient.invalidateQueries({ queryKey: ['reports'] })
+    this.queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
   }
 
   // Invalidate repair caches
   invalidateRepair() {
     this.queryClient.invalidateQueries({ queryKey: ['repair'] })
     this.queryClient.invalidateQueries({ queryKey: ['reports'] })
+    this.queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
   }
 
   // Invalidate lookup data (when departments, types, or users change)
