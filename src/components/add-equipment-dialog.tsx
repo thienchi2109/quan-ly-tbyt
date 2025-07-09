@@ -31,15 +31,16 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
 import { type Equipment } from "@/lib/data"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 
-const equipmentStatusOptions: Equipment['tinh_trang_hien_tai'][] = [
+const equipmentStatusOptions = [
     "Hoạt động", 
     "Chờ sửa chữa", 
     "Chờ bảo trì", 
     "Chờ hiệu chuẩn/kiểm định", 
     "Ngưng sử dụng", 
     "Chưa có nhu cầu sử dụng"
-];
+] as const;
 
 
 const equipmentFormSchema = z.object({
@@ -58,7 +59,7 @@ const equipmentFormSchema = z.object({
   vi_tri_lap_dat: z.string().optional(),
   khoa_phong_quan_ly: z.string().optional(),
   nguoi_dang_truc_tiep_quan_ly: z.string().optional(),
-  tinh_trang_hien_tai: z.enum(equipmentStatusOptions).optional().nullable(),
+  tinh_trang_hien_tai: z.enum(equipmentStatusOptions).optional(),
   cau_hinh_thiet_bi: z.string().optional(),
   phu_kien_kem_theo: z.string().optional(),
   ghi_chu: z.string().optional(),
@@ -75,16 +76,72 @@ interface AddEquipmentDialogProps {
 export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipmentDialogProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [departments, setDepartments] = React.useState<string[]>([])
   const form = useForm<EquipmentFormValues>({
     resolver: zodResolver(equipmentFormSchema),
     defaultValues: {
       ma_thiet_bi: "",
       ten_thiet_bi: "",
+      model: "",
+      serial: "",
+      hang_san_xuat: "",
+      noi_san_xuat: "",
+      nam_san_xuat: null,
+      ngay_nhap: "",
+      ngay_dua_vao_su_dung: "",
+      nguon_kinh_phi: "",
+      gia_goc: null,
+      han_bao_hanh: "",
+      vi_tri_lap_dat: "",
+      khoa_phong_quan_ly: "",
+      nguoi_dang_truc_tiep_quan_ly: "",
+      tinh_trang_hien_tai: undefined,
+      cau_hinh_thiet_bi: "",
+      phu_kien_kem_theo: "",
+      ghi_chu: "",
     },
   })
 
+  React.useEffect(() => {
+    if (open) {
+      fetchDepartments();
+    } else {
+      form.reset();
+    }
+  }, [open, form])
+
+  const fetchDepartments = async () => {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('thiet_bi')
+        .select('khoa_phong_quan_ly')
+        .not('khoa_phong_quan_ly', 'is', null);
+
+      if (error) throw error;
+      
+      const uniqueDepartments = Array.from(new Set(data.map(item => item.khoa_phong_quan_ly).filter(Boolean)));
+      setDepartments(uniqueDepartments.sort());
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi tải danh sách khoa phòng",
+        description: error.message,
+      });
+    }
+  };
+
   async function onSubmit(values: EquipmentFormValues) {
     setIsSubmitting(true)
+    if (!supabase) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Lỗi kết nối cơ sở dữ liệu."
+      })
+      setIsSubmitting(false);
+      return;
+    }
     try {
       const { error } = await supabase.from("thiet_bi").insert([values])
 
@@ -168,7 +225,15 @@ export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipme
                     )} />
                 </div>
                  <FormField control={form.control} name="nam_san_xuat" render={({ field }) => (
-                    <FormItem><FormLabel>Năm sản xuất</FormLabel><FormControl><Input type="number" {...field} onChange={event => field.onChange(event.target.value === '' ? null : +event.target.value)} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Năm sản xuất</FormLabel><FormControl><Input 
+                        type="number" 
+                        {...field} 
+                        value={field.value ?? ''} 
+                        onChange={event => {
+                            const val = parseInt(event.target.value, 10);
+                            field.onChange(isNaN(val) ? null : val);
+                        }} 
+                    /></FormControl><FormMessage /></FormItem>
                 )} />
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -185,7 +250,15 @@ export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipme
                         <FormItem><FormLabel>Nguồn kinh phí</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="gia_goc" render={({ field }) => (
-                        <FormItem><FormLabel>Giá gốc (VNĐ)</FormLabel><FormControl><Input type="number" {...field} onChange={event => field.onChange(event.target.value === '' ? null : +event.target.value)}/></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Giá gốc (VNĐ)</FormLabel><FormControl><Input 
+                            type="number" 
+                            {...field} 
+                            value={field.value ?? ''}
+                            onChange={event => {
+                                const val = parseInt(event.target.value, 10);
+                                field.onChange(isNaN(val) ? null : val);
+                            }}
+                        /></FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
                 
@@ -194,9 +267,33 @@ export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipme
                 )} />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="khoa_phong_quan_ly" render={({ field }) => (
-                        <FormItem><FormLabel>Khoa/Phòng quản lý</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
+                    <FormField
+                      control={form.control}
+                      name="khoa_phong_quan_ly"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Khoa/Phòng quản lý</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Nhập hoặc chọn khoa/phòng"/>
+                          </FormControl>
+                          <ScrollArea className="h-20 w-full rounded-md border p-2 mt-2">
+                            <div className="flex flex-wrap gap-2">
+                              {departments.map((dep) => (
+                                <Badge
+                                  key={dep}
+                                  variant="outline"
+                                  className="cursor-pointer hover:bg-blue-100 hover:border-blue-500 hover:text-blue-800"
+                                  onClick={() => form.setValue("khoa_phong_quan_ly", dep, { shouldValidate: true })}
+                                >
+                                  {dep}
+                                </Badge>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField control={form.control} name="vi_tri_lap_dat" render={({ field }) => (
                         <FormItem><FormLabel>Vị trí lắp đặt</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
@@ -210,7 +307,7 @@ export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipme
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Tình trạng hiện tại</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value ?? undefined}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Chọn tình trạng" />

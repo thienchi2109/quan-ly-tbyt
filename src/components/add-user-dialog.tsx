@@ -18,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
 import { USER_ROLES, type UserRole } from "@/types/database"
+import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface AddUserDialogProps {
   open: boolean
@@ -28,6 +30,7 @@ interface AddUserDialogProps {
 export function AddUserDialog({ open, onOpenChange, onSuccess }: AddUserDialogProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = React.useState(false)
+  const [departments, setDepartments] = React.useState<{ label: string; value: string }[]>([])
   
   const [formData, setFormData] = React.useState({
     username: "",
@@ -52,6 +55,35 @@ export function AddUserDialog({ open, onOpenChange, onSuccess }: AddUserDialogPr
       resetForm()
     }
   }, [open, resetForm])
+
+  React.useEffect(() => {
+    if (open) {
+      fetchDepartments();
+    }
+  }, [open]);
+
+  const fetchDepartments = async () => {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('thiet_bi')
+        .select('khoa_phong_quan_ly')
+        .not('khoa_phong_quan_ly', 'is', null);
+
+      if (error) throw error;
+      
+      const uniqueDepartments = Array.from(new Set(data.map(item => item.khoa_phong_quan_ly).filter(Boolean)));
+      setDepartments(
+        uniqueDepartments.sort().map(dep => ({ value: dep, label: dep }))
+      );
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi tải danh sách khoa phòng",
+        description: error.message,
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -244,9 +276,27 @@ export function AddUserDialog({ open, onOpenChange, onSuccess }: AddUserDialogPr
                 id="khoa_phong"
                 value={formData.khoa_phong}
                 onChange={(e) => setFormData(prev => ({ ...prev, khoa_phong: e.target.value }))}
-                placeholder="Nhập khoa/phòng làm việc"
+                placeholder="Nhập hoặc chọn khoa/phòng bên dưới"
                 disabled={isLoading}
               />
+              <ScrollArea className="h-24 w-full rounded-md border p-2">
+                <div className="flex flex-wrap gap-2">
+                  {departments.length > 0 ? (
+                    departments.map((dep) => (
+                      <Badge
+                        key={dep.value}
+                        variant="secondary"
+                        className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                        onClick={() => setFormData(prev => ({ ...prev, khoa_phong: dep.value }))}
+                      >
+                        {dep.label}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Không có gợi ý khoa/phòng.</p>
+                  )}
+                </div>
+              </ScrollArea>
             </div>
           </div>
           <DialogFooter>

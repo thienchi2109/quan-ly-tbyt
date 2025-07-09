@@ -54,6 +54,7 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
   const [searchTerm, setSearchTerm] = React.useState("")
   const debouncedSearch = useSearchDebounce(searchTerm)
   const [selectedEquipment, setSelectedEquipment] = React.useState<EquipmentWithDept | null>(null)
+  const [departments, setDepartments] = React.useState<string[]>([])
   
   const [formData, setFormData] = React.useState({
     thiet_bi_id: 0,
@@ -92,17 +93,13 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
   }, [])
 
   React.useEffect(() => {
-    if (!open) {
+    if (open) {
+      if (allEquipment.length === 0) fetchEquipment();
+      if (departments.length === 0) fetchDepartments();
+    } else {
       resetForm()
     }
   }, [open, resetForm])
-
-  // Fetch equipment list when dialog opens
-  React.useEffect(() => {
-    if (open && allEquipment.length === 0) {
-      fetchEquipment()
-    }
-  }, [open])
 
   const fetchEquipment = async () => {
     if (!supabase) return
@@ -121,6 +118,27 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
         title: "Lỗi tải danh sách thiết bị",
         description: error.message
       })
+    }
+  }
+
+  const fetchDepartments = async () => {
+    if (!supabase) return
+    try {
+      const { data, error } = await supabase
+        .from('thiet_bi')
+        .select('khoa_phong_quan_ly')
+        .not('khoa_phong_quan_ly', 'is', null)
+
+      if (error) throw error
+      
+      const uniqueDepartments = Array.from(new Set(data.map(item => item.khoa_phong_quan_ly).filter(Boolean)))
+      setDepartments(uniqueDepartments.sort())
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi tải danh sách khoa phòng",
+        description: error.message,
+      });
     }
   }
 
@@ -159,6 +177,10 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
       thiet_bi_id: equipment.id,
       khoa_phong_hien_tai: equipment.khoa_phong_quan_ly || ""
     }))
+  }
+
+  const handleValueChange = (field: keyof typeof formData) => (value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -348,26 +370,41 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
             {formData.loai_hinh === 'noi_bo' && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="current_dept">Khoa/Phòng hiện tại *</Label>
-                    <Input
-                      id="current_dept"
+                  <div className="space-y-2">
+                    <Label htmlFor="khoa_phong_hien_tai">Khoa/Phòng hiện tại</Label>
+                    <Select
                       value={formData.khoa_phong_hien_tai}
-                      onChange={(e) => setFormData(prev => ({ ...prev, khoa_phong_hien_tai: e.target.value }))}
-                      placeholder="Khoa/phòng hiện tại quản lý"
-                      disabled={isLoading}
-                    />
+                      onValueChange={handleValueChange('khoa_phong_hien_tai')}
+                      disabled={!!selectedEquipment}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn khoa/phòng hiện tại" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map(dep => (
+                          <SelectItem key={dep} value={dep}>{dep}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="receiving_dept">Khoa/Phòng nhận *</Label>
-                    <Input
-                      id="receiving_dept"
+
+                  <div className="space-y-2">
+                    <Label htmlFor="khoa_phong_nhan">Khoa/Phòng nhận</Label>
+                    <Select
                       value={formData.khoa_phong_nhan}
-                      onChange={(e) => setFormData(prev => ({ ...prev, khoa_phong_nhan: e.target.value }))}
-                      placeholder="Khoa/phòng sẽ nhận thiết bị"
-                      disabled={isLoading}
-                      required
-                    />
+                      onValueChange={handleValueChange('khoa_phong_nhan')}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Chọn khoa/phòng nhận" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments
+                          .filter(dep => dep !== formData.khoa_phong_hien_tai)
+                          .map(dep => (
+                            <SelectItem key={dep} value={dep}>{dep}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </>
@@ -380,11 +417,11 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
                   <Label htmlFor="purpose">Mục đích *</Label>
                   <Select
                     value={formData.muc_dich}
-                    onValueChange={(value: TransferPurpose) => setFormData(prev => ({ ...prev, muc_dich: value }))}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, muc_dich: value as TransferPurpose }))}
                     disabled={isLoading}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Chọn mục đích" />
+                      <SelectValue placeholder="Chọn mục đích luân chuyển" />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(TRANSFER_PURPOSES).map(([key, label]) => (
