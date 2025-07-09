@@ -75,6 +75,7 @@ const NotesInput = React.memo(({ taskId, value, onChange }: {
 import { BulkScheduleDialog } from "@/components/bulk-schedule-dialog"
 import { useMaintenancePlans, useCreateMaintenancePlan, useUpdateMaintenancePlan, useDeleteMaintenancePlan, maintenanceKeys } from "@/hooks/use-cached-maintenance"
 import { useQueryClient } from "@tanstack/react-query"
+import { useMaintenanceRealtimeSync } from "@/hooks/use-realtime-sync"
 
 export default function MaintenancePage() {
   const { toast } = useToast()
@@ -82,6 +83,9 @@ export default function MaintenancePage() {
   const searchParams = useSearchParams()
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
+
+  // Temporarily disable useRealtimeSync to avoid conflict with RealtimeProvider
+  // useMaintenanceRealtimeSync()
 
   // ✅ Use cached hooks for data fetching, keep manual mutations for now
   const { data: plans = [], isLoading: isLoadingPlans, refetch: refetchPlans } = useMaintenancePlans()

@@ -59,6 +59,7 @@ import { useSearchDebounce } from "@/hooks/use-debounce"
 import { Separator } from "@/components/ui/separator"
 import type { Column } from "@tanstack/react-table"
 import { RepairRequestAlert } from "@/components/repair-request-alert"
+import { useRepairRealtimeSync } from "@/hooks/use-realtime-sync"
 
 
 type EquipmentSelectItem = {
@@ -199,6 +200,9 @@ export default function RepairRequestsPage() {
   const { toast } = useToast()
   const { user } = useAuth()
   const isMobile = useIsMobile()
+
+  // Temporarily disable useRealtimeSync to avoid conflict with RealtimeProvider
+  // useRepairRealtimeSync()
   const searchParams = useSearchParams()
   const [requests, setRequests] = React.useState<RepairRequestWithEquipment[]>([])
   const [isLoading, setIsLoading] = React.useState(true)

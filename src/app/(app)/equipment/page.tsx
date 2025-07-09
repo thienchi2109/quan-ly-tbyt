@@ -88,6 +88,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type Equipment } from "@/lib/data"
 import { supabase, supabaseError } from "@/lib/supabase"
+import { useEquipmentRealtimeSync } from "@/hooks/use-realtime-sync"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -308,6 +309,9 @@ export default function EquipmentPage() {
   const searchParams = useSearchParams()
   const { user } = useAuth();
   const { toast } = useToast()
+
+  // Temporarily disable useRealtimeSync to avoid conflict with RealtimeProvider
+  // useEquipmentRealtimeSync()
   const [data, setData] = React.useState<Equipment[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [sorting, setSorting] = React.useState<SortingState>([])
