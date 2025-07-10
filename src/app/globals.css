@@ -143,7 +143,116 @@
 
   /* Improved spacing for mobile cards */
   .mobile-card-spacing {
-    @apply p-4 gap-3 md:p-3 md:gap-2;
+    @apply p-3 gap-2 md:p-4 md:gap-3;
+  }
+
+  /* Mobile footer navigation specific styles */
+  .mobile-footer-nav-item {
+    @apply flex flex-col items-center justify-center gap-1 text-xs font-medium transition-all duration-200 touch-target;
+    @apply hover:bg-muted/50 rounded-lg mx-1 py-2;
+  }
+
+  .mobile-footer-nav-item.active {
+    @apply text-primary bg-primary/10;
+  }
+
+  .mobile-footer-nav-item.inactive {
+    @apply text-muted-foreground hover:text-primary;
+  }
+
+  /* Enhanced mobile navigation transitions */
+  .mobile-nav-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Mobile-specific z-index management */
+  .mobile-footer-z {
+    z-index: 50;
+  }
+
+  .mobile-header-z {
+    z-index: 40;
+  }
+
+  /* Mobile KPI Cards optimization */
+  .mobile-kpi-card {
+    @apply min-h-[120px] md:min-h-[140px];
+  }
+
+  /* Mobile quick actions optimization */
+  .mobile-quick-action {
+    @apply h-auto flex-col gap-2 p-3 md:p-6;
+  }
+
+  .mobile-quick-action-icon {
+    @apply h-4 w-4 md:h-6 md:w-6;
+  }
+
+  .mobile-quick-action-text {
+    @apply text-center;
+  }
+
+  .mobile-quick-action-title {
+    @apply font-medium text-xs md:text-sm;
+  }
+
+  .mobile-quick-action-desc {
+    @apply text-xs text-muted-foreground hidden md:block;
+  }
+
+  /* Mobile repair request cards optimization */
+  .mobile-repair-card {
+    @apply p-3 md:p-4 gap-2 md:gap-3;
+  }
+
+  .mobile-repair-card-header {
+    @apply p-3 pb-2 md:p-6 md:pb-4;
+  }
+
+  .mobile-repair-card-content {
+    @apply p-3 pt-0 md:p-6 md:pt-0 space-y-2 md:space-y-3;
+  }
+
+  .mobile-repair-card-title {
+    @apply text-sm md:text-base font-medium leading-tight;
+  }
+
+  .mobile-repair-card-description {
+    @apply text-xs md:text-sm text-muted-foreground;
+  }
+
+  .mobile-repair-card-field {
+    @apply flex justify-between items-start gap-2;
+  }
+
+  .mobile-repair-card-label {
+    @apply text-xs md:text-sm text-muted-foreground flex-shrink-0;
+  }
+
+  .mobile-repair-card-value {
+    @apply text-xs md:text-sm font-medium text-right;
+  }
+
+  /* Text truncation utilities */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   /* Responsive Typography Scaling */

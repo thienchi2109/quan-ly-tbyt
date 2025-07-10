@@ -17,22 +17,22 @@ export function TotalEquipmentCard() {
   const { data: totalDevices, isLoading, error } = useTotalEquipment()
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">
+    <Card className="mobile-kpi-card">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 md:p-6 md:pb-2">
+        <CardTitle className="text-xs md:text-sm font-medium truncate">
           Tổng số thiết bị
         </CardTitle>
-        <Package className="h-4 w-4 text-muted-foreground" />
+        <Package className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
         {isLoading ? (
-          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-6 md:h-8 w-12 md:w-16" />
         ) : error ? (
-          <div className="text-2xl font-bold text-destructive">--</div>
+          <div className="text-lg md:text-2xl font-bold text-destructive">--</div>
         ) : (
-          <div className="text-2xl font-bold">{totalDevices}</div>
+          <div className="text-lg md:text-2xl font-bold">{totalDevices}</div>
         )}
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground mt-1 leading-tight">
           Thiết bị đang được quản lý
         </p>
       </CardContent>
@@ -45,22 +45,22 @@ export function MaintenanceCountCard() {
   const { data: maintenanceCount, isLoading, error } = useMaintenanceCount()
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">
+    <Card className="mobile-kpi-card">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 md:p-6 md:pb-2">
+        <CardTitle className="text-xs md:text-sm font-medium truncate">
           Cần bảo trì/hiệu chuẩn
         </CardTitle>
-        <HardHat className="h-4 w-4 text-muted-foreground" />
+        <HardHat className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
         {isLoading ? (
-          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-6 md:h-8 w-12 md:w-16" />
         ) : error ? (
-          <div className="text-2xl font-bold text-destructive">--</div>
+          <div className="text-lg md:text-2xl font-bold text-destructive">--</div>
         ) : (
-          <div className="text-2xl font-bold">{maintenanceCount}</div>
+          <div className="text-lg md:text-2xl font-bold">{maintenanceCount}</div>
         )}
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground mt-1 leading-tight">
           Thiết bị có lịch bảo trì hoặc hiệu chuẩn
         </p>
       </CardContent>
@@ -73,27 +73,34 @@ export function RepairRequestsCard() {
   const { data: repairStats, isLoading, error } = useRepairRequestStats()
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Yêu cầu sửa chữa</CardTitle>
-        <Wrench className="h-4 w-4 text-muted-foreground" />
+    <Card className="mobile-kpi-card">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 md:p-6 md:pb-2">
+        <CardTitle className="text-xs md:text-sm font-medium truncate">Yêu cầu sửa chữa</CardTitle>
+        <Wrench className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
         {isLoading ? (
-          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-6 md:h-8 w-12 md:w-16" />
         ) : error ? (
-          <div className="text-2xl font-bold text-destructive">--</div>
+          <div className="text-lg md:text-2xl font-bold text-destructive">--</div>
         ) : (
-          <div className="text-2xl font-bold">{repairStats?.total || 0}</div>
+          <div className="text-lg md:text-2xl font-bold">{repairStats?.total || 0}</div>
         )}
         {isLoading ? (
-          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-24 md:w-32" />
         ) : (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-1 leading-tight">
             {error ? (
               "Lỗi tải dữ liệu"
             ) : (
-              `${repairStats?.pending || 0} chờ xử lý • ${repairStats?.approved || 0} đã duyệt • ${repairStats?.completed || 0} hoàn thành`
+              <span className="hidden md:inline">
+                {`${repairStats?.pending || 0} chờ xử lý • ${repairStats?.approved || 0} đã duyệt • ${repairStats?.completed || 0} hoàn thành`}
+              </span>
+            )}
+            {!error && (
+              <span className="md:hidden">
+                {`${repairStats?.pending || 0} chờ • ${repairStats?.approved || 0} duyệt • ${repairStats?.completed || 0} xong`}
+              </span>
             )}
           </p>
         )}
@@ -107,23 +114,23 @@ export function MaintenancePlansCard() {
   const { data: planStats, isLoading, error } = useMaintenancePlanStats()
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Kế hoạch BT/HC/KĐ</CardTitle>
-        <Calendar className="h-4 w-4 text-muted-foreground" />
+    <Card className="mobile-kpi-card">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-3 md:p-6 md:pb-2">
+        <CardTitle className="text-xs md:text-sm font-medium truncate">Kế hoạch BT/HC/KĐ</CardTitle>
+        <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
         {isLoading ? (
-          <Skeleton className="h-8 w-16" />
+          <Skeleton className="h-6 md:h-8 w-12 md:w-16" />
         ) : error ? (
-          <div className="text-2xl font-bold text-destructive">--</div>
+          <div className="text-lg md:text-2xl font-bold text-destructive">--</div>
         ) : (
-          <div className="text-2xl font-bold">{planStats?.total || 0}</div>
+          <div className="text-lg md:text-2xl font-bold">{planStats?.total || 0}</div>
         )}
         {isLoading ? (
-          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-20 md:w-24" />
         ) : (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-1 leading-tight">
             {error ? (
               "Lỗi tải dữ liệu"
             ) : (
@@ -139,7 +146,7 @@ export function MaintenancePlansCard() {
 // Combined KPI Cards Component
 export function KPICards() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+    <div className="grid gap-3 grid-cols-2 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
       <TotalEquipmentCard />
       <MaintenanceCountCard />
       <RepairRequestsCard />

@@ -34,40 +34,40 @@ export default function Dashboard() {
       {/* Quick Actions Section */}
       <div className="grid gap-4 md:gap-8">
   <Card>
-    <CardHeader>
-      <CardTitle>Thao tác nhanh</CardTitle>
-      <CardDescription>
+    <CardHeader className="p-4 md:p-6">
+      <CardTitle className="text-base md:text-lg">Thao tác nhanh</CardTitle>
+      <CardDescription className="text-sm">
         Truy cập nhanh các chức năng chính của hệ thống.
       </CardDescription>
     </CardHeader>
-    <CardContent>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Button asChild size="lg" variant="outline" className="h-auto flex-col gap-2 p-6">
+    <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+      <div className="grid gap-3 grid-cols-3 md:grid-cols-2 lg:grid-cols-3 md:gap-4">
+        <Button asChild size="lg" variant="outline" className="mobile-quick-action">
           <Link href="/equipment?action=add">
-            <Plus className="h-6 w-6" />
-            <div className="text-center">
-              <div className="font-semibold">Thêm thiết bị</div>
-              <div className="text-xs text-muted-foreground">Đăng ký thiết bị mới vào hệ thống</div>
+            <Plus className="mobile-quick-action-icon" />
+            <div className="mobile-quick-action-text">
+              <div className="mobile-quick-action-title">Thêm thiết bị</div>
+              <div className="mobile-quick-action-desc">Đăng ký thiết bị mới vào hệ thống</div>
             </div>
           </Link>
         </Button>
-        
-        <Button asChild size="lg" variant="outline" className="h-auto flex-col gap-2 p-6">
+
+        <Button asChild size="lg" variant="outline" className="mobile-quick-action">
           <Link href="/maintenance?action=create">
-            <ClipboardList className="h-6 w-6" />
-            <div className="text-center">
-              <div className="font-semibold">Lập kế hoạch BT/HC/KĐ</div>
-              <div className="text-xs text-muted-foreground">Tạo kế hoạch bảo trì, hiệu chuẩn, kiểm định</div>
+            <ClipboardList className="mobile-quick-action-icon" />
+            <div className="mobile-quick-action-text">
+              <div className="mobile-quick-action-title">Lập kế hoạch</div>
+              <div className="mobile-quick-action-desc">Tạo kế hoạch bảo trì, hiệu chuẩn, kiểm định</div>
             </div>
           </Link>
         </Button>
-        
-        <Button asChild size="lg" variant="outline" className="h-auto flex-col gap-2 p-6">
+
+        <Button asChild size="lg" variant="outline" className="mobile-quick-action">
           <Link href="/qr-scanner">
-            <QrCode className="h-6 w-6" />
-            <div className="text-center">
-              <div className="font-semibold">Quét mã QR</div>
-              <div className="text-xs text-muted-foreground">Quét mã QR thiết bị nhanh chóng</div>
+            <QrCode className="mobile-quick-action-icon" />
+            <div className="mobile-quick-action-text">
+              <div className="mobile-quick-action-title">Quét mã QR</div>
+              <div className="mobile-quick-action-desc">Quét mã QR thiết bị nhanh chóng</div>
             </div>
           </Link>
         </Button>

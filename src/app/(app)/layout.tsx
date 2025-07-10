@@ -41,6 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import { NotificationBellDialog } from "@/components/notification-bell-dialog"
 import { RealtimeStatus } from "@/components/realtime-status"
+import { MobileFooterNav } from "@/components/mobile-footer-nav"
 import { USER_ROLES } from "@/types/database"
 import { supabase } from "@/lib/supabase"
 
@@ -148,7 +149,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         open={isChangePasswordOpen}
         onOpenChange={setIsChangePasswordOpen}
       />
-      <div className={cn("grid min-h-screen w-full transition-all pt-14 pb-16 md:pt-0 md:pb-0", isSidebarOpen ? "md:grid-cols-[220px_1fr]" : "md:grid-cols-[72px_1fr]")}>
+      <div className={cn("grid min-h-screen w-full transition-all pt-14 pb-20 md:pt-0 md:pb-0", isSidebarOpen ? "md:grid-cols-[220px_1fr]" : "md:grid-cols-[72px_1fr]")}>
         <div className="hidden border-r bg-muted/40 md:block">
           <div className="flex h-full max-h-screen flex-col">
             <div className="flex h-auto flex-col items-center gap-4 border-b p-4">
@@ -181,12 +182,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex flex-col">
           <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 md:relative md:z-auto fixed top-0 left-0 right-0 z-40 backdrop-blur-sm bg-muted/90 md:bg-muted/40 md:backdrop-blur-none">
+            {/* Hide mobile sheet trigger since we're using footer navigation on mobile */}
             <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
                   size="icon"
-                  className="shrink-0 md:hidden touch-target"
+                  className="shrink-0 hidden touch-target"
+                  style={{ display: 'none' }}
                 >
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle navigation menu</span>
@@ -280,10 +283,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenuContent>
             </DropdownMenu>
           </header>
-          <main className="flex flex-1 flex-col gap-4 p-4 pb-20 md:pb-4 lg:gap-6 lg:p-6 bg-background animate-fade-in">
+          <main className="flex flex-1 flex-col gap-4 p-4 pb-24 md:pb-4 lg:gap-6 lg:p-6 bg-background animate-fade-in">
             {children}
           </main>
-          <footer className="flex flex-col items-center gap-1 p-4 text-center caption-responsive border-t bg-muted/40 md:relative md:z-auto fixed bottom-0 left-0 right-0 z-40 backdrop-blur-sm bg-muted/90 md:bg-muted/40 md:backdrop-blur-none">
+
+          {/* Mobile Footer Navigation - replaces offcanvas sidebar on mobile */}
+          <MobileFooterNav />
+
+          {/* Desktop Footer - hidden on mobile when footer nav is active */}
+          <footer className="hidden md:flex flex-col items-center gap-1 p-4 text-center caption-responsive border-t bg-muted/40">
             <div className="flex items-center gap-1">
               <span>Hệ thống quản lý thiết bị y tế</span>
               <Copyright className="h-3 w-3" />

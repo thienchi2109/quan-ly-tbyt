@@ -60,6 +60,7 @@ import { Separator } from "@/components/ui/separator"
 import type { Column } from "@tanstack/react-table"
 import { RepairRequestAlert } from "@/components/repair-request-alert"
 import { useRepairRealtimeSync } from "@/hooks/use-realtime-sync"
+import { MobileFiltersDropdown } from "@/components/mobile-filters-dropdown"
 
 
 type EquipmentSelectItem = {
@@ -1327,32 +1328,65 @@ export default function RepairRequestsPage() {
         {/* Secondary Action: View Existing Requests */}
         {showRequestsList && (
           <div className="w-full collapsible-enter">
-          <Card>
+          <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle className="heading-responsive-h2">Danh sách yêu cầu</CardTitle>
               <CardDescription className="body-responsive-sm">
                 Tất cả các yêu cầu sửa chữa đã được ghi nhận.
               </CardDescription>
             </CardHeader>
-            <CardContent className="mobile-card-spacing">
-              <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
-                  <div className="flex flex-1 items-center space-x-2">
+            <CardContent className="p-3 md:p-6 gap-3 md:gap-4">
+              <div className="flex items-center justify-between gap-2 flex-wrap mb-3 md:mb-4">
+                  <div className="flex flex-1 items-center gap-2">
                       <Input
                           placeholder="Tìm thiết bị, mô tả..."
                           value={searchTerm}
                           onChange={(event) => setSearchTerm(event.target.value)}
-                          className="h-8 w-[150px] lg:w-[250px] touch-target-sm md:h-8"
+                          className="h-8 w-[120px] md:w-[200px] lg:w-[250px] touch-target-sm md:h-8"
                       />
-                      <DataTableFacetedFilter
-                          column={table.getColumn("trang_thai")}
-                          title="Trạng thái"
-                          options={requestStatuses.map(s => ({label: s, value: s}))}
-                      />
-                      <DataTableFacetedFilter
-                          column={table.getColumn("don_vi_thuc_hien")}
-                          title="Đơn vị thực hiện"
-                          options={repairUnits}
-                      />
+
+                      {/* Desktop: Show filters inline */}
+                      {!isMobile && (
+                        <>
+                          <DataTableFacetedFilter
+                              column={table.getColumn("trang_thai")}
+                              title="Trạng thái"
+                              options={requestStatuses.map(s => ({label: s, value: s}))}
+                          />
+                          <DataTableFacetedFilter
+                              column={table.getColumn("don_vi_thuc_hien")}
+                              title="Đơn vị thực hiện"
+                              options={repairUnits}
+                          />
+                        </>
+                      )}
+
+                      {/* Mobile: Show filters in dropdown */}
+                      {isMobile && (
+                        <MobileFiltersDropdown
+                          activeFiltersCount={
+                            ((table.getColumn("trang_thai")?.getFilterValue() as string[])?.length || 0) +
+                            ((table.getColumn("don_vi_thuc_hien")?.getFilterValue() as string[])?.length || 0)
+                          }
+                          onClearFilters={() => {
+                            table.getColumn("trang_thai")?.setFilterValue([])
+                            table.getColumn("don_vi_thuc_hien")?.setFilterValue([])
+                          }}
+                        >
+                          <DataTableFacetedFilter
+                              column={table.getColumn("trang_thai")}
+                              title="Trạng thái"
+                              options={requestStatuses.map(s => ({label: s, value: s}))}
+                          />
+                          <DataTableFacetedFilter
+                              column={table.getColumn("don_vi_thuc_hien")}
+                              title="Đơn vị thực hiện"
+                              options={repairUnits}
+                          />
+                        </MobileFiltersDropdown>
+                      )}
+
+                      {/* Clear all filters button */}
                       {isFiltered && (
                           <Button
                               variant="ghost"
@@ -1362,63 +1396,65 @@ export default function RepairRequestsPage() {
                               }}
                               className="h-8 px-2 lg:px-3 touch-target-sm md:h-8"
                           >
-                              Xóa
-                              <FilterX className="ml-2 h-4 w-4" />
+                              <span className="hidden sm:inline">Xóa</span>
+                              <FilterX className="h-4 w-4 sm:ml-2" />
                           </Button>
                       )}
                   </div>
               </div>
               {/* Mobile Card View */}
               {isMobile ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {isLoading ? (
-                    <div className="flex justify-center items-center gap-2 py-8">
+                    <div className="flex justify-center items-center gap-2 py-6">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Đang tải...</span>
+                      <span className="text-sm">Đang tải...</span>
                     </div>
                   ) : table.getRowModel().rows?.length ? (
                     table.getRowModel().rows.map((row) => {
                       const request = row.original;
                       return (
-                        <Card key={request.id} className="mobile-card-spacing">
-                          <CardHeader className="flex flex-row items-start justify-between pb-4 mobile-interactive">
-                            <div className="max-w-[calc(100%-40px)]">
-                              <CardTitle className="heading-responsive-h4 font-bold leading-tight">
+                        <Card key={request.id} className="mobile-repair-card">
+                          <CardHeader className="mobile-repair-card-header flex flex-row items-start justify-between">
+                            <div className="flex-1 min-w-0 pr-2">
+                              <CardTitle className="mobile-repair-card-title truncate line-clamp-1">
                                 {request.thiet_bi?.ten_thiet_bi || 'N/A'}
                               </CardTitle>
-                              <CardDescription className="body-responsive-sm">
+                              <CardDescription className="mobile-repair-card-description truncate">
                                 {request.thiet_bi?.ma_thiet_bi || 'N/A'}
                               </CardDescription>
                             </div>
-                            {renderActions(request)}
+                            <div className="flex-shrink-0">
+                              {renderActions(request)}
+                            </div>
                           </CardHeader>
-                          <CardContent className="body-responsive-sm space-y-3 mobile-interactive">
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground">Trạng thái</span>
-                              <Badge variant={getStatusVariant(request.trang_thai)} className="self-start">
+                          <CardContent className="mobile-repair-card-content">
+                            <div className="mobile-repair-card-field">
+                              <span className="mobile-repair-card-label">Trạng thái</span>
+                              <Badge variant={getStatusVariant(request.trang_thai)} className="text-xs">
                                 {request.trang_thai}
                               </Badge>
                             </div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground">Ngày yêu cầu</span>
-                              <span className="font-medium">
+                            <div className="mobile-repair-card-field">
+                              <span className="mobile-repair-card-label">Ngày yêu cầu</span>
+                              <span className="mobile-repair-card-value">
                                 {format(parseISO(request.ngay_yeu_cau), 'dd/MM/yyyy', { locale: vi })}
                               </span>
                             </div>
                             <div className="space-y-1">
-                              <span className="text-muted-foreground text-xs">Mô tả sự cố:</span>
-                              <p className="text-sm">{request.mo_ta_su_co}</p>
+                              <span className="mobile-repair-card-label">Mô tả sự cố:</span>
+                              <p className="mobile-repair-card-value text-left text-xs leading-relaxed line-clamp-2">{request.mo_ta_su_co}</p>
                             </div>
                             {request.hang_muc_sua_chua && (
                               <div className="space-y-1">
-                                <span className="text-muted-foreground text-xs">Hạng mục sửa chữa:</span>
-                                <p className="text-sm">{request.hang_muc_sua_chua}</p>
+                                <span className="mobile-repair-card-label">Hạng mục sửa chữa:</span>
+                                <p className="mobile-repair-card-value text-left text-xs leading-relaxed line-clamp-2">{request.hang_muc_sua_chua}</p>
                               </div>
                             )}
                             {request.nguoi_yeu_cau && (
-                              <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Người yêu cầu</span>
-                                <span className="font-medium">{request.nguoi_yeu_cau}</span>
+                              <div className="mobile-repair-card-field">
+                                <span className="mobile-repair-card-label">Người yêu cầu</span>
+                                <span className="mobile-repair-card-value">{request.nguoi_yeu_cau}</span>
                               </div>
                             )}
                           </CardContent>
@@ -1426,7 +1462,7 @@ export default function RepairRequestsPage() {
                       );
                     })
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
+                    <div className="text-center py-6 text-muted-foreground text-sm">
                       Không có kết quả.
                     </div>
                   )}
