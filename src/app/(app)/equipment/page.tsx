@@ -105,6 +105,7 @@ import { UsageHistoryTab } from "@/components/usage-history-tab"
 import { ActiveUsageIndicator } from "@/components/active-usage-indicator"
 import { MobileUsageActions } from "@/components/mobile-usage-actions"
 import { useSearchDebounce } from "@/hooks/use-debounce"
+import { MobileEquipmentListItem } from "@/components/mobile-equipment-list-item"
 
 type Attachment = {
   id: string;
@@ -1184,52 +1185,15 @@ export default function EquipmentPage() {
     }
 
     return isMobile ? (
-      <div className="space-y-4">
-        {table.getRowModel().rows.map((row) => {
-          const equipment = row.original;
-          return (
-            <Card key={equipment.id} data-equipment-id={equipment.id} className="mobile-card-spacing">
-              <CardHeader className="flex flex-row items-start justify-between pb-4 mobile-interactive">
-                <div className="max-w-[calc(100%-40px)]">
-                  <CardTitle className="heading-responsive-h4 font-bold leading-tight truncate">{equipment.ten_thiet_bi}</CardTitle>
-                  <CardDescription className="body-responsive-sm">{equipment.ma_thiet_bi}</CardDescription>
-                  <div className="mt-2">
-                    <ActiveUsageIndicator equipmentId={equipment.id} />
-                  </div>
-                </div>
-                {renderActions(equipment)}
-              </CardHeader>
-              <CardContent className="body-responsive-sm space-y-3 mobile-interactive">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Trạng thái</span>
-                  {equipment.tinh_trang_hien_tai ? (
-                    <Badge variant={getStatusVariant(equipment.tinh_trang_hien_tai)}>{equipment.tinh_trang_hien_tai}</Badge>
-                  ) : (
-                    <span className="italic text-muted-foreground text-xs">Chưa có</span>
-                  )}
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center gap-2">
-                  <span className="text-muted-foreground shrink-0">Khoa/Phòng</span>
-                  <span className="font-medium text-right truncate">
-                    {equipment.khoa_phong_quan_ly || <span className="italic text-muted-foreground text-xs">Chưa có</span>}
-                  </span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center gap-2">
-                  <span className="text-muted-foreground shrink-0">Người sử dụng</span>
-                  <span className="font-medium text-right truncate">
-                    {equipment.nguoi_dang_truc_tiep_quan_ly || <span className="italic text-muted-foreground text-xs">Chưa có</span>}
-                  </span>
-                </div>
-                <Separator />
-                <div className="pt-2">
-                  <MobileUsageActions equipment={equipment} />
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="space-y-2">
+        {table.getRowModel().rows.map((row) => (
+          <MobileEquipmentListItem
+            key={row.original.id}
+            equipment={row.original}
+            onShowDetails={handleShowDetails}
+            onEdit={setEditingEquipment}
+          />
+        ))}
       </div>
     ) : (
       <div className="overflow-x-auto rounded-md border">

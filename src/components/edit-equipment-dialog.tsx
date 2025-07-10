@@ -61,6 +61,7 @@ const equipmentFormSchema = z.object({
   cau_hinh_thiet_bi: z.string().optional().nullable(),
   phu_kien_kem_theo: z.string().optional().nullable(),
   ghi_chu: z.string().optional().nullable(),
+  phan_loai_theo_nd98: z.enum(['A', 'B', 'C', 'D']).optional().nullable(),
 });
 
 type EquipmentFormValues = z.infer<typeof equipmentFormSchema>
@@ -249,6 +250,30 @@ export function EditEquipmentDialog({ open, onOpenChange, onSuccess, equipment }
                 <FormField control={form.control} name="ghi_chu" render={({ field }) => (
                     <FormItem><FormLabel>Ghi chú</FormLabel><FormControl><Textarea rows={3} {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
                 )} />
+                <FormField
+                    control={form.control}
+                    name="phan_loai_theo_nd98"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Phân loại TB theo NĐ 98</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value ?? undefined}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Chọn phân loại" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {['A', 'B', 'C', 'D'].map(type => (
+                                <SelectItem key={type} value={type}>
+                                {`Loại ${type}`}
+                                </SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
               </div>
             </ScrollArea>
             <DialogFooter className="pt-6">
