@@ -1,10 +1,12 @@
 /**
  * Firebase utilities with dynamic import for Firebase libraries
  * This ensures Firebase is only loaded when actually needed for push notifications
- * 
+ *
  * NOTE: Currently push notifications are not used in the main application.
  * This file is prepared for future push notification implementation.
  */
+
+import * as React from "react"
 
 // Type definitions for Firebase (to avoid importing the full library)
 export interface FirebaseConfig {

@@ -1,10 +1,12 @@
 /**
  * AI utilities with dynamic import for Firebase/Genkit libraries
  * This ensures AI libraries are only loaded when actually needed
- * 
+ *
  * NOTE: Currently these AI features are not used in the main application.
  * This file is prepared for future AI feature implementation.
  */
+
+import * as React from "react"
 
 // Type definitions for AI features (to avoid importing the full libraries)
 export interface AIResponse {
