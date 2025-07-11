@@ -42,7 +42,9 @@ export function EquipmentAttentionTable() {
     <Card>
       <CardHeader className="flex flex-row items-center">
         <div className="grid gap-2">
-          <CardTitle>Thiết bị cần chú ý</CardTitle>
+          <CardTitle className="text-responsive-lg md:text-2xl font-semibold leading-none tracking-tight">
+            Thiết bị cần chú ý
+          </CardTitle>
           <CardDescription>
             Danh sách các thiết bị cần sửa chữa hoặc đang bảo trì.
           </CardDescription>

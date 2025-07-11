@@ -40,7 +40,9 @@ export function MaintenancePlansTable() {
     <Card>
       <CardHeader className="flex flex-row items-center">
         <div className="grid gap-2">
-          <CardTitle>Kế hoạch BT/HC/KĐ gần đây</CardTitle>
+          <CardTitle className="text-responsive-lg md:text-2xl font-semibold leading-none tracking-tight">
+            Kế hoạch BT/HC/KĐ gần đây
+          </CardTitle>
           <CardDescription>
             Danh sách các kế hoạch bảo trì, hiệu chuẩn, kiểm định mới nhất.
           </CardDescription>

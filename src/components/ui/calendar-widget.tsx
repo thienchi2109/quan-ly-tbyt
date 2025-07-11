@@ -55,9 +55,9 @@ function CalendarSkeleton({ className }: { className?: string }) {
   return (
     <Card className={className}>
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2">
-          <CalendarIcon className="h-5 w-5" />
-          Lịch Bảo trì/Hiệu chuẩn/Kiểm định
+        <CardTitle className="flex items-center gap-2 text-responsive-lg md:text-2xl font-semibold leading-none tracking-tight">
+          <CalendarIcon className="h-4 w-4 md:h-5 md:w-5" />
+          <span className="line-clamp-2 md:line-clamp-1">Lịch Bảo trì/Hiệu chuẩn/Kiểm định</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -149,14 +149,14 @@ function CalendarWidgetImpl({
   return (
     <Card className={className}>
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5" />
-            Lịch Bảo trì/Hiệu chuẩn/Kiểm định
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <CardTitle className="flex items-center gap-2 text-responsive-lg md:text-2xl font-semibold leading-none tracking-tight">
+            <CalendarIcon className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="line-clamp-2 md:line-clamp-1">Lịch Bảo trì/Hiệu chuẩn/Kiểm định</span>
           </CardTitle>
           <div className="flex items-center gap-2">
             <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Chọn khoa/phòng" />
               </SelectTrigger>
               <SelectContent>

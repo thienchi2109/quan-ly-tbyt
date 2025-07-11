@@ -86,8 +86,8 @@ export function UpcomingMaintenanceCard({ className }: UpcomingMaintenanceCardPr
     <Card className={className}>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-responsive-lg md:text-2xl font-semibold leading-none tracking-tight">
+            <Calendar className="h-4 w-4 md:h-5 md:w-5" />
             Công việc tháng {month}/{year}
           </CardTitle>
           <Button asChild variant="outline" size="sm">
