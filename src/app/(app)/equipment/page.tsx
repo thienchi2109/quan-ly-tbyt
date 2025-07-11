@@ -311,8 +311,8 @@ export default function EquipmentPage() {
   const { user } = useAuth();
   const { toast } = useToast()
 
-  // Temporarily disable useRealtimeSync to avoid conflict with RealtimeProvider
-  // useEquipmentRealtimeSync()
+  // Enable realtime sync to invalidate cache on external changes
+  useEquipmentRealtimeSync()
   const [data, setData] = React.useState<Equipment[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -857,6 +857,20 @@ export default function EquipmentPage() {
 
   React.useEffect(() => {
     fetchEquipment();
+  }, [fetchEquipment]);
+
+  // Listen for realtime cache invalidation events
+  React.useEffect(() => {
+    const handleCacheInvalidation = () => {
+      console.log('[EquipmentPage] Cache invalidated by realtime, refetching...')
+      fetchEquipment();
+    };
+
+    window.addEventListener('equipment-cache-invalidated', handleCacheInvalidation);
+
+    return () => {
+      window.removeEventListener('equipment-cache-invalidated', handleCacheInvalidation);
+    };
   }, [fetchEquipment]);
 
   // Handle URL parameters for quick actions

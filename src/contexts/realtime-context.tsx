@@ -12,7 +12,7 @@ import type { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/
 
 // Types for realtime events
 type DatabaseEvent = 'INSERT' | 'UPDATE' | 'DELETE'
-type TableName = 'thiet_bi' | 'yeu_cau_sua_chua' | 'ke_hoach_bao_tri' | 'nhat_ky_su_dung' | 'yeu_cau_luan_chuyen'
+type TableName = 'thiet_bi' | 'yeu_cau_sua_chua' | 'ke_hoach_bao_tri' | 'nhat_ky_su_dung' | 'yeu_cau_luan_chuyen' | 'cong_viec_bao_tri'
 
 interface RealtimeContextType {
   isConnected: boolean
@@ -92,27 +92,25 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       case 'thiet_bi':
         // Equipment changes affect multiple areas
         // Use proper query keys from hooks
-        debouncedInvalidate(equipmentKeys.all) // ['equipment'] - invalidates all equipment queries
-        debouncedInvalidate(dashboardStatsKeys.all) // ['dashboard-stats'] - invalidates dashboard
+        debouncedInvalidate([...equipmentKeys.all]) // ['equipment'] - invalidates all equipment queries
+        debouncedInvalidate([...dashboardStatsKeys.all]) // ['dashboard-stats'] - invalidates dashboard
         debouncedInvalidate(['reports'])
         debouncedInvalidate(['equipment-distribution'])
         break
 
       case 'yeu_cau_sua_chua':
         // Repair request changes
-        debouncedInvalidate(repairKeys.all) // ['repair'] - invalidates all repair queries
-        debouncedInvalidate(dashboardStatsKeys.all) // ['dashboard-stats']
+        debouncedInvalidate([...repairKeys.all]) // ['repair'] - invalidates all repair queries
+        debouncedInvalidate([...dashboardStatsKeys.all]) // ['dashboard-stats']
         debouncedInvalidate(['reports'])
         break
 
       case 'ke_hoach_bao_tri':
         // Maintenance plan changes
-        debouncedInvalidate(maintenanceKeys.all) // ['maintenance'] - invalidates all maintenance queries
-        debouncedInvalidate(dashboardStatsKeys.all) // ['dashboard-stats']
+        debouncedInvalidate([...maintenanceKeys.all]) // ['maintenance'] - invalidates all maintenance queries
+        debouncedInvalidate([...dashboardStatsKeys.all]) // ['dashboard-stats']
         debouncedInvalidate(['calendar-events'])
         break
-
-
 
       case 'nhat_ky_su_dung':
         // Usage log changes
@@ -127,6 +125,13 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
         debouncedInvalidate(['reports'])
         break
 
+      case 'cong_viec_bao_tri':
+        // Maintenance task changes
+        debouncedInvalidate(['maintenance']) // maintenance queries
+        debouncedInvalidate(['dashboard-stats'])
+        debouncedInvalidate(['calendar-events'])
+        break
+
       default:
         console.warn(`[Realtime] Unhandled table: ${table}`)
     }
@@ -137,8 +142,9 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
         'thiet_bi': 'Thiết bị mới đã được thêm',
         'yeu_cau_sua_chua': 'Yêu cầu sửa chữa mới',
         'ke_hoach_bao_tri': 'Kế hoạch bảo trì mới',
-        'lich_bao_tri': 'Lịch bảo trì mới',
-        'yeu_cau_luan_chuyen': 'Yêu cầu luân chuyển mới'
+        'cong_viec_bao_tri': 'Công việc bảo trì mới',
+        'yeu_cau_luan_chuyen': 'Yêu cầu luân chuyển mới',
+        'nhat_ky_su_dung': 'Nhật ký sử dụng mới'
       }
       
       const message = messages[table as TableName]
@@ -171,7 +177,8 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       'yeu_cau_sua_chua',
       'ke_hoach_bao_tri',
       'nhat_ky_su_dung',
-      'yeu_cau_luan_chuyen'
+      'yeu_cau_luan_chuyen',
+      'cong_viec_bao_tri'
     ]
 
     tables.forEach(table => {

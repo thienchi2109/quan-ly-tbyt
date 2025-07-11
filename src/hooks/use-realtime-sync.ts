@@ -72,13 +72,72 @@ export function useDashboardRealtimeSync() {
 }
 
 /**
- * Hook specifically for equipment pages
+ * Hook specifically for equipment pages with localStorage cache invalidation
  */
 export function useEquipmentRealtimeSync() {
-  return useRealtimeSync({
-    tables: ['thiet_bi', 'yeu_cau_luan_chuyen'],
-    queryKeys: [['equipment'], ['transfers'], ['dashboard-stats']]
-  })
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (!supabase) return
+
+    console.log('[useEquipmentRealtimeSync] Setting up equipment realtime sync')
+
+    const channel = supabase.channel('equipment-sync')
+
+    // Subscribe to equipment table changes
+    channel.on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'thiet_bi'
+      },
+      (payload) => {
+        console.log(`[useEquipmentRealtimeSync] ${payload.eventType} on thiet_bi:`, payload)
+
+        // Invalidate React Query cache
+        queryClient.invalidateQueries({ queryKey: ['equipment'] })
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+
+        // Invalidate localStorage cache for equipment page
+        try {
+          localStorage.removeItem('equipment_data')
+          console.log('[useEquipmentRealtimeSync] Cleared equipment localStorage cache')
+
+          // Trigger a custom event to notify equipment page to refetch
+          window.dispatchEvent(new CustomEvent('equipment-cache-invalidated'))
+        } catch (error) {
+          console.error('[useEquipmentRealtimeSync] Error clearing localStorage:', error)
+        }
+      }
+    )
+
+    // Subscribe to transfer requests that might affect equipment
+    channel.on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'yeu_cau_luan_chuyen'
+      },
+      (payload) => {
+        console.log(`[useEquipmentRealtimeSync] ${payload.eventType} on yeu_cau_luan_chuyen:`, payload)
+
+        // Invalidate React Query cache
+        queryClient.invalidateQueries({ queryKey: ['transfers'] })
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+      }
+    )
+
+    channel.subscribe((status) => {
+      console.log('[useEquipmentRealtimeSync] Subscription status:', status)
+    })
+
+    return () => {
+      console.log('[useEquipmentRealtimeSync] Cleaning up subscription')
+      supabase.removeChannel(channel)
+    }
+  }, [queryClient])
 }
 
 /**

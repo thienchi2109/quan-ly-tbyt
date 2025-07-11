@@ -82,7 +82,7 @@ export function useRealtimeQuery(config: RealtimeQueryConfig) {
         clearTimeout(timeoutRef.current)
       }
       
-      if (channelRef.current) {
+      if (channelRef.current && supabase) {
         supabase.removeChannel(channelRef.current)
         channelRef.current = null
       }
@@ -132,7 +132,7 @@ export function useMaintenancePlansRealtime() {
  */
 export function useMaintenanceSchedulesRealtime() {
   return useRealtimeQuery({
-    table: 'lich_bao_tri',
+    table: 'cong_viec_bao_tri',
     queryKey: ['maintenance'],
     debounceMs: 500
   })
