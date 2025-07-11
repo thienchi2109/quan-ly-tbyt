@@ -67,46 +67,37 @@ async function buildCloudflare() {
     process.exit(1);
   }
 
-  // Step 4: Create Vercel-compatible output structure for Cloudflare
-  log(`${colors.blue}📁 Creating Cloudflare Workers compatible structure...${colors.reset}`);
+  // Step 4: Cloudflare Pages uses the 'out' directory directly
+  log(`${colors.blue}📁 Preparing for Cloudflare Pages deployment...${colors.reset}`);
   try {
-    // Create .vercel/output directory structure
-    const outputDir = '.vercel/output';
-    const staticDir = path.join(outputDir, 'static');
-    
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
-    
-    if (!fs.existsSync(staticDir)) {
-      fs.mkdirSync(staticDir, { recursive: true });
+    // Check if output directory exists
+    if (!fs.existsSync('out')) {
+      log(`${colors.red}❌ Export directory 'out' not found${colors.reset}`);
+      process.exit(1);
     }
 
-    // Copy the exported files to the static directory
-    execSync(`xcopy "out\\*" "${staticDir}\\" /E /I /Y`, { stdio: 'inherit' });
-    
-    // Create config.json for Cloudflare Pages
-    const config = {
-      version: 3,
-      routes: [
-        {
-          src: "/(.*)",
-          dest: "/$1"
-        }
-      ]
-    };
-    
-    fs.writeFileSync(path.join(outputDir, 'config.json'), JSON.stringify(config, null, 2));
-    
-    log(`${colors.green}✅ Cloudflare Workers structure created${colors.reset}`);
+    // Copy _headers file to out directory for Cloudflare Pages
+    if (fs.existsSync('_headers')) {
+      fs.copyFileSync('_headers', path.join('out', '_headers'));
+      log(`${colors.green}✅ Headers configuration copied${colors.reset}`);
+    }
+
+    // Create _redirects file for SPA routing
+    const redirects = `
+# SPA routing - redirect all routes to index.html
+/*    /index.html   200
+`;
+    fs.writeFileSync(path.join('out', '_redirects'), redirects.trim());
+
+    log(`${colors.green}✅ Cloudflare Pages structure ready${colors.reset}`);
   } catch (error) {
-    log(`${colors.red}❌ Failed to create Cloudflare structure: ${error.message}${colors.reset}`);
+    log(`${colors.red}❌ Failed to prepare Cloudflare structure: ${error.message}${colors.reset}`);
     process.exit(1);
   }
 
-  log(`\n${colors.green}${colors.bright}🎉 Cloudflare Workers build completed successfully!${colors.reset}`);
-  log(`${colors.cyan}📁 Output directory: .vercel/output/static${colors.reset}`);
-  log(`${colors.cyan}🚀 Ready for deployment to Cloudflare Workers${colors.reset}`);
+  log(`\n${colors.green}${colors.bright}🎉 Cloudflare Pages build completed successfully!${colors.reset}`);
+  log(`${colors.cyan}📁 Output directory: out${colors.reset}`);
+  log(`${colors.cyan}🚀 Ready for deployment to Cloudflare Pages${colors.reset}`);
 }
 
 // Run the build

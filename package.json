@@ -13,7 +13,7 @@
     "deploy:cloudflare": "wrangler pages deploy .vercel/output/static",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "cf:login": "wrangler auth login",
+    "cf:login": "wrangler login",
     "cf:preview": "npm run build:cloudflare && wrangler pages dev .vercel/output/static",
     "deploy:dual": "node scripts/deploy-dual.js",
     "deploy:all": "npm run deploy:dual",
