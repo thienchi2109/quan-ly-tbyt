@@ -16,7 +16,8 @@
     "cf:login": "wrangler auth login",
     "cf:preview": "npm run build:cloudflare && wrangler pages dev .vercel/output/static",
     "deploy:dual": "node scripts/deploy-dual.js",
-    "deploy:all": "npm run deploy:dual"
+    "deploy:all": "npm run deploy:dual",
+    "setup:cicd": "node scripts/setup-cicd.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
