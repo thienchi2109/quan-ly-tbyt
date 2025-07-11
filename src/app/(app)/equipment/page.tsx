@@ -22,6 +22,7 @@ import {
   File,
   PlusCircle,
   FilterX,
+  Filter,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -105,6 +106,7 @@ import { UsageHistoryTab } from "@/components/usage-history-tab"
 import { ActiveUsageIndicator } from "@/components/active-usage-indicator"
 import { MobileUsageActions } from "@/components/mobile-usage-actions"
 import { useSearchDebounce } from "@/hooks/use-debounce"
+import { EquipmentFilterStatus } from "@/components/department-filter-status"
 import { MobileEquipmentListItem } from "@/components/mobile-equipment-list-item"
 
 type Attachment = {
@@ -792,8 +794,13 @@ export default function EquipmentPage() {
   const fetchEquipment = React.useCallback(async () => {
       setIsLoading(true);
 
+      // Phase 1: Department-based filtering - check cache key includes user department
+      const cacheKey = user?.khoa_phong && !['admin', 'to_qltb'].includes(user.role)
+        ? `${CACHE_KEY}_${user.khoa_phong}`
+        : CACHE_KEY;
+
       try {
-        const cachedItemJSON = localStorage.getItem(CACHE_KEY);
+        const cachedItemJSON = localStorage.getItem(cacheKey);
         if (cachedItemJSON) {
           const cachedItem = JSON.parse(cachedItemJSON);
           setData(cachedItem.data as Equipment[]);
@@ -802,9 +809,9 @@ export default function EquipmentPage() {
         }
       } catch (e) {
         console.error("Error reading from localStorage, fetching from network.", e);
-        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(cacheKey);
       }
-      
+
       if (supabaseError) {
           toast({
               variant: "destructive",
@@ -821,15 +828,29 @@ export default function EquipmentPage() {
           return;
       }
 
-      const { data, error } = await supabase.from('thiet_bi').select('*').order('id', { ascending: true });
-      
+      // Phase 1: Apply department-based filtering for non-admin users
+      let query = supabase.from('thiet_bi').select('*');
+
+      // Apply department filter for non-admin users
+      const shouldFilterByDepartment = user &&
+        !['admin', 'to_qltb'].includes(user.role) &&
+        user.khoa_phong;
+
+      if (shouldFilterByDepartment) {
+        console.log(`[Equipment] Applying department filter: ${user.khoa_phong}`);
+        query = query.eq('khoa_phong_quan_ly', user.khoa_phong);
+      }
+
+      const { data, error } = await query.order('id', { ascending: true });
+
       if (error) {
         toast({
           variant: "destructive",
           title: "Lỗi",
           description: "Không thể tải dữ liệu thiết bị. " + error.message,
         })
-        if (!localStorage.getItem(CACHE_KEY)) {
+        const cacheKey = shouldFilterByDepartment ? `${CACHE_KEY}_${user.khoa_phong}` : CACHE_KEY;
+        if (!localStorage.getItem(cacheKey)) {
             setData([]);
         }
       } else {
@@ -838,22 +859,27 @@ export default function EquipmentPage() {
             const itemToCache = {
                 data: data,
             };
-            localStorage.setItem(CACHE_KEY, JSON.stringify(itemToCache));
+            const cacheKey = shouldFilterByDepartment ? `${CACHE_KEY}_${user.khoa_phong}` : CACHE_KEY;
+            localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
         } catch (e) {
             console.error("Error writing to localStorage", e);
         }
       }
       setIsLoading(false);
-    }, [toast]);
+    }, [toast, user]);
 
   const onDataMutationSuccess = React.useCallback(() => {
     try {
+      // Clear both general and department-specific cache
       localStorage.removeItem(CACHE_KEY);
+      if (user?.khoa_phong) {
+        localStorage.removeItem(`${CACHE_KEY}_${user.khoa_phong}`);
+      }
     } catch (error) {
       console.error("Failed to invalidate cache", error);
     }
     fetchEquipment();
-  }, [fetchEquipment]);
+  }, [fetchEquipment, user?.khoa_phong]);
 
   React.useEffect(() => {
     fetchEquipment();
@@ -1500,6 +1526,12 @@ export default function EquipmentPage() {
           <CardDescription className="body-responsive-sm">
             Quản lý danh sách các trang thiết bị y tế.
           </CardDescription>
+
+          {/* Phase 2: Enhanced department filter notification */}
+          <EquipmentFilterStatus
+            itemCount={table.getFilteredRowModel().rows.length}
+            className="mt-3"
+          />
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Mobile-optimized filters layout */}

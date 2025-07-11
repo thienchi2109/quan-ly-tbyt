@@ -44,7 +44,7 @@ import {
 import { supabase, supabaseError } from "@/lib/supabase"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { ArrowUpDown, Calendar as CalendarIcon, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronUp, Edit, FilterX, History, Loader2, MoreHorizontal, PlusCircle, Trash2 } from "lucide-react"
+import { ArrowUpDown, Calendar as CalendarIcon, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronUp, Edit, FilterX, History, Loader2, MoreHorizontal, PlusCircle, Trash2 } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { vi } from 'date-fns/locale'
 import { cn } from "@/lib/utils"
@@ -61,6 +61,7 @@ import type { Column } from "@tanstack/react-table"
 import { RepairRequestAlert } from "@/components/repair-request-alert"
 import { useRepairRealtimeSync } from "@/hooks/use-realtime-sync"
 import { MobileFiltersDropdown } from "@/components/mobile-filters-dropdown"
+import { RepairRequestFilterStatus } from "@/components/department-filter-status"
 
 
 type EquipmentSelectItem = {
@@ -263,8 +264,17 @@ export default function RepairRequestsPage() {
     if (!supabase) return;
     setIsLoading(true);
 
+    // Phase 2: Department-based filtering for repair requests
+    const shouldFilterByDepartment = user &&
+      !['admin', 'to_qltb'].includes(user.role) &&
+      user.khoa_phong;
+
+    const cacheKey = shouldFilterByDepartment
+      ? `${CACHE_KEY}_${user.khoa_phong}`
+      : CACHE_KEY;
+
     try {
-      const cachedItemJSON = localStorage.getItem(CACHE_KEY);
+      const cachedItemJSON = localStorage.getItem(cacheKey);
       if (cachedItemJSON) {
         const cachedItem = JSON.parse(cachedItemJSON);
         setRequests(cachedItem.data as RepairRequestWithEquipment[]);
@@ -273,10 +283,10 @@ export default function RepairRequestsPage() {
       }
     } catch (e) {
       console.error("Error reading cache for repair requests, fetching from network.", e);
-      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(cacheKey);
     }
-    
-    const { data, error } = await supabase
+
+    let query = supabase
         .from('yeu_cau_sua_chua')
         .select(`
             id,
@@ -298,8 +308,15 @@ export default function RepairRequestsPage() {
                 serial,
                 khoa_phong_quan_ly
             )
-        `)
-        .order('ngay_yeu_cau', { ascending: false });
+        `);
+
+    // Phase 2: Apply department filter for repair requests
+    if (shouldFilterByDepartment) {
+      console.log(`[RepairRequests] Applying department filter: ${user.khoa_phong}`);
+      query = query.eq('thiet_bi.khoa_phong_quan_ly', user.khoa_phong);
+    }
+
+    const { data, error } = await query.order('ngay_yeu_cau', { ascending: false });
 
     if (error) {
         toast({
@@ -307,28 +324,32 @@ export default function RepairRequestsPage() {
             title: "Lỗi tải danh sách yêu cầu",
             description: error.message,
         });
-        if (!localStorage.getItem(CACHE_KEY)) {
+        if (!localStorage.getItem(cacheKey)) {
             setRequests([]);
         }
     } else {
         setRequests(data as RepairRequestWithEquipment[]);
         try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ data }));
+            localStorage.setItem(cacheKey, JSON.stringify({ data }));
         } catch (e) {
             console.error("Error writing repair requests to localStorage", e);
         }
     }
     setIsLoading(false);
-  }, [toast]);
+  }, [toast, user]);
   
   const invalidateCacheAndRefetch = React.useCallback(() => {
       try {
+        // Clear both general and department-specific cache
         localStorage.removeItem(CACHE_KEY);
+        if (user?.khoa_phong) {
+          localStorage.removeItem(`${CACHE_KEY}_${user.khoa_phong}`);
+        }
       } catch (error) {
         console.error("Failed to invalidate repair requests cache", error);
       }
       fetchRequests();
-  }, [fetchRequests]);
+  }, [fetchRequests, user?.khoa_phong]);
 
   const handleSelectEquipment = React.useCallback((equipment: EquipmentSelectItem) => {
     setSelectedEquipment(equipment);
@@ -1334,6 +1355,12 @@ export default function RepairRequestsPage() {
               <CardDescription className="body-responsive-sm">
                 Tất cả các yêu cầu sửa chữa đã được ghi nhận.
               </CardDescription>
+
+              {/* Phase 2: Department filter notification for repair requests */}
+              <RepairRequestFilterStatus
+                itemCount={requests.length}
+                className="mt-3"
+              />
             </CardHeader>
             <CardContent className="p-3 md:p-6 gap-3 md:gap-4">
               <div className="flex items-center justify-between gap-2 flex-wrap mb-3 md:mb-4">

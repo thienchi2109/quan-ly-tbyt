@@ -1,27 +1,35 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
+import { useAuth } from '@/contexts/auth-context'
+import { CacheKeys, CACHE_CONFIG, DepartmentCacheUtils } from '@/lib/advanced-cache-manager'
 
-// Query keys for caching
-export const equipmentKeys = {
-  all: ['equipment'] as const,
-  lists: () => [...equipmentKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...equipmentKeys.lists(), { filters }] as const,
-  details: () => [...equipmentKeys.all, 'detail'] as const,
-  detail: (id: string) => [...equipmentKeys.details(), id] as const,
-}
+// Phase 3: Use advanced cache keys from cache manager
+export const equipmentKeys = CacheKeys.equipment
 
-// Fetch all equipment with filters
+// Phase 3: Enhanced equipment fetching with advanced caching
 export function useEquipment(filters?: {
   search?: string
   phong_ban?: string
   trang_thai?: string
   loai_thiet_bi?: string
 }) {
+  const { user } = useAuth()
+
+  // Get user's cache scope using advanced cache manager
+  const cacheScope = DepartmentCacheUtils.getUserCacheScope(user)
+  const userDepartment = cacheScope.scope === 'department' ? cacheScope.department : undefined
+
+  // Performance monitoring
+  const startTime = performance.now()
+
   return useQuery({
-    queryKey: equipmentKeys.list(filters || {}),
+    queryKey: equipmentKeys.list(filters || {}, userDepartment),
     queryFn: async () => {
       console.log('[useEquipment] Fetching equipment data with filters:', filters)
+      console.log('[useEquipment] Cache scope:', cacheScope)
+      console.log('[useEquipment] Department filter:', userDepartment)
+
       if (!supabase) {
         throw new Error('Supabase client not initialized')
       }
@@ -34,29 +42,42 @@ export function useEquipment(filters?: {
           loai_thiet_bi:loai_thiet_bi(ten_loai)
         `)
 
-      // Apply filters
-      if (filters?.search) {
-        query = query.or(`ten_thiet_bi.ilike.%${filters.search}%,ma_thiet_bi.ilike.%${filters.search}%`)
+      // Phase 3: Apply department filter based on cache scope
+      if (cacheScope.scope === 'department' && userDepartment) {
+        query = query.eq('khoa_phong_quan_ly', userDepartment)
       }
-      if (filters?.phong_ban) {
-        query = query.eq('phong_ban_id', filters.phong_ban)
-      }
+
+      // Apply other filters with optimized order (most selective first)
       if (filters?.trang_thai) {
         query = query.eq('trang_thai', filters.trang_thai)
       }
       if (filters?.loai_thiet_bi) {
         query = query.eq('loai_thiet_bi_id', filters.loai_thiet_bi)
       }
+      if (filters?.phong_ban) {
+        query = query.eq('phong_ban_id', filters.phong_ban)
+      }
+      if (filters?.search) {
+        query = query.or(`ten_thiet_bi.ilike.%${filters.search}%,ma_thiet_bi.ilike.%${filters.search}%`)
+      }
 
       const { data, error } = await query.order('created_at', { ascending: false })
 
       if (error) throw error
+
+      // Log performance metrics
+      const endTime = performance.now()
+      console.log(`[useEquipment] Query completed in ${endTime - startTime}ms, returned ${data?.length || 0} items`)
+
       return data
     },
-    staleTime: 3 * 60 * 1000, // 3 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    refetchOnMount: true, // Refetch when component mounts
+    // Phase 3: Advanced caching configuration
+    staleTime: CACHE_CONFIG.EQUIPMENT_STALE_TIME,
+    gcTime: CACHE_CONFIG.EQUIPMENT_GC_TIME,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    // Enable background refetching for better UX
+    refetchInterval: cacheScope.scope === 'department' ? 10 * 60 * 1000 : false, // 10 min for department users
   })
 }
 

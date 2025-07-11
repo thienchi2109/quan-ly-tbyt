@@ -35,12 +35,12 @@ export function MobileFooterNav() {
     { href: "/dashboard", icon: Home, label: "Tổng quan" },
     { href: "/equipment", icon: Package, label: "Thiết bị" },
     { href: "/repair-requests", icon: Wrench, label: "Sửa chữa" },
-    { href: "/transfers", icon: ArrowLeftRight, label: "Luân chuyển" },
   ]
 
   // Secondary navigation items for "More" dropdown
   const moreNavItems = React.useMemo(() => {
     const baseItems = [
+      { href: "/transfers", icon: ArrowLeftRight, label: "Luân chuyển" },
       { href: "/maintenance", icon: HardHat, label: "Bảo trì" },
       { href: "/reports", icon: BarChart3, label: "Báo cáo" },
       { href: "/qr-scanner", icon: QrCode, label: "Quét QR" },
@@ -72,7 +72,7 @@ export function MobileFooterNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 mobile-footer-z border-t bg-background/95 backdrop-blur-sm md:hidden lg:hidden">
       <nav
-        className="grid h-16 grid-cols-5 items-center px-1"
+        className="grid h-20 grid-cols-4 items-center px-1"
         role="navigation"
         aria-label="Điều hướng chính"
       >
