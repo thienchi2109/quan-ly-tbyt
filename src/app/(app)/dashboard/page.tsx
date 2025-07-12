@@ -21,25 +21,16 @@ import { KPICards } from "@/components/dashboard/kpi-cards"
 import { EquipmentAttentionTable } from "@/components/dashboard/equipment-attention-table"
 import { MaintenancePlansTable } from "@/components/dashboard/maintenance-plans-table"
 import { useDashboardRealtimeSync } from "@/hooks/use-realtime-sync"
-import { PerformanceDashboard } from "@/components/performance-dashboard"
-import { useAuth } from "@/contexts/auth-context"
 
 export default function Dashboard() {
   // Temporarily disable useRealtimeSync to avoid conflict with RealtimeProvider
   // useDashboardRealtimeSync()
-
-  const { user } = useAuth()
 
   return (
     <>
       {/* KPI Cards */}
       <KPICards />
 
-      {/* Phase 3: Performance Dashboard for Admin Users */}
-      {user?.role === 'admin' && (
-        <PerformanceDashboard />
-      )}
-      
       {/* Quick Actions Section */}
       <div className="grid gap-4 md:gap-8">
   <Card>

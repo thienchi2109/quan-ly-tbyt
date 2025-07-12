@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { MainContentTransition } from "@/components/page-transition-wrapper"
 import {
   Bell,
   HardHat,
@@ -283,8 +284,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenuContent>
             </DropdownMenu>
           </header>
-          <main className="flex flex-1 flex-col gap-4 p-4 pb-24 md:pb-4 lg:gap-6 lg:p-6 bg-background animate-fade-in">
-            {children}
+          <main className="flex flex-1 flex-col gap-4 p-4 pb-24 md:pb-4 lg:gap-6 lg:p-6 bg-background">
+            <MainContentTransition>
+              {children}
+            </MainContentTransition>
           </main>
 
           {/* Mobile Footer Navigation - replaces offcanvas sidebar on mobile */}

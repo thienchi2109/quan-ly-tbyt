@@ -387,4 +387,107 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
+
+  /* Page transition animations - Performance optimized */
+  .page-transition-enter {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+
+  .page-transition-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 300ms ease-out, transform 300ms ease-out;
+  }
+
+  .page-transition-exit {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .page-transition-exit-active {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 200ms ease-in, transform 200ms ease-in;
+  }
+
+  /* Route-specific transitions */
+  .route-slide-left-enter {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  .route-slide-left-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 250ms ease-out, transform 250ms ease-out;
+  }
+
+  .route-slide-right-enter {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  .route-slide-right-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: opacity 250ms ease-out, transform 250ms ease-out;
+  }
+
+  .route-slide-up-enter {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .route-slide-up-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 300ms ease-out, transform 300ms ease-out;
+  }
+
+  /* Modal and dialog transitions */
+  .modal-backdrop-enter {
+    opacity: 0;
+  }
+
+  .modal-backdrop-enter-active {
+    opacity: 1;
+    transition: opacity 200ms ease-out;
+  }
+
+  .modal-content-enter {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+
+  .modal-content-enter-active {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transition: opacity 200ms ease-out, transform 200ms ease-out;
+  }
+
+  /* Loading state transitions */
+  .loading-fade-enter {
+    opacity: 0;
+  }
+
+  .loading-fade-enter-active {
+    opacity: 1;
+    transition: opacity 150ms ease-out;
+  }
+
+  /* Performance-optimized utility classes */
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  .gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
 }
