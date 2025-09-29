@@ -1,0 +1,463 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Markdown Preview</title>
+      <style>
+        body {
+          font-family: sans-serif;
+          padding: 40px;
+          line-height: 1.6;
+          background: #fdfdfd;
+          color: #333;
+        }
+        pre {
+          background: #f4f4f4;
+          padding: 10px;
+          border-radius: 5px;
+          overflow-x: auto;
+        }
+        code {
+          font-family: monospace;
+          background: #eee;
+          padding: 2px 4px;
+        }
+        table {
+          border-collapse: collapse;
+          width: 100%;
+          margin-top: 20px;
+        }
+        th, td {
+          border: 1px solid #ccc;
+          padding: 8px 12px;
+          text-align: left;
+        }
+        th {
+          background-color: #f2f2f2;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>TestSprite AI Testing Report (MCP)</h1>
+<hr>
+<h2>1️⃣ Document Metadata</h2>
+<ul>
+<li><strong>Project Name:</strong> quan-ly-tbyt (Medical Equipment Management System)</li>
+<li><strong>Version:</strong> 0.1.0</li>
+<li><strong>Date:</strong> 2025-08-02</li>
+<li><strong>Prepared by:</strong> TestSprite AI Team</li>
+</ul>
+<hr>
+<h2>2️⃣ Requirement Validation Summary</h2>
+<h3>Requirement: User Authentication</h3>
+<ul>
+<li><strong>Description:</strong> Secure user authentication system with role-based access control and department-based filtering.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC001</li>
+<li><strong>Test Name:</strong> User Authentication Success</li>
+<li><strong>Test Code:</strong> <a href="./TC001_User_Authentication_Success.py">TC001_User_Authentication_Success.py</a></li>
+<li><strong>Test Error:</strong> N/A</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/f65c086a-d211-4291-848a-96b049e0ee82</li>
+<li><strong>Status:</strong> ✅ Passed</li>
+<li><strong>Severity:</strong> Low</li>
+<li><strong>Analysis / Findings:</strong> The test passed successfully, confirming that users can authenticate using valid credentials and that role and department-based access restrictions are properly enforced. Functionality is correct; consider adding multi-factor authentication or login attempt throttling for enhanced security.</li>
+</ul>
+<hr>
+<h4>Test 2</h4>
+<ul>
+<li><strong>Test ID:</strong> TC002</li>
+<li><strong>Test Name:</strong> User Authentication Failure</li>
+<li><strong>Test Code:</strong> <a href="./TC002_User_Authentication_Failure.py">TC002_User_Authentication_Failure.py</a></li>
+<li><strong>Test Error:</strong> N/A</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/6395880a-a023-4f22-b701-654dbfb3b385</li>
+<li><strong>Status:</strong> ✅ Passed</li>
+<li><strong>Severity:</strong> Low</li>
+<li><strong>Analysis / Findings:</strong> The test passed and correctly handled login attempts with invalid credentials by preventing access and displaying appropriate failure messages. Functionality is correct; ensure messages are clear and consistent. Consider logging failed attempts for security auditing.</li>
+</ul>
+<hr>
+<h3>Requirement: Equipment Management</h3>
+<ul>
+<li><strong>Description:</strong> Comprehensive CRUD operations for medical equipment with data validation and real-time updates.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC003</li>
+<li><strong>Test Name:</strong> Equipment CRUD Operations</li>
+<li><strong>Test Code:</strong> <a href="./TC003_Equipment_CRUD_Operations.py">TC003_Equipment_CRUD_Operations.py</a></li>
+<li><strong>Test Error:</strong> The task to validate creation, reading, updating, and deletion of medical equipment entries was partially successful. Creation and deletion of equipment entries with valid data were verified and reflected in the system in real-time. Validation errors were correctly shown for invalid or missing mandatory data. However, the update functionality could not be fully tested due to repeated UI errors preventing access to the edit form. Performance, security, and UI responsiveness were generally acceptable during testing. Further investigation is needed to resolve the update form access issue to complete full CRUD validation.</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/7a8c1227-deb0-4f57-b67f-55e3482587dd</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> High</li>
+<li><strong>Analysis / Findings:</strong> Update functionality could not be fully validated due to repeated UI errors preventing access to the edit form, though creation, deletion, and data validation are verified. Investigate the UI error blocking the edit form access and fix it to ensure full CRUD operations can be tested and function correctly.</li>
+</ul>
+<hr>
+<h4>Test 2</h4>
+<ul>
+<li><strong>Test ID:</strong> TC004</li>
+<li><strong>Test Name:</strong> Equipment Bulk Import via Excel</li>
+<li><strong>Test Code:</strong> <a href="./TC004_Equipment_Bulk_Import_via_Excel.py">TC004_Equipment_Bulk_Import_via_Excel.py</a></li>
+<li><strong>Test Error:</strong> Reported issue: The bulk import button labeled 'Excel mẫu' on the equipment management page is unresponsive and does not open any dialog or download template. This prevents testing of bulk import functionality. Stopping further actions.</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/b184e8eb-4468-4b1b-b3b3-eb1ecc07ac57</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> High</li>
+<li><strong>Analysis / Findings:</strong> The bulk import button 'Excel mẫu' is unresponsive, preventing access to bulk import dialogs or template downloads, thus blocking the bulk import functionality test. Fix the event handler or UI binding for the 'Excel mẫu' button to open the import dialog or download the template, enabling bulk import testing and functionality.</li>
+</ul>
+<hr>
+<h4>Test 3</h4>
+<ul>
+<li><strong>Test ID:</strong> TC005</li>
+<li><strong>Test Name:</strong> Equipment QR Code Scanning</li>
+<li><strong>Test Code:</strong> <a href="./TC005_Equipment_QR_Code_Scanning.py">TC005_Equipment_QR_Code_Scanning.py</a></li>
+<li><strong>Test Error:</strong> Testing stopped due to runtime error preventing access to QR code scanner interface. Reported the issue for resolution. Unable to validate QR code scanner functionality at this time. Browser Console Logs: [ERROR] Failed to load resource: net::ERR_EMPTY_RESPONSE (at http://localhost:3000/<em>next/static/chunks/src_app</em>(app)<em>qr-scanner_page_tsx_9ee19c68.</em>.js:0:0)</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/bdd01e9f-cb4b-4ba1-b21b-ed65099921c4</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> High</li>
+<li><strong>Analysis / Findings:</strong> Runtime error prevented loading the QR code scanner interface, stopping validation of QR code scanning functionality. Resolve the resource loading error causing the QR scanner module to fail, ensuring the interface loads correctly for scanning equipment.</li>
+</ul>
+<hr>
+<h3>Requirement: Equipment Usage Tracking</h3>
+<ul>
+<li><strong>Description:</strong> Real-time equipment usage session tracking with start/stop functionality and multi-client synchronization.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC006</li>
+<li><strong>Test Name:</strong> Real-Time Equipment Usage Session Tracking</li>
+<li><strong>Test Code:</strong> <a href="./TC006_Real_Time_Equipment_Usage_Session_Tracking.py">TC006_Real_Time_Equipment_Usage_Session_Tracking.py</a></li>
+<li><strong>Test Error:</strong> Login functionality failed repeatedly. Cannot proceed with equipment usage session testing. Reporting issue and stopping further actions.</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/5a0151e4-82c8-42b8-bf2c-6d0323365710</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> High</li>
+<li><strong>Analysis / Findings:</strong> Login failure blocks proceeding with testing real-time equipment usage sessions, halting validation of session tracking updates. Fix the login issues first to allow access to the application, enabling subsequent testing and validation of equipment usage session features.</li>
+</ul>
+<hr>
+<h3>Requirement: Repair Request Management</h3>
+<ul>
+<li><strong>Description:</strong> Department-based repair request workflow with creation, approval, and tracking capabilities.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC007</li>
+<li><strong>Test Name:</strong> Repair Request Workflow</li>
+<li><strong>Test Code:</strong> <a href="./TC007_Repair_Request_Workflow.py">TC007_Repair_Request_Workflow.py</a></li>
+<li><strong>Test Error:</strong> Testing stopped due to missing device data preventing repair request creation. The system does not list any devices for repair requests, blocking further validation of creation, approval, and tracking processes.</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/3cd4a19b-2fec-4a27-9683-dacce9b74168</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> High</li>
+<li><strong>Analysis / Findings:</strong> No device data was available to select for repair request creation, blocking all further testing of the repair request workflow including approval and tracking. Ensure device data is correctly loaded or seeded for repair requests, so users can create requests and proceed with workflow testing.</li>
+</ul>
+<hr>
+<h3>Requirement: Maintenance Management</h3>
+<ul>
+<li><strong>Description:</strong> Maintenance planning system with task creation, bulk scheduling, and progress tracking.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC008</li>
+<li><strong>Test Name:</strong> Maintenance Plan Creation and Bulk Scheduling</li>
+<li><strong>Test Code:</strong> <a href="./TC008_Maintenance_Plan_Creation_and_Bulk_Scheduling.py">TC008_Maintenance_Plan_Creation_and_Bulk_Scheduling.py</a></li>
+<li><strong>Test Error:</strong> The user successfully logged in as a maintenance planner and created a new maintenance plan named 'Kế hoạch bảo trì năm 2025'. The plan was saved and listed correctly. Attempts to add individual maintenance tasks to the plan were made, but the user canceled the addition each time, so no tasks were added. Consequently, bulk scheduling and progress tracking could not be fully tested. The system UI correctly reflected the absence of tasks in the plan. Overall, the creation and listing of maintenance plans work as expected, but task addition, bulk scheduling, and progress tracking remain unverified due to no tasks being added.</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/9cdd53e3-1c7f-4e0f-9fbb-a89994061d8a</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> Medium</li>
+<li><strong>Analysis / Findings:</strong> Although maintenance plans can be created and listed properly, no maintenance tasks were added due to user cancellation, preventing testing of bulk scheduling and progress tracking. Add or mock sample maintenance tasks to test task addition, bulk scheduling, and progress tracking functionalities fully.</li>
+</ul>
+<hr>
+<h3>Requirement: Equipment Transfer Management</h3>
+<ul>
+<li><strong>Description:</strong> Internal and external equipment transfer system with approval workflow and audit trails.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC009</li>
+<li><strong>Test Name:</strong> Equipment Transfer Management</li>
+<li><strong>Test Code:</strong> <a href="./TC009_Equipment_Transfer_Management.py">TC009_Equipment_Transfer_Management.py</a></li>
+<li><strong>Test Error:</strong> Verified internal equipment transfer request creation, approval, tracking, and audit trail with full audit details. The transfer request was created with pending status, approved by an authorized user, and tracked through completion with audit trail reflecting all actions and status changes. External transfer scenario testing is pending and not completed in this session.</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/17f9879f-0302-4f2c-a62f-c73dad854163</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> Medium</li>
+<li><strong>Analysis / Findings:</strong> Internal equipment transfer features (creation, approval, tracking, audit trail) work as expected, but external transfer testing remains incomplete. Complete testing for external transfer scenarios to ensure full coverage; consider adding automated tests for these cases.</li>
+</ul>
+<hr>
+<h3>Requirement: Administrative User Management</h3>
+<ul>
+<li><strong>Description:</strong> Admin functionality for creating, editing, disabling users with role and department assignment.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC010</li>
+<li><strong>Test Name:</strong> Administrative User Management</li>
+<li><strong>Test Code:</strong> <a href="./TC010_Administrative_User_Management.py">TC010_Administrative_User_Management.py</a></li>
+<li><strong>Test Error:</strong> Testing stopped due to critical bug in user creation: department assignment does not match selected value. User 'testuser1' created with wrong department 'Dinh dưỡng' instead of 'Xét nghiệm'. Please fix this issue before continuing further tests. Browser Console Logs: [ERROR] Failed to load resource: the server responded with a status of 404 () (at https://ltvojwauucztmanidfcb.supabase.co/rest/v1/rpc/create_user:0:0)</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/94b49dd2-ce13-4b73-b08b-f69469c21a73</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> High</li>
+<li><strong>Analysis / Findings:</strong> User creation has a critical bug where department assignment does not match the selected value, creating users in incorrect departments and generating 404 errors. Fix the user creation flow and backend API integration to ensure selected department is assigned correctly and avoid resource not found errors.</li>
+</ul>
+<hr>
+<h3>Requirement: Dashboard and Reporting</h3>
+<ul>
+<li><strong>Description:</strong> Interactive dashboards with accurate metrics and data export functionality.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC011</li>
+<li><strong>Test Name:</strong> Dashboard and Reporting Accuracy</li>
+<li><strong>Test Code:</strong> <a href="./TC011_Dashboard_and_Reporting_Accuracy.py">TC011_Dashboard_and_Reporting_Accuracy.py</a></li>
+<li><strong>Test Error:</strong> Export functionality on the 'Xuất-Nhập-Tồn' report tab is not working as expected. Clicking the 'Xuất Excel' button does not trigger the file download and the export dialog remains open. This blocks further verification of exported report data. Reporting this issue and stopping the test as per instructions.</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/6f95a5c6-490b-4b88-afd6-a119d29c13e7</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> High</li>
+<li><strong>Analysis / Findings:</strong> Export functionality on the reports page fails due to a JavaScript error ('finalFileName' undefined), preventing file downloads and blocking report export verification. Fix the undefined variable issue in export handling code; verify WebSocket connectivity issues are resolved to ensure stable export and reporting features.</li>
+</ul>
+<hr>
+<h3>Requirement: Progressive Web App Features</h3>
+<ul>
+<li><strong>Description:</strong> PWA installation, offline mode functionality, and push notifications.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC012</li>
+<li><strong>Test Name:</strong> Progressive Web App Installation and Offline Mode</li>
+<li><strong>Test Code:</strong> <a href="./TC012_Progressive_Web_App_Installation_and_Offline_Mode.py">TC012_Progressive_Web_App_Installation_and_Offline_Mode.py</a></li>
+<li><strong>Test Error:</strong> PWA installation prompt is not available, and the site is not served over HTTPS, which likely prevents PWA installation. Attempts to simulate offline mode failed, so offline usability cannot be verified. Push notification functionality was not tested due to these limitations. Task stopped due to these critical issues.</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/bbf723d2-dfa6-4bb6-9305-f4c10d2ccbbd</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> High</li>
+<li><strong>Analysis / Findings:</strong> PWA install prompt is unavailable due to site not being served over HTTPS; offline mode simulation fails, preventing verification of offline and push notification features. Serve the site over HTTPS to enable PWA features; fix service worker and offline mode implementation to support offline usability and push notifications.</li>
+</ul>
+<hr>
+<h3>Requirement: Real-Time Data Synchronization</h3>
+<ul>
+<li><strong>Description:</strong> Multi-client real-time synchronization of equipment status and usage data.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC013</li>
+<li><strong>Test Name:</strong> Real-Time Data Synchronization</li>
+<li><strong>Test Code:</strong> <a href="./TC013_Real_Time_Data_Synchronization.py">TC013_Real_Time_Data_Synchronization.py</a></li>
+<li><strong>Test Error:</strong> N/A</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/67c483a2-9683-4f27-bd45-f52e69a34820</li>
+<li><strong>Status:</strong> ✅ Passed</li>
+<li><strong>Severity:</strong> Low</li>
+<li><strong>Analysis / Findings:</strong> The test passed, confirming that equipment status and usage data updates synchronize immediately across multiple clients as intended. Functionality is correct; monitor synchronization performance and consider additional tests for concurrency and conflict resolution.</li>
+</ul>
+<hr>
+<h3>Requirement: Data Import/Export</h3>
+<ul>
+<li><strong>Description:</strong> Bulk import and export of equipment data via Excel files with data integrity validation.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC014</li>
+<li><strong>Test Name:</strong> Import and Export Data Integrity</li>
+<li><strong>Test Code:</strong> <a href="./TC014_Import_and_Export_Data_Integrity.py">TC014_Import_and_Export_Data_Integrity.py</a></li>
+<li><strong>Test Error:</strong> Export of equipment data to Excel was successful and verified by extracting equipment data from the page. However, the system does not provide any visible or functional option to import modified Excel files back into the system. Attempts to find import/upload buttons or alternative methods failed. The 'Excel mẫu' button does not trigger any import action. Therefore, bulk import functionality could not be fully tested. The system handles export well but lacks import capability or UI for import. Recommend development team to implement or fix import feature for complete bulk import/export testing.</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/8eaf6631-04e8-4fe6-a7b3-54274f0cfc22</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> High</li>
+<li><strong>Analysis / Findings:</strong> Exporting equipment data to Excel works correctly, but the system lacks any visible or functional import mechanism, blocking bulk import verification. Develop or fix the import functionality and UI elements, including the 'Excel mẫu' button, to fully support import alongside export operations.</li>
+</ul>
+<hr>
+<h3>Requirement: Performance Optimization</h3>
+<ul>
+<li><strong>Description:</strong> System performance under typical and peak usage loads with acceptable response times.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC015</li>
+<li><strong>Test Name:</strong> Performance under Load</li>
+<li><strong>Test Code:</strong> <a href="./TC015_Performance_under_Load.py">TC015_Performance_under_Load.py</a></li>
+<li><strong>Test Error:</strong> N/A</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/0915a7bf-2c57-4d4e-8f2d-54399f001709</li>
+<li><strong>Status:</strong> ✅ Passed</li>
+<li><strong>Severity:</strong> Low</li>
+<li><strong>Analysis / Findings:</strong> Performance tests passed under typical and peak loads, confirming acceptable loading times and responsiveness. Functionality is correct; consider continuous performance monitoring and load testing during future enhancements.</li>
+</ul>
+<hr>
+<h3>Requirement: Access Control</h3>
+<ul>
+<li><strong>Description:</strong> Role and department-based access control enforcement across system functionality.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC016</li>
+<li><strong>Test Name:</strong> Role and Department-Based Access Control Enforcement</li>
+<li><strong>Test Code:</strong> <a href="./TC016_Role_and_Department_Based_Access_Control_Enforcement.py">TC016_Role_and_Department_Based_Access_Control_Enforcement.py</a></li>
+<li><strong>Test Error:</strong> N/A</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/92c3dab7-7606-40fc-83b8-e9f91e73d69b</li>
+<li><strong>Status:</strong> ✅ Passed</li>
+<li><strong>Severity:</strong> Low</li>
+<li><strong>Analysis / Findings:</strong> Access control based on user roles and department assignments was correctly enforced, as verified by successful restriction or granting of functionality. Functionality is correct; ensure access control rules remain updated with changing roles and permissions.</li>
+</ul>
+<hr>
+<h3>Requirement: Error Handling</h3>
+<ul>
+<li><strong>Description:</strong> Graceful error handling with user-friendly messages for various failure scenarios.</li>
+</ul>
+<h4>Test 1</h4>
+<ul>
+<li><strong>Test ID:</strong> TC017</li>
+<li><strong>Test Name:</strong> Error Handling and User Feedback</li>
+<li><strong>Test Code:</strong> <a href="./TC017_Error_Handling_and_User_Feedback.py">TC017_Error_Handling_and_User_Feedback.py</a></li>
+<li><strong>Test Error:</strong> Tested network failure scenario during equipment update. The system did not show any error message or indication of failure, returning to the equipment list as if successful. This is a critical issue for error handling. Stopping further testing as other error scenarios depend on proper error handling implementation. Please address this issue to ensure user-friendly error messages and data integrity during network failures.</li>
+<li><strong>Test Visualization and Result:</strong> https://www.testsprite.com/dashboard/mcp/tests/6028ab65-6c88-405b-a87e-367af90d9230/817dfadf-34ee-4246-9956-27804fb03afe</li>
+<li><strong>Status:</strong> ❌ Failed</li>
+<li><strong>Severity:</strong> High</li>
+<li><strong>Analysis / Findings:</strong> The system failed to display any error message or indication when network failure occurred during equipment update, misleading users and risking data integrity. Implement robust error handling with clear, user-friendly messages for network failures and related issues to maintain trust and data safety.</li>
+</ul>
+<hr>
+<h2>3️⃣ Coverage &amp; Matching Metrics</h2>
+<p><strong>29% of tests passed successfully</strong>
+<strong>71% of tests encountered failures or issues</strong></p>
+<p><strong>Key gaps / risks:</strong></p>
+<blockquote>
+<p>17 requirements had test cases generated with comprehensive coverage.
+5 tests passed fully, demonstrating strong performance in authentication, real-time synchronization, performance optimization, and access control.
+12 tests failed due to critical UI/UX issues, missing functionality, and infrastructure problems.
+<strong>Major Risks:</strong> QR scanner module failure, bulk import/export dysfunction, PWA features unavailable, error handling deficiencies, and user management bugs pose significant operational risks.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Total Tests</th>
+<th>✅ Passed</th>
+<th>⚠️ Partial</th>
+<th>❌ Failed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User Authentication</td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Equipment Management</td>
+<td>3</td>
+<td>0</td>
+<td>0</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Equipment Usage Tracking</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Repair Request Management</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Maintenance Management</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Equipment Transfer Management</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Administrative User Management</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Dashboard and Reporting</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Progressive Web App Features</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Real-Time Data Synchronization</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Data Import/Export</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Performance Optimization</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Access Control</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Error Handling</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>4️⃣ Critical Issues Summary</h2>
+<h3>High Priority Fixes Required:</h3>
+<ol>
+<li><strong>Equipment Edit Form Access</strong> - UI errors prevent equipment updates</li>
+<li><strong>Excel Import Button</strong> - 'Excel mẫu' button unresponsive</li>
+<li><strong>QR Scanner Module</strong> - Resource loading failures</li>
+<li><strong>User Management Bug</strong> - Department assignment mismatch</li>
+<li><strong>Export Functionality</strong> - JavaScript error in report export</li>
+<li><strong>PWA Features</strong> - HTTPS requirement and service worker issues</li>
+<li><strong>Error Handling</strong> - No user feedback for network failures</li>
+</ol>
+<h3>Medium Priority Issues:</h3>
+<ol>
+<li><strong>Maintenance Task Addition</strong> - Incomplete task workflow testing</li>
+<li><strong>External Transfer Testing</strong> - Partial coverage of transfer scenarios</li>
+</ol>
+<h3>Security &amp; Performance Notes:</h3>
+<ul>
+<li>Authentication and access control systems are functioning correctly</li>
+<li>Real-time synchronization performs as expected</li>
+<li>Performance benchmarks are met under normal and peak loads</li>
+<li>Consider implementing additional security measures like MFA and audit logging</li>
+</ul>
+
+    </body>
+    </html>
+  

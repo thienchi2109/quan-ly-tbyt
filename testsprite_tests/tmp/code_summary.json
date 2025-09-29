@@ -1,0 +1,161 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js 15",
+    "React 18",
+    "Supabase (PostgreSQL)",
+    "TailwindCSS",
+    "Radix UI",
+    "React Query",
+    "React Hook Form",
+    "Date-fns",
+    "Zod",
+    "Lucide React",
+    "Chart.js"
+  ],
+  "features": [
+    {
+      "name": "Authentication System",
+      "description": "Custom authentication system with dual-mode support (plain text and hashed passwords), role-based access control (admin, to_qltb, qltb_khoa, user), department-based filtering",
+      "files": [
+        "src/contexts/auth-context.tsx",
+        "src/contexts/secure-auth-context.tsx",
+        "supabase/migrations/20241221_secure_user_update_function.sql",
+        "scripts/password_migration_execution_guide.md"
+      ]
+    },
+    {
+      "name": "Equipment Management",
+      "description": "Comprehensive medical equipment management with CRUD operations, status tracking, QR code scanning, department-based filtering, search functionality",
+      "files": [
+        "src/app/(app)/equipment/page.tsx",
+        "src/components/add-equipment-dialog.tsx",
+        "src/components/edit-equipment-dialog.tsx",
+        "src/components/mobile-equipment-list-item.tsx",
+        "src/hooks/use-equipment-distribution.ts"
+      ]
+    },
+    {
+      "name": "Equipment Usage Tracking",
+      "description": "Real-time usage logging, start/end usage sessions, mobile-optimized usage actions, active usage indicators",
+      "files": [
+        "src/components/start-usage-dialog.tsx",
+        "src/components/end-usage-dialog.tsx",
+        "src/components/mobile-usage-actions.tsx",
+        "src/components/active-usage-indicator.tsx",
+        "src/hooks/use-usage-logs.ts"
+      ]
+    },
+    {
+      "name": "Repair Request Management", 
+      "description": "Department-based repair request system with authorization checks, equipment filtering, user permission validation",
+      "files": [
+        "src/app/(app)/repair-requests/page.tsx",
+        "docs/repair_request_authorization_implementation.md",
+        "scripts/test_frontend_authorization.md"
+      ]
+    },
+    {
+      "name": "Maintenance Management",
+      "description": "Maintenance planning and scheduling, maintenance plan creation and editing, maintenance task management",
+      "files": [
+        "src/app/(app)/maintenance/page.tsx",
+        "src/components/add-maintenance-plan-dialog.tsx",
+        "src/components/edit-maintenance-plan-dialog.tsx"
+      ]
+    },
+    {
+      "name": "Transfer Management",
+      "description": "Equipment transfer between departments, transfer request creation, transfer history tracking",
+      "files": [
+        "src/components/add-transfer-dialog.tsx",
+        "src/components/edit-transfer-dialog.tsx",
+        "docs/transfer-history-fix.md"
+      ]
+    },
+    {
+      "name": "User Management",
+      "description": "Administrative user management system with role assignment, department assignment, user status tracking",
+      "files": [
+        "src/components/admin/user-management.tsx",
+        "src/components/user-card.tsx",
+        "src/components/add-user-dialog.tsx",
+        "src/components/edit-user-dialog.tsx"
+      ]
+    },
+    {
+      "name": "Dashboard & Reporting",
+      "description": "Interactive dashboards with equipment statistics, inventory reports, performance monitoring, data visualization with charts",
+      "files": [
+        "src/app/(app)/dashboard/page.tsx",
+        "src/app/(app)/reports/components/inventory-report-tab.tsx",
+        "src/components/interactive-equipment-chart.tsx",
+        "src/components/performance-dashboard.tsx",
+        "src/hooks/use-inventory-data.ts"
+      ]
+    },
+    {
+      "name": "Real-time Synchronization",
+      "description": "Real-time data synchronization using Supabase realtime, equipment updates, usage logging sync",
+      "files": [
+        "src/hooks/use-realtime-sync.ts",
+        "supabase/migrations/20241229_enable_realtime_for_custom_auth.sql"
+      ]
+    },
+    {
+      "name": "Database Schema & Migrations",
+      "description": "PostgreSQL database schema with 9 main tables, migration scripts, performance optimization indexes",
+      "files": [
+        "database/migrations/add_department_filtering_indexes.sql",
+        "database/migrations/create_indexes_minimal.sql",
+        "docs/database-optimization-status.md",
+        "src/types/database.ts"
+      ]
+    },
+    {
+      "name": "Import/Export Functionality",
+      "description": "Excel import/export for equipment data, bulk operations, data formatting utilities",
+      "files": [
+        "src/components/import-equipment-dialog.tsx",
+        "src/lib/excel-utils.ts"
+      ]
+    },
+    {
+      "name": "AI Integration (Future)",
+      "description": "AI utilities and components for future features like equipment analysis, maintenance prediction",
+      "files": [
+        "src/lib/ai-utils.tsx",
+        "src/ai/dev.ts",
+        "src/ai/genkit.ts"
+      ]
+    },
+    {
+      "name": "Performance Monitoring",
+      "description": "Department-based performance tracking, system optimization monitoring, cache management",
+      "files": [
+        "src/hooks/use-department-performance.ts",
+        "src/components/performance-dashboard.tsx"
+      ]
+    },
+    {
+      "name": "PWA & Mobile Optimization",
+      "description": "Progressive Web App features, mobile-responsive design, offline capabilities, push notifications",
+      "files": [
+        "next.config.ts",
+        "public/manifest.json",
+        "public/firebase-messaging-sw.js",
+        "src/hooks/use-mobile.ts"
+      ]
+    },
+    {
+      "name": "Deployment & DevOps",
+      "description": "Dual deployment to Vercel and Cloudflare Workers, CI/CD pipelines, environment configuration",
+      "files": [
+        "DEPLOYMENT.md",
+        "scripts/deploy-dual.js",
+        "scripts/build-cloudflare.js",
+        "wrangler.toml"
+      ]
+    }
+  ]
+}

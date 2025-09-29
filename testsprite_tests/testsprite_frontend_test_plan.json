@@ -1,0 +1,559 @@
+[
+  {
+    "id": "TC001",
+    "title": "User Authentication Success",
+    "description": "Verify that users can successfully authenticate using correct credentials with appropriate role and department access restrictions applied.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page."
+      },
+      {
+        "type": "action",
+        "description": "Enter valid username and password credentials."
+      },
+      {
+        "type": "action",
+        "description": "Click the login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is logged in successfully."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user interface matches the user's assigned role and department permissions."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "User Authentication Failure",
+    "description": "Verify system behavior when users attempt to login with invalid or incorrect credentials.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the login page."
+      },
+      {
+        "type": "action",
+        "description": "Enter invalid username or incorrect password."
+      },
+      {
+        "type": "action",
+        "description": "Click the login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify login is rejected."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify appropriate error message is displayed without revealing sensitive system information."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Equipment CRUD Operations",
+    "description": "Validate creation, reading, updating, and deletion of medical equipment entries including data validation and real-time reflection in system.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with equipment manager role."
+      },
+      {
+        "type": "action",
+        "description": "Create a new medical equipment entry with valid detailed technical data."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify equipment entry is saved successfully and appears in inventory list."
+      },
+      {
+        "type": "action",
+        "description": "Modify existing equipment details."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify updated equipment data is immediately reflected in the system."
+      },
+      {
+        "type": "action",
+        "description": "Delete an equipment entry."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify equipment is removed and no longer visible in inventory."
+      },
+      {
+        "type": "action",
+        "description": "Try to create or update equipment with invalid or missing mandatory data."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system rejects invalid input with clear validation errors."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Equipment Bulk Import via Excel",
+    "description": "Verify ability to bulk import equipment data from Excel files with validation and error feedback.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with appropriate role that allows bulk import."
+      },
+      {
+        "type": "action",
+        "description": "Upload a well-formed Excel file containing multiple equipment records."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that all valid records are correctly imported into the system."
+      },
+      {
+        "type": "action",
+        "description": "Upload an Excel file with some invalid or incomplete data."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system provides detailed feedback on records rejected due to validation errors, without corrupting existing data."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Equipment QR Code Scanning",
+    "description": "Validate QR code scanner correctly identifies equipment and surfaces appropriate options.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Use QR code scanner on a known equipment’s QR code from mobile or desktop interface."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify correct equipment details are displayed."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify actionable options such as creating repair requests and viewing usage history are accessible."
+      },
+      {
+        "type": "action",
+        "description": "Attempt scanning invalid or unregistered QR code."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is informed about the unrecognized QR code gracefully."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Real-Time Equipment Usage Session Tracking",
+    "description": "Verify starting and stopping equipment usage sessions updates status in real-time and synchronizes across clients.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and select equipment."
+      },
+      {
+        "type": "action",
+        "description": "Start a usage session on the equipment."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify usage session is recorded and active usage indicator appears."
+      },
+      {
+        "type": "action",
+        "description": "Stop the usage session."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify session is ended and status updates accordingly."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm changes are reflected in real-time for other logged-in users."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Repair Request Workflow",
+    "description": "Validate creation, approval, and tracking of repair requests with proper department and role authorization.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as user authorized to create repair requests."
+      },
+      {
+        "type": "action",
+        "description": "Create a new repair request for specific equipment."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify request is created and visible in the repair request list."
+      },
+      {
+        "type": "action",
+        "description": "Login as an authorized approver."
+      },
+      {
+        "type": "action",
+        "description": "Approve the repair request."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify request status updates to approved."
+      },
+      {
+        "type": "action",
+        "description": "Track request to completion."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify status updates correctly and audit logs reflect changes."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Maintenance Plan Creation and Bulk Scheduling",
+    "description": "Verify users can create maintenance plans, add tasks, and apply bulk scheduling with accurate progress tracking.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a maintenance planner."
+      },
+      {
+        "type": "action",
+        "description": "Create a new maintenance plan with required details."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the maintenance plan is saved and listed."
+      },
+      {
+        "type": "action",
+        "description": "Add individual maintenance tasks to the plan."
+      },
+      {
+        "type": "action",
+        "description": "Schedule multiple tasks in batch."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify scheduled tasks are saved with correct dates."
+      },
+      {
+        "type": "action",
+        "description": "Mark some tasks as completed individually and in bulk."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify completion status is updated and progress percentage reflects accurately."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Equipment Transfer Management",
+    "description": "Verify equipment transfer request creation, approval, tracking for internal and external transfers with full audit trails.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login with transfer management rights."
+      },
+      {
+        "type": "action",
+        "description": "Initiate equipment transfer request between departments."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify transfer request is created and visible with pending status."
+      },
+      {
+        "type": "action",
+        "description": "Approve the transfer request as an authorized user."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify status changes to approved."
+      },
+      {
+        "type": "action",
+        "description": "Track transfer through completion."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify audit trail reflects all actions and status changes."
+      },
+      {
+        "type": "action",
+        "description": "Repeat process for external transfer scenario."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Administrative User Management",
+    "description": "Ensure administrators can create, edit, disable, and assign roles and departments for users with immediate effect.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as administrator."
+      },
+      {
+        "type": "action",
+        "description": "Create a new user with assigned roles and departments."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify new user is created and visible in user management list."
+      },
+      {
+        "type": "action",
+        "description": "Edit user role and department assignments."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify changes are saved and reflected immediately."
+      },
+      {
+        "type": "action",
+        "description": "Disable a user account."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user cannot authenticate anymore and is marked as disabled."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Dashboard and Reporting Accuracy",
+    "description": "Validate that interactive dashboards display correct up-to-date metrics and reports export data correctly.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and navigate to dashboard."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify key equipment, maintenance, and usage metrics are accurate and current."
+      },
+      {
+        "type": "action",
+        "description": "Open reporting modules including inventory and performance reports."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify charts and data visualizations reflect correct aggregated data."
+      },
+      {
+        "type": "action",
+        "description": "Use export functionality to download reports."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify exported files contain correct data matching on-screen display."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Progressive Web App Installation and Offline Mode",
+    "description": "Verify PWA installation on supported devices, offline usability, and push notification functionality.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access the web app on a supported mobile device."
+      },
+      {
+        "type": "action",
+        "description": "Trigger PWA installation flow and install the app."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify app appears as installed and launches independently."
+      },
+      {
+        "type": "action",
+        "description": "Use the app offline, navigating cached pages and data."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify offline functionality works correctly with cached equipment and usage data."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify push notifications are received when online."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Real-Time Data Synchronization",
+    "description": "Ensure updates to equipment status and usage data synchronize immediately across multiple clients.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open the application on two different clients logged in as relevant users."
+      },
+      {
+        "type": "action",
+        "description": "Perform an equipment status update or start/stop a usage session on the first client."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify change reflects in real-time on the second client without page refresh."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Import and Export Data Integrity",
+    "description": "Verify bulk import and export of equipment data via Excel files processes without data corruption and provides user feedback.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Export current equipment data to Excel from the system."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify exported file content matches the equipment data."
+      },
+      {
+        "type": "action",
+        "description": "Modify the exported Excel file data and import it back."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the system updates equipment records based on import, preserving data integrity."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to import malformed or corrupted Excel file."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the system handles the error gracefully and reports clear import errors without affecting existing data."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Performance under Load",
+    "description": "Verify the system meets performance benchmarks for loading times and responsiveness under typical and peak usage.",
+    "category": "performance",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate multiple concurrent users performing common operations such as equipment search, usage logging, and navigation."
+      },
+      {
+        "type": "assertion",
+        "description": "Measure and verify page load times remain within acceptable limits."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user actions respond within defined performance thresholds."
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Role and Department-Based Access Control Enforcement",
+    "description": "Ensure system restricts or grants access to functionality according to user roles and department assignments.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as a user with limited department role."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access restricted modules and operations outside assigned department or role."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied and user is presented with appropriate message."
+      },
+      {
+        "type": "action",
+        "description": "Login as administrator."
+      },
+      {
+        "type": "action",
+        "description": "Ensure full access is granted including user management and all equipment."
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Error Handling and User Feedback",
+    "description": "Validate that the system handles errors gracefully with user-friendly messages for scenarios including network failures, invalid inputs, and authorization failures.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate network failure during equipment update."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system informs user of failure without data loss."
+      },
+      {
+        "type": "action",
+        "description": "Attempt invalid form submission for creating maintenance plan."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify detailed validation error messages appear alongside the respective input fields."
+      },
+      {
+        "type": "action",
+        "description": "Attempt unauthorized access to restricted page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access denied messages appear and navigation is restricted."
+      }
+    ]
+  }
+]

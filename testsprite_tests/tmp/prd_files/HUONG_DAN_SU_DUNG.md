@@ -258,84 +258,32 @@ Sau khi đăng nhập thành công, bạn sẽ thấy trang chủ với:
 
 1. **Nhấn "Báo cáo"** trong menu
 2. **Chọn loại báo cáo**:
-   - **Xuất-Nhập-Tồn**: Báo cáo giao dịch thiết bị
-   - **Bảo trì / Sửa chữa**: Tình hình thực hiện bảo trì
-   - **Sử dụng thiết bị**: Thống kê tần suất sử dụng
+   - **Báo cáo thiết bị**: Thống kê tổng quan thiết bị
+   - **Báo cáo bảo trì**: Tình hình thực hiện bảo trì
 
-### **Báo cáo Xuất-Nhập-Tồn**
+### **Báo cáo thiết bị**
 
-**Tính năng chính**:
-- **Tìm kiếm theo thời gian**: Chọn khoảng thời gian báo cáo
-- **Lọc theo khoa/phòng**: Xem riêng từng khoa phòng
-- **Tìm kiếm thiết bị**: Tìm theo tên hoặc mã thiết bị
-- **Biểu đồ trực quan**: Hiển thị xu hướng xuất nhập
+**Các biểu đồ có sẵn**:
+- **Phân bố theo khoa phòng**: Số lượng thiết bị mỗi khoa
+- **Phân bố theo tình trạng**: Hoạt động, chờ sửa chữa, v.v.
+- **Thống kê theo năm sản xuất**: Độ tuổi thiết bị
 
-**Các thông số hiển thị**:
-- **Tổng nhập**: Số thiết bị nhập trong kỳ
-- **Tổng xuất**: Số thiết bị xuất trong kỳ  
-- **Tồn kho**: Số thiết bị hiện có
-- **Biến động**: Thay đổi so với đầu kỳ
+**Tương tác với biểu đồ**:
+- **Di chuột** lên cột để xem chi tiết
+- **Nhấn vào cột** để xem danh sách thiết bị
+- **Chọn bộ lọc** bên trái để thay đổi dữ liệu
 
-### **Xuất báo cáo Excel nâng cao**
+### **Xuất báo cáo Excel**
 
-Tính năng xuất Excel đã được nâng cấp với **6 sheet dữ liệu**:
-
-1. **Nhấn nút "Xuất báo cáo"** trên giao diện
-2. **Kiểm tra thông tin xuất**:
-   - Khoảng thời gian
-   - Khoa/phòng được chọn  
-   - Số bản ghi
-3. **Nhập tên file** (tùy chọn)
-4. **Nhấn "Xuất Excel"**
-
-**Nội dung file Excel gồm 6 sheet**:
-
-#### **Sheet 1: Tổng quan**
-- Thông tin báo cáo (thời gian, khoa/phòng, ngày xuất)
-- Tóm tắt các chỉ số chính
-- Tổng thiết bị nhập, xuất, tồn kho, biến động
-
-#### **Sheet 2: Chi tiết** 
-- Danh sách chi tiết tất cả giao dịch
-- Thông tin: Ngày, mã TB, tên TB, model, serial
-- Khoa/phòng, loại giao dịch, nguồn, lý do, giá trị
-
-#### **Sheet 3: Thống kê**
-- Thống kê theo khoa/phòng
-- Số lượng nhập, xuất, tổng của từng khoa
-- Sắp xếp theo tổng số giao dịch
-
-#### **Sheet 4: Phân bố trạng thái TB** ⭐ *Mới*
-- Phân tích trạng thái thiết bị hiện tại
-- Số lượng và tỷ lệ % từng trạng thái:
-  - Hoạt động
-  - Chờ sửa chữa  
-  - Chờ bảo trì
-  - Chờ hiệu chuẩn/kiểm định
-  - Ngưng sử dụng
-  - Chưa có nhu cầu sử dụng
-
-#### **Sheet 5: Phân bố theo Khoa-Phòng** ⭐ *Mới*
-- Chi tiết thiết bị từng khoa/phòng
-- Tổng số thiết bị và phân tích theo trạng thái
-- Tỷ lệ hoạt động của từng khoa/phòng
-
-#### **Sheet 6: Phân bố theo Vị trí** ⭐ *Mới*  
-- Phân tích thiết bị theo vị trí lắp đặt
-- Tương tự như phân bố theo khoa/phòng
-- Giúp quản lý thiết bị theo không gian vật lý
+1. **Nhấn nút "Xuất Excel"** trên biểu đồ
+2. **Chọn định dạng** xuất (nếu có tùy chọn)
+3. **File sẽ được tải về** máy tính tự động
 
 ### **Báo cáo bảo trì**
 
 - **Tiến độ hoàn thành**: % công việc đã hoàn thành theo tháng
 - **Top thiết bị**: Thiết bị có nhiều công việc bảo trì nhất
 - **Thống kê theo loại**: Bảo trì, hiệu chuẩn, kiểm định
-
-### **Báo cáo sử dụng thiết bị**
-
-- **Thống kê phiên sử dụng**: Tần suất sử dụng thiết bị
-- **Thời gian sử dụng**: Tổng thời gian và trung bình/phiên
-- **Hiệu suất sử dụng**: Đánh giá mức độ tận dụng thiết bị
 
 ---
 

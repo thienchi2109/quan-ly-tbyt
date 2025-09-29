@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "loginUser": "ntchi",
+  "loginPassword": "admin",
+  "executionArgs": {
+    "projectName": "quan-ly-tbyt",
+    "projectPath": "d:\\app-qltbyt-supabase\\quan-ly-tbyt",
+    "testIds": [],
+    "additionalInstruction": "Focus on performance testing, security testing, and user interface testing for medical equipment management system. Test login functionality, equipment management features, and responsive design.",
+    "envs": {
+      "API_KEY": "sk-user-3Uc6rKl4V4xngHb-HOzX1HUUnDRkZoKNo72jZgX6TcPew73XED18X-hgUcDJFnnwVFzZk6LetuTTyHW7aIyMFfPr4kDbzeh_MnBoT3coZfOW2HQ1apWRb3xA5mXG4dwdiAg"
+    }
+  },
+  "proxy": "http://2424cb5c-1b5f-401a-b3f3-64bf39c0fb58:k5HHUX3BlJiQSroEwjMdSUheIIjaJrdA@tun.testsprite.com:8080"
+}

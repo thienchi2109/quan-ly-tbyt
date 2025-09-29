@@ -21,6 +21,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { InventoryItem, InventorySummary } from "../hooks/use-inventory-data"
+import { useEquipmentDistribution, STATUS_LABELS } from "@/hooks/use-equipment-distribution"
 
 interface DateRange {
   from: Date
@@ -48,6 +49,11 @@ export function ExportReportDialog({
   const [isExporting, setIsExporting] = React.useState(false)
   const [fileName, setFileName] = React.useState("")
 
+  // Fetch equipment distribution data for the new sheets
+  const { data: equipmentDistribution } = useEquipmentDistribution(
+    department === "all" ? undefined : department
+  )
+
   // Generate default filename
   React.useEffect(() => {
     if (open) {
@@ -57,6 +63,73 @@ export function ExportReportDialog({
       setFileName(defaultName)
     }
   }, [open, dateRange])
+
+  // Generate device status distribution data
+  const generateStatusDistributionData = () => {
+    if (!equipmentDistribution) return []
+
+    // Calculate total equipment
+    const totalEquipment = equipmentDistribution.totalEquipment
+
+    // Sum up all status counts from departments data
+    const statusCounts = equipmentDistribution.byDepartment.reduce((acc, dept) => {
+      acc.hoat_dong += dept.hoat_dong
+      acc.cho_sua_chua += dept.cho_sua_chua
+      acc.cho_bao_tri += dept.cho_bao_tri
+      acc.cho_hieu_chuan += dept.cho_hieu_chuan
+      acc.ngung_su_dung += dept.ngung_su_dung
+      acc.chua_co_nhu_cau += dept.chua_co_nhu_cau
+      return acc
+    }, {
+      hoat_dong: 0,
+      cho_sua_chua: 0,
+      cho_bao_tri: 0,
+      cho_hieu_chuan: 0,
+      ngung_su_dung: 0,
+      chua_co_nhu_cau: 0
+    })
+
+    // Convert to array format for Excel
+    return Object.entries(statusCounts).map(([key, count]) => ({
+      "Trạng thái": STATUS_LABELS[key as keyof typeof STATUS_LABELS] || key,
+      "Số lượng": count,
+      "Tỷ lệ (%)": totalEquipment > 0 ? Math.round((count / totalEquipment) * 100) : 0
+    })).filter(item => item["Số lượng"] > 0)
+  }
+
+  // Generate device distribution by department data
+  const generateDepartmentDistributionData = () => {
+    if (!equipmentDistribution) return []
+
+    return equipmentDistribution.byDepartment.map(dept => ({
+      "Khoa/Phòng": dept.name,
+      "Tổng số TB": dept.total,
+      "Hoạt động": dept.hoat_dong,
+      "Chờ sửa chữa": dept.cho_sua_chua,
+      "Chờ bảo trì": dept.cho_bao_tri,
+      "Chờ hiệu chuẩn": dept.cho_hieu_chuan,
+      "Ngưng sử dụng": dept.ngung_su_dung,
+      "Chưa có nhu cầu": dept.chua_co_nhu_cau,
+      "Tỷ lệ hoạt động (%)": dept.total > 0 ? Math.round((dept.hoat_dong / dept.total) * 100) : 0
+    })).sort((a, b) => b["Tổng số TB"] - a["Tổng số TB"])
+  }
+
+  // Generate device distribution by location data
+  const generateLocationDistributionData = () => {
+    if (!equipmentDistribution) return []
+
+    return equipmentDistribution.byLocation.map(location => ({
+      "Vị trí": location.name,
+      "Tổng số TB": location.total,
+      "Hoạt động": location.hoat_dong,
+      "Chờ sửa chữa": location.cho_sua_chua,
+      "Chờ bảo trì": location.cho_bao_tri,
+      "Chờ hiệu chuẩn": location.cho_hieu_chuan,
+      "Ngưng sử dụng": location.ngung_su_dung,
+      "Chưa có nhu cầu": location.chua_co_nhu_cau,
+      "Tỷ lệ hoạt động (%)": location.total > 0 ? Math.round((location.hoat_dong / location.total) * 100) : 0
+    })).sort((a, b) => b["Tổng số TB"] - a["Tổng số TB"])
+  }
 
   const handleExport = async () => {
     setIsExporting(true)
@@ -95,6 +168,11 @@ export function ExportReportDialog({
       // Create statistics sheet data
       const statsData = generateStatistics(data)
 
+      // Generate new dataset sheets
+      const statusDistributionData = generateStatusDistributionData()
+      const departmentDistributionData = generateDepartmentDistributionData()
+      const locationDistributionData = generateLocationDistributionData()
+
       // Create multi-sheet Excel file using dynamic import
       await createMultiSheetExcel([
         {
@@ -114,12 +192,30 @@ export function ExportReportDialog({
           data: statsData,
           type: "json",
           columnWidths: [25, 15, 15, 15]
+        },
+        {
+          name: "Phân bố trạng thái TB",
+          data: statusDistributionData,
+          type: "json",
+          columnWidths: [25, 15, 15]
+        },
+        {
+          name: "Phân bố theo Khoa-Phòng",
+          data: departmentDistributionData,
+          type: "json",
+          columnWidths: [25, 12, 12, 12, 12, 12, 12, 15, 15]
+        },
+        {
+          name: "Phân bố theo Vị trí",
+          data: locationDistributionData,
+          type: "json",
+          columnWidths: [25, 12, 12, 12, 12, 12, 12, 15, 15]
         }
       ], fileName)
 
       toast({
         title: "Xuất báo cáo thành công",
-        description: `Đã tạo file ${finalFileName}`,
+        description: `Đã tạo file ${fileName}.xlsx`,
       })
 
       onOpenChange(false)
