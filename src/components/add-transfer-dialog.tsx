@@ -206,7 +206,7 @@ export function AddTransferDialog({ open, onOpenChange, onSuccess }: AddTransfer
     }
 
     // Validate external transfer fields
-    if (formData.loai_hinh === 'ben_ngoai' && (!formData.muc_dich || !formData.don_vi_nhan)) {
+    if (formData.loai_hinh === 'ben_ngoai' && (!formData.muc_dich || !formData.don_vi_nhan.trim())) {
       toast({
         variant: "destructive",
         title: "Lỗi",
