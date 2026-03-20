@@ -124,6 +124,7 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
     const dateRange = dateFrom || dateTo 
       ? `(${dateFrom ? format(new Date(dateFrom), 'dd/MM/yyyy', { locale: vi }) : '...'} - ${dateTo ? format(new Date(dateTo), 'dd/MM/yyyy', { locale: vi }) : '...'})`
       : ''
+    const activeUser = usageLogs?.find(log => log.trang_thai === 'dang_su_dung')?.nguoi_su_dung?.full_name || ''
 
     return `
       <!DOCTYPE html>
@@ -134,7 +135,7 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
         <style>
           @page {
             size: A4 landscape;
-            margin: 1cm;
+            margin: 1cm 1cm 1.8cm 1cm;
           }
           
           body {
@@ -173,22 +174,25 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
           /* Print footer styles */
           .print-footer {
             position: fixed;
-            bottom: 1cm;
-            left: 2cm;
-            right: 2cm;
-            width: calc(100% - 4cm);
+            bottom: 0;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 11px;
           }
 
+          .page-number::after {
+            content: "Trang: " counter(page) "/" counter(pages);
+          }
+
           .content-body {
-            padding-bottom: 30px; /* Space for footer */
+            padding-bottom: 50px; /* Space for fixed footer */
           }
           
           .header h1 {
-            font-size: 20px;
+            font-size: 17px;
             font-weight: bold;
             margin: 0 0 5px 0;
             text-transform: uppercase;
@@ -261,13 +265,15 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
           
           .signature-title {
             font-weight: bold;
-            margin-bottom: 50px;
+            margin-bottom: 0;
           }
           
-          .signature-line {
-            border-top: 1px solid #000;
-            margin-top: 50px;
-            padding-top: 5px;
+          .signature-space {
+            height: 60px;
+          }
+          
+          .signature-name {
+            font-weight: bold;
           }
           
           .print-info {
@@ -286,7 +292,7 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
         <div class="header">
           <img src="https://i.postimg.cc/W1ym4T74/cdc-logo-150.png" alt="Logo CDC" class="header-logo" onerror="this.onerror=null;this.src='https://i.postimg.cc/W1ym4T74/cdc-logo-150.png';">
           <div class="header-content">
-            <h2 style="font-size: 14px; font-weight: bold; margin: 0 0 5px 0; text-transform: uppercase;">TRUNG TÂM KIỂM SOÁT BỆNH TẬT THÀNH PHỐ CẦN THƠ</h2>
+            <h2 style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0; text-transform: uppercase;">TRUNG TÂM KIỂM SOÁT BỆNH TẬT THÀNH PHỐ CẦN THƠ</h2>
             <h1>NHẬT KÝ SỬ DỤNG THIẾT BỊ</h1>
             <h2>${equipment.ten_thiet_bi}</h2>
             <div>Mã thiết bị: ${equipment.ma_thiet_bi} ${dateRange}</div>
@@ -357,11 +363,13 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
         <div class="footer">
           <div class="signature-section">
             <div class="signature-title">Người lập báo cáo</div>
-            <div class="signature-line">Ký tên</div>
+            <div class="signature-space"></div>
+            <div class="signature-name">${activeUser}</div>
           </div>
           <div class="signature-section">
             <div class="signature-title">Phụ trách thiết bị</div>
-            <div class="signature-line">Ký tên</div>
+            <div class="signature-space"></div>
+            <div class="signature-name">${equipment.nguoi_dang_truc_tiep_quan_ly || ''}</div>
           </div>
         </div>
         
@@ -374,7 +382,7 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
         <footer class="print-footer">
           <span>QLTB-BM.06</span>
           <span>BH.01 (05/2024)</span>
-          <span>Trang: 1/1</span>
+          <span class="page-number"></span>
         </footer>
       </body>
       </html>
