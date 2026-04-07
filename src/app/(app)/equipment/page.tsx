@@ -74,6 +74,7 @@ export default function EquipmentPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const hasAppliedInitialFilter = React.useRef(false)
   const [searchTerm, setSearchTerm] = React.useState("")
   const debouncedSearch = useSearchDebounce(searchTerm)
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false)
@@ -204,7 +205,7 @@ export default function EquipmentPage() {
     setIsLoading(true)
 
     const cacheKey = user?.khoa_phong && !["admin", "to_qltb"].includes(user.role)
-      ? `${CACHE_KEY}_${user.khoa_phong}_${user.full_name || ''}`
+      ? `${CACHE_KEY}_${user.khoa_phong}`
       : CACHE_KEY
 
     try {
@@ -262,33 +263,10 @@ export default function EquipmentPage() {
       return
     }
 
-    let finalData = nextData as Equipment[];
-
-    if (shouldFilterByDepartment && user?.full_name) {
-      const normalizeName = (name: string | null | undefined) => {
-        if (!name) return "";
-        return name
-          .trim()
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "");
-      };
-
-      const normalizedUserName = normalizeName(user.full_name);
-      
-      const userEquipments = finalData.filter(eq => 
-        normalizeName(eq.nguoi_dang_truc_tiep_quan_ly) === normalizedUserName
-      );
-
-      if (userEquipments.length > 0) {
-        finalData = userEquipments;
-      }
-    }
-
-    setData(finalData)
+    setData(nextData as Equipment[])
 
     try {
-      localStorage.setItem(cacheKey, JSON.stringify({ data: finalData }))
+      localStorage.setItem(cacheKey, JSON.stringify({ data: nextData }))
     } catch (error) {
       console.error("Error writing to localStorage", error)
     }
@@ -301,18 +279,52 @@ export default function EquipmentPage() {
       localStorage.removeItem(CACHE_KEY)
       if (user?.khoa_phong) {
         localStorage.removeItem(`${CACHE_KEY}_${user.khoa_phong}`)
-        localStorage.removeItem(`${CACHE_KEY}_${user.khoa_phong}_${user.full_name || ''}`)
       }
     } catch (error) {
       console.error("Failed to invalidate cache", error)
     }
 
     fetchEquipment()
-  }, [fetchEquipment, user?.khoa_phong, user?.full_name])
+  }, [fetchEquipment, user?.khoa_phong])
 
   React.useEffect(() => {
     fetchEquipment()
   }, [fetchEquipment])
+
+  React.useEffect(() => {
+    if (data.length > 0 && user?.full_name && !hasAppliedInitialFilter.current) {
+      const isPrivileged = ["admin", "to_qltb"].includes(user.role);
+      
+      if (!isPrivileged) {
+        const normalizeName = (name: string | null | undefined) => {
+          if (!name) return "";
+          return name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        };
+
+        const normalizedUserName = normalizeName(user.full_name);
+        
+        // Find exact string values in the dataset that match the user
+        const matchingDBValues = Array.from(new Set(
+          data
+            .map(eq => eq.nguoi_dang_truc_tiep_quan_ly?.trim())
+            .filter((val): val is string => Boolean(val) && normalizeName(val) === normalizedUserName)
+        ));
+
+        if (matchingDBValues.length > 0) {
+          setColumnFilters(prev => {
+            if (prev.some(f => f.id === "nguoi_dang_truc_tiep_quan_ly")) {
+              return prev;
+            }
+            return [
+              ...prev,
+              { id: "nguoi_dang_truc_tiep_quan_ly", value: matchingDBValues }
+            ];
+          });
+        }
+      }
+      hasAppliedInitialFilter.current = true;
+    }
+  }, [data, user])
 
   React.useEffect(() => {
     const handleCacheInvalidation = () => {
