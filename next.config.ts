@@ -1,4 +1,4 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 import withPWAInit from 'next-pwa';
 
 const withPWA = withPWAInit({
@@ -13,9 +13,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  turbopack: {},
   // Cloudflare Workers compatibility
   experimental: {
     // Enable experimental features for better Cloudflare Workers support
