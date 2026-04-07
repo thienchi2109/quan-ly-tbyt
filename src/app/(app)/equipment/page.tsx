@@ -204,7 +204,7 @@ export default function EquipmentPage() {
     setIsLoading(true)
 
     const cacheKey = user?.khoa_phong && !["admin", "to_qltb"].includes(user.role)
-      ? `${CACHE_KEY}_${user.khoa_phong}`
+      ? `${CACHE_KEY}_${user.khoa_phong}_${user.full_name || ''}`
       : CACHE_KEY
 
     try {
@@ -262,10 +262,33 @@ export default function EquipmentPage() {
       return
     }
 
-    setData(nextData as Equipment[])
+    let finalData = nextData as Equipment[];
+
+    if (shouldFilterByDepartment && user?.full_name) {
+      const normalizeName = (name: string | null | undefined) => {
+        if (!name) return "";
+        return name
+          .trim()
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+      };
+
+      const normalizedUserName = normalizeName(user.full_name);
+      
+      const userEquipments = finalData.filter(eq => 
+        normalizeName(eq.nguoi_dang_truc_tiep_quan_ly) === normalizedUserName
+      );
+
+      if (userEquipments.length > 0) {
+        finalData = userEquipments;
+      }
+    }
+
+    setData(finalData)
 
     try {
-      localStorage.setItem(cacheKey, JSON.stringify({ data: nextData }))
+      localStorage.setItem(cacheKey, JSON.stringify({ data: finalData }))
     } catch (error) {
       console.error("Error writing to localStorage", error)
     }
@@ -278,13 +301,14 @@ export default function EquipmentPage() {
       localStorage.removeItem(CACHE_KEY)
       if (user?.khoa_phong) {
         localStorage.removeItem(`${CACHE_KEY}_${user.khoa_phong}`)
+        localStorage.removeItem(`${CACHE_KEY}_${user.khoa_phong}_${user.full_name || ''}`)
       }
     } catch (error) {
       console.error("Failed to invalidate cache", error)
     }
 
     fetchEquipment()
-  }, [fetchEquipment, user?.khoa_phong])
+  }, [fetchEquipment, user?.khoa_phong, user?.full_name])
 
   React.useEffect(() => {
     fetchEquipment()
