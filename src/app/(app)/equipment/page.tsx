@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import type { Column, ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef } from "@tanstack/react-table"
 import {
   ColumnFiltersState,
   SortingState,
@@ -21,9 +21,6 @@ import {
   MoreHorizontal,
   File,
   PlusCircle,
-  FilterX,
-  Filter,
-  Check,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -98,7 +95,6 @@ import { AddEquipmentDialog } from "@/components/add-equipment-dialog"
 import { ImportEquipmentDialog } from "@/components/import-equipment-dialog"
 import { useAuth } from "@/contexts/auth-context"
 import { EditEquipmentDialog } from "@/components/edit-equipment-dialog"
-import { MobileFiltersDropdown } from "@/components/mobile-filters-dropdown"
 import { ResponsivePaginationInfo } from "@/components/responsive-pagination-info"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useMediaQuery } from "@/hooks/use-media-query"
@@ -109,6 +105,7 @@ import { MobileUsageActions } from "@/components/mobile-usage-actions"
 import { useSearchDebounce } from "@/hooks/use-debounce"
 import { EquipmentFilterStatus } from "@/components/department-filter-status"
 import { MobileEquipmentListItem } from "@/components/mobile-equipment-list-item"
+import { EquipmentFilterBar } from "@/components/equipment-filter-bar"
 
 type Attachment = {
   id: string;
@@ -118,29 +115,29 @@ type Attachment = {
 };
 
 type HistoryItem = {
-    id: number;
-    ngay_thuc_hien: string;
-    loai_su_kien: string;
-    mo_ta: string;
-    chi_tiet: {
-      // Repair request fields
-      mo_ta_su_co?: string;
-      hang_muc_sua_chua?: string;
-      nguoi_yeu_cau?: string;
-      // Maintenance fields
-      cong_viec_id?: number;
-      thang?: number;
-      ten_ke_hoach?: string;
-      khoa_phong?: string;
-      nam?: number;
-      // Transfer fields
-      ma_yeu_cau?: string;
-      loai_hinh?: string;
-      khoa_phong_hien_tai?: string;
-      khoa_phong_nhan?: string;
-      don_vi_nhan?: string;
-    } | null;
-  };
+  id: number;
+  ngay_thuc_hien: string;
+  loai_su_kien: string;
+  mo_ta: string;
+  chi_tiet: {
+    // Repair request fields
+    mo_ta_su_co?: string;
+    hang_muc_sua_chua?: string;
+    nguoi_yeu_cau?: string;
+    // Maintenance fields
+    cong_viec_id?: number;
+    thang?: number;
+    ten_ke_hoach?: string;
+    khoa_phong?: string;
+    nam?: number;
+    // Transfer fields
+    ma_yeu_cau?: string;
+    loai_hinh?: string;
+    khoa_phong_hien_tai?: string;
+    khoa_phong_nhan?: string;
+    don_vi_nhan?: string;
+  } | null;
+};
 
 const getStatusVariant = (status: Equipment["tinh_trang_hien_tai"]) => {
   switch (status) {
@@ -201,111 +198,13 @@ const columnLabels: Record<keyof Equipment, string> = {
 }
 
 const filterableColumns: (keyof Equipment)[] = [
-    'khoa_phong_quan_ly',
-    'vi_tri_lap_dat',
-    'nguoi_dang_truc_tiep_quan_ly',
-    'phan_loai_theo_nd98',
-    'tinh_trang_hien_tai'
+  'khoa_phong_quan_ly',
+  'vi_tri_lap_dat',
+  'nguoi_dang_truc_tiep_quan_ly',
+  'phan_loai_theo_nd98',
+  'tinh_trang_hien_tai'
 ];
 
-interface DataTableFacetedFilterProps<TData, TValue> {
-  column?: Column<TData, TValue>
-  title?: string
-  options: {
-    label: string
-    value: string
-  }[]
-}
-
-function DataTableFacetedFilter<TData, TValue>({
-  column,
-  title,
-  options,
-}: DataTableFacetedFilterProps<TData, TValue>) {
-  const selectedValues = new Set(column?.getFilterValue() as string[])
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed touch-target-sm md:h-8">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          {title}
-          {selectedValues?.size > 0 && (
-            <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge
-                variant="secondary"
-                className="rounded-sm px-1 font-normal lg:hidden"
-              >
-                {selectedValues.size}
-              </Badge>
-              <div className="hidden space-x-1 lg:flex">
-                {selectedValues.size > 2 ? (
-                  <Badge
-                    variant="secondary"
-                    className="rounded-sm px-1 font-normal"
-                  >
-                    {selectedValues.size} đã chọn
-                  </Badge>
-                ) : (
-                  options
-                    .filter((option) => selectedValues.has(option.value))
-                    .map((option) => (
-                      <Badge
-                        variant="secondary"
-                        key={option.value}
-                        className="rounded-sm px-1 font-normal"
-                      >
-                        <span className="truncate max-w-[100px]">{option.label}</span>
-                      </Badge>
-                    ))
-                )}
-              </div>
-            </>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[200px] max-h-[300px] overflow-y-auto" align="start">
-        <DropdownMenuLabel>{title}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {options.map((option) => {
-          const isSelected = selectedValues.has(option.value)
-          return (
-            <DropdownMenuCheckboxItem
-              key={option.value}
-              checked={isSelected}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  selectedValues.add(option.value)
-                } else {
-                  selectedValues.delete(option.value)
-                }
-                const filterValues = Array.from(selectedValues)
-                column?.setFilterValue(
-                  filterValues.length ? filterValues : undefined
-                )
-              }}
-              onSelect={(e) => e.preventDefault()}
-            >
-              <span className="truncate">{option.label}</span>
-            </DropdownMenuCheckboxItem>
-          )
-        })}
-        {selectedValues.size > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onSelect={() => column?.setFilterValue(undefined)}
-              className="justify-center text-center"
-            >
-              Xóa bộ lọc
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
 
 
 export default function EquipmentPage() {
@@ -434,8 +333,8 @@ export default function EquipmentPage() {
 
     const formatValue = (value: any) => value ?? "";
     const formatCurrency = (value: any) => {
-        if (value === null || value === undefined || value === "") return "";
-        return Number(value).toLocaleString('vi-VN') + ' VNĐ';
+      if (value === null || value === undefined || value === "") return "";
+      return Number(value).toLocaleString('vi-VN') + ' VNĐ';
     }
 
     const htmlContent = `
@@ -590,12 +489,12 @@ export default function EquipmentPage() {
       </body>
       </html>
     `;
-    
+
     const newWindow = window.open("", "_blank");
     if (newWindow) {
-        newWindow.document.open();
-        newWindow.document.write(htmlContent);
-        newWindow.document.close();
+      newWindow.document.open();
+      newWindow.document.write(htmlContent);
+      newWindow.document.close();
     }
   }
 
@@ -603,12 +502,12 @@ export default function EquipmentPage() {
     if (!equipment) return;
 
     const formatValue = (value: any) => value ?? "";
-    
+
     const qrText = formatValue(equipment.ma_thiet_bi);
     const qrSize = 112;
-    const qrUrl = qrText 
-        ? `https://quickchart.io/qr?text=${encodeURIComponent(qrText)}&caption=${encodeURIComponent(qrText)}&captionFontFamily=mono&captionFontSize=12&size=${qrSize}&ecLevel=H&margin=2` 
-        : `https://placehold.co/${qrSize}x${qrSize}/ffffff/cccccc?text=QR+Code`;
+    const qrUrl = qrText
+      ? `https://quickchart.io/qr?text=${encodeURIComponent(qrText)}&caption=${encodeURIComponent(qrText)}&captionFontFamily=mono&captionFontSize=12&size=${qrSize}&ecLevel=H&margin=2`
+      : `https://placehold.co/${qrSize}x${qrSize}/ffffff/cccccc?text=QR+Code`;
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -694,12 +593,12 @@ export default function EquipmentPage() {
       </body>
       </html>
     `;
-    
+
     const newWindow = window.open("", "_blank");
     if (newWindow) {
-        newWindow.document.open();
-        newWindow.document.write(htmlContent);
-        newWindow.document.close();
+      newWindow.document.open();
+      newWindow.document.write(htmlContent);
+      newWindow.document.close();
     }
   }
 
@@ -725,7 +624,7 @@ export default function EquipmentPage() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-           <DropdownMenuItem onSelect={() => handleShowDetails(equipment)}>
+          <DropdownMenuItem onSelect={() => handleShowDetails(equipment)}>
             Xem chi tiết
           </DropdownMenuItem>
           {canEdit && (
@@ -740,7 +639,7 @@ export default function EquipmentPage() {
       </DropdownMenu>
     );
   };
-  
+
   const columns: ColumnDef<Equipment>[] = [
     ...(Object.keys(columnLabels) as Array<keyof Equipment>).map((key) => {
       const columnDef: ColumnDef<Equipment> = {
@@ -758,7 +657,7 @@ export default function EquipmentPage() {
         },
         cell: ({ row }) => {
           const value = row.getValue(key)
-  
+
           if (key === 'tinh_trang_hien_tai') {
             const statusValue = value as Equipment["tinh_trang_hien_tai"];
             if (!statusValue) {
@@ -770,7 +669,7 @@ export default function EquipmentPage() {
               </Badge>
             )
           }
-          
+
           if (key === 'phan_loai_theo_nd98') {
             const classification = value as Equipment["phan_loai_theo_nd98"];
             if (!classification) {
@@ -782,30 +681,30 @@ export default function EquipmentPage() {
               </Badge>
             );
           }
-  
+
           if (key === 'gia_goc') {
             if (value === null || value === undefined) {
-               return <div className="text-right italic text-muted-foreground">Chưa có dữ liệu</div>
+              return <div className="text-right italic text-muted-foreground">Chưa có dữ liệu</div>
             }
             return <div className="text-right">{Number(value).toLocaleString()}đ</div>
           }
-          
+
           if (value === null || value === undefined || value === "") {
-              return <div className="italic text-muted-foreground">Chưa có dữ liệu</div>
+            return <div className="italic text-muted-foreground">Chưa có dữ liệu</div>
           }
-  
+
           return <div className="truncate max-w-xs">{String(value)}</div>
         },
       }
-  
+
       if (filterableColumns.includes(key)) {
-          columnDef.filterFn = (row, id, value) => {
-              const rowValue = row.getValue(id) as string;
-              if (!rowValue) return false;
-              return value.includes(rowValue.trim());
-          }
+        columnDef.filterFn = (row, id, value) => {
+          const rowValue = row.getValue(id) as string;
+          if (!rowValue) return false;
+          return value.includes(rowValue.trim());
+        }
       }
-  
+
       return columnDef;
     }),
     {
@@ -818,81 +717,81 @@ export default function EquipmentPage() {
   const CACHE_KEY = 'equipment_data';
 
   const fetchEquipment = React.useCallback(async () => {
-      setIsLoading(true);
+    setIsLoading(true);
 
-      // Phase 1: Department-based filtering - check cache key includes user department
-      const cacheKey = user?.khoa_phong && !['admin', 'to_qltb'].includes(user.role)
-        ? `${CACHE_KEY}_${user.khoa_phong}`
-        : CACHE_KEY;
+    // Phase 1: Department-based filtering - check cache key includes user department
+    const cacheKey = user?.khoa_phong && !['admin', 'to_qltb'].includes(user.role)
+      ? `${CACHE_KEY}_${user.khoa_phong}`
+      : CACHE_KEY;
 
-      try {
-        const cachedItemJSON = localStorage.getItem(cacheKey);
-        if (cachedItemJSON) {
-          const cachedItem = JSON.parse(cachedItemJSON);
-          setData(cachedItem.data as Equipment[]);
-          setIsLoading(false);
-          // Do not return here to allow background refresh if needed later.
-        }
-      } catch (e) {
-        console.error("Error reading from localStorage, fetching from network.", e);
-        localStorage.removeItem(cacheKey);
+    try {
+      const cachedItemJSON = localStorage.getItem(cacheKey);
+      if (cachedItemJSON) {
+        const cachedItem = JSON.parse(cachedItemJSON);
+        setData(cachedItem.data as Equipment[]);
+        setIsLoading(false);
+        // Do not return here to allow background refresh if needed later.
       }
+    } catch (e) {
+      console.error("Error reading from localStorage, fetching from network.", e);
+      localStorage.removeItem(cacheKey);
+    }
 
-      if (supabaseError) {
-          toast({
-              variant: "destructive",
-              title: "Lỗi cấu hình Supabase",
-              description: supabaseError,
-              duration: 10000,
-          })
-          setData([]);
-          setIsLoading(false);
-          return;
-      }
-      if (!supabase) {
-          setIsLoading(false);
-          return;
-      }
-
-      // Phase 1: Apply department-based filtering for non-admin users
-      let query = supabase.from('thiet_bi').select('*');
-
-      // Apply department filter for non-admin users
-      const shouldFilterByDepartment = user &&
-        !['admin', 'to_qltb'].includes(user.role) &&
-        user.khoa_phong;
-
-      if (shouldFilterByDepartment) {
-        console.log(`[Equipment] Applying department filter: ${user.khoa_phong}`);
-        query = query.eq('khoa_phong_quan_ly', user.khoa_phong);
-      }
-
-      const { data, error } = await query.order('id', { ascending: true });
-
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Lỗi",
-          description: "Không thể tải dữ liệu thiết bị. " + error.message,
-        })
-        const cacheKey = shouldFilterByDepartment ? `${CACHE_KEY}_${user.khoa_phong}` : CACHE_KEY;
-        if (!localStorage.getItem(cacheKey)) {
-            setData([]);
-        }
-      } else {
-        setData(data as Equipment[]);
-        try {
-            const itemToCache = {
-                data: data,
-            };
-            const cacheKey = shouldFilterByDepartment ? `${CACHE_KEY}_${user.khoa_phong}` : CACHE_KEY;
-            localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
-        } catch (e) {
-            console.error("Error writing to localStorage", e);
-        }
-      }
+    if (supabaseError) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi cấu hình Supabase",
+        description: supabaseError,
+        duration: 10000,
+      })
+      setData([]);
       setIsLoading(false);
-    }, [toast, user]);
+      return;
+    }
+    if (!supabase) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Phase 1: Apply department-based filtering for non-admin users
+    let query = supabase.from('thiet_bi').select('*');
+
+    // Apply department filter for non-admin users
+    const shouldFilterByDepartment = user &&
+      !['admin', 'to_qltb'].includes(user.role) &&
+      user.khoa_phong;
+
+    if (shouldFilterByDepartment) {
+      console.log(`[Equipment] Applying department filter: ${user.khoa_phong}`);
+      query = query.eq('khoa_phong_quan_ly', user.khoa_phong);
+    }
+
+    const { data, error } = await query.order('id', { ascending: true });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể tải dữ liệu thiết bị. " + error.message,
+      })
+      const cacheKey = shouldFilterByDepartment ? `${CACHE_KEY}_${user.khoa_phong}` : CACHE_KEY;
+      if (!localStorage.getItem(cacheKey)) {
+        setData([]);
+      }
+    } else {
+      setData(data as Equipment[]);
+      try {
+        const itemToCache = {
+          data: data,
+        };
+        const cacheKey = shouldFilterByDepartment ? `${CACHE_KEY}_${user.khoa_phong}` : CACHE_KEY;
+        localStorage.setItem(cacheKey, JSON.stringify(itemToCache));
+      } catch (e) {
+        console.error("Error writing to localStorage", e);
+      }
+    }
+    setIsLoading(false);
+  }, [toast, user]);
 
   const onDataMutationSuccess = React.useCallback(() => {
     try {
@@ -930,30 +829,30 @@ export default function EquipmentPage() {
     const actionParam = searchParams.get('action')
     const highlightParam = searchParams.get('highlight')
     const tabParam = searchParams.get('tab')
-    
+
     if (actionParam === 'add') {
       setIsAddDialogOpen(true)
       // Clear URL params after opening dialog
       router.replace('/equipment', { scroll: false })
     }
-    
+
     // Handle QR Scanner highlights
     if (highlightParam && data.length > 0) {
       const equipmentToHighlight = data.find(eq => eq.id === Number(highlightParam))
       if (equipmentToHighlight) {
         setSelectedEquipment(equipmentToHighlight)
         setIsDetailModalOpen(true)
-        
+
         // Set tab from URL parameter
         if (tabParam && ['details', 'files', 'history', 'usage'].includes(tabParam)) {
           setCurrentTab(tabParam)
         } else {
           setCurrentTab('details')
         }
-        
+
         // Clear URL params after opening modal
         router.replace('/equipment', { scroll: false })
-        
+
         // Auto scroll to equipment in table (with delay for modal to open)
         setTimeout(() => {
           const element = document.querySelector(`[data-equipment-id="${highlightParam}"]`)
@@ -992,22 +891,22 @@ export default function EquipmentPage() {
     if (!supabase) return;
     setIsLoadingHistory(true);
     try {
-        const { data, error } = await supabase
-            .from('lich_su_thiet_bi')
-            .select('*')
-            .eq('thiet_bi_id', equipmentId)
-            .order('ngay_thuc_hien', { ascending: false });
+      const { data, error } = await supabase
+        .from('lich_su_thiet_bi')
+        .select('*')
+        .eq('thiet_bi_id', equipmentId)
+        .order('ngay_thuc_hien', { ascending: false });
 
-        if (error) throw error;
-        setHistory(data as HistoryItem[] || []);
+      if (error) throw error;
+      setHistory(data as HistoryItem[] || []);
     } catch (error: any) {
-        toast({
-            variant: "destructive",
-            title: "Lỗi tải lịch sử thiết bị",
-            description: error.message,
-        });
+      toast({
+        variant: "destructive",
+        title: "Lỗi tải lịch sử thiết bị",
+        description: error.message,
+      });
     } finally {
-        setIsLoadingHistory(false);
+      setIsLoadingHistory(false);
     }
   }, [toast]);
 
@@ -1025,14 +924,14 @@ export default function EquipmentPage() {
 
     // Basic URL validation
     try {
-        new URL(newFileUrl);
+      new URL(newFileUrl);
     } catch (_) {
-        toast({
-            variant: "destructive",
-            title: "URL không hợp lệ",
-            description: "Vui lòng nhập một đường dẫn URL hợp lệ.",
-        });
-        return;
+      toast({
+        variant: "destructive",
+        title: "URL không hợp lệ",
+        description: "Vui lòng nhập một đường dẫn URL hợp lệ.",
+      });
+      return;
     }
 
 
@@ -1068,28 +967,28 @@ export default function EquipmentPage() {
     if (!selectedEquipment || deletingAttachmentId) return;
 
     if (!confirm('Bạn có chắc chắn muốn xóa file đính kèm này không?')) {
-        return;
+      return;
     }
-    
+
     setDeletingAttachmentId(attachmentId);
     try {
-        if (!supabase) throw new Error("Supabase client is not available");
-        const { error } = await supabase.from('file_dinh_kem').delete().eq('id', attachmentId);
-        if (error) throw error;
+      if (!supabase) throw new Error("Supabase client is not available");
+      const { error } = await supabase.from('file_dinh_kem').delete().eq('id', attachmentId);
+      if (error) throw error;
 
-        toast({
-            title: "Đã xóa",
-            description: "Đã xóa liên kết thành công.",
-        });
-        fetchAttachments(selectedEquipment.id);
+      toast({
+        title: "Đã xóa",
+        description: "Đã xóa liên kết thành công.",
+      });
+      fetchAttachments(selectedEquipment.id);
     } catch (error: any) {
-        toast({
-            variant: "destructive",
-            title: "Lỗi xóa liên kết",
-            description: error.message,
-        });
+      toast({
+        variant: "destructive",
+        title: "Lỗi xóa liên kết",
+        description: error.message,
+      });
     } finally {
-        setDeletingAttachmentId(null);
+      setDeletingAttachmentId(null);
     }
   };
 
@@ -1113,7 +1012,7 @@ export default function EquipmentPage() {
       globalFilter: debouncedSearch,
     },
   })
-  
+
   // Restore table state after data reload
   React.useEffect(() => {
     if (preservePageState && !isLoading && data.length > 0) {
@@ -1125,7 +1024,7 @@ export default function EquipmentPage() {
       }, 150);
     }
   }, [preservePageState, isLoading, data.length, table]);
-  
+
   // Enhanced onDataMutationSuccess that preserves table state
   const onDataMutationSuccessWithStatePreservation = React.useCallback(() => {
     // Save current table state before reload
@@ -1134,13 +1033,13 @@ export default function EquipmentPage() {
       pageIndex: currentState.pagination.pageIndex,
       pageSize: currentState.pagination.pageSize,
     };
-    
+
     setPreservePageState(stateToSave);
-    
+
     // Call original function
     onDataMutationSuccess();
   }, [table, onDataMutationSuccess]);
-  
+
   const handleExportData = async () => {
     const rowsToExport = table.getFilteredRowModel().rows;
     if (rowsToExport.length === 0) {
@@ -1159,17 +1058,17 @@ export default function EquipmentPage() {
       const headers = dbKeysInOrder.map(key => columnLabels[key]);
 
       const formattedData = dataToExport.map(item => {
-          const rowData: Record<string, any> = {};
-          dbKeysInOrder.forEach(key => {
-              const header = columnLabels[key];
-              let value = item[key];
-              rowData[header] = value ?? "";
-          });
-          return rowData;
+        const rowData: Record<string, any> = {};
+        dbKeysInOrder.forEach(key => {
+          const header = columnLabels[key];
+          let value = item[key];
+          rowData[header] = value ?? "";
+        });
+        return rowData;
       });
 
       const colWidths = headers.map(header => Math.max(header.length, 20));
-      const fileName = `Danh_sach_thiet_bi_${new Date().toISOString().slice(0,10)}.xlsx`;
+      const fileName = `Danh_sach_thiet_bi_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
       await exportToExcel(formattedData, fileName, "Danh sách thiết bị", colWidths);
 
@@ -1192,7 +1091,7 @@ export default function EquipmentPage() {
   const users = React.useMemo(() => Array.from(new Set(data.map((item) => item.nguoi_dang_truc_tiep_quan_ly?.trim()).filter(Boolean))), [data])
   const classifications = React.useMemo(() => Array.from(new Set(data.map((item) => item.phan_loai_theo_nd98?.trim()).filter(Boolean))), [data])
   const statuses = React.useMemo(() => Array.from(new Set(data.map((item) => item.tinh_trang_hien_tai?.trim()).filter(Boolean))), [data])
-  
+
   const isFiltered = table.getState().columnFilters.length > 0;
 
   const renderContent = () => {
@@ -1272,9 +1171,9 @@ export default function EquipmentPage() {
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -1302,29 +1201,29 @@ export default function EquipmentPage() {
 
   const getHistoryIcon = (eventType: string) => {
     switch (eventType) {
-        case 'Sửa chữa':
-            return <Wrench className="h-4 w-4 text-muted-foreground" />;
-        case 'Bảo trì':
-        case 'Bảo trì định kỳ':
-        case 'Bảo trì dự phòng':
-            return <Settings className="h-4 w-4 text-muted-foreground" />;
-        case 'Luân chuyển':
-        case 'Luân chuyển nội bộ':
-        case 'Luân chuyển bên ngoài':
-            return <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />;
-        case 'Hiệu chuẩn':
-        case 'Kiểm định':
-            return <CheckCircle className="h-4 w-4 text-muted-foreground" />;
-        case 'Thanh lý':
-            return <Trash2 className="h-4 w-4 text-muted-foreground" />;
-        default:
-            return <Calendar className="h-4 w-4 text-muted-foreground" />;
+      case 'Sửa chữa':
+        return <Wrench className="h-4 w-4 text-muted-foreground" />;
+      case 'Bảo trì':
+      case 'Bảo trì định kỳ':
+      case 'Bảo trì dự phòng':
+        return <Settings className="h-4 w-4 text-muted-foreground" />;
+      case 'Luân chuyển':
+      case 'Luân chuyển nội bộ':
+      case 'Luân chuyển bên ngoài':
+        return <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />;
+      case 'Hiệu chuẩn':
+      case 'Kiểm định':
+        return <CheckCircle className="h-4 w-4 text-muted-foreground" />;
+      case 'Thanh lý':
+        return <Trash2 className="h-4 w-4 text-muted-foreground" />;
+      default:
+        return <Calendar className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   return (
     <>
-       <AddEquipmentDialog
+      <AddEquipmentDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onSuccess={onDataMutationSuccessWithStatePreservation}
@@ -1349,208 +1248,208 @@ export default function EquipmentPage() {
       />
       {selectedEquipment && (
         <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-            <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
-                <DialogHeader>
-                    <DialogTitle>Chi tiết thiết bị: {selectedEquipment.ten_thiet_bi}</DialogTitle>
-                    <DialogDescription>
-                        Mã thiết bị: {selectedEquipment.ma_thiet_bi}
-                    </DialogDescription>
-                </DialogHeader>
-                <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow flex flex-col overflow-hidden">
-                    <TabsList className="shrink-0">
-                        <TabsTrigger value="details">Thông tin chi tiết</TabsTrigger>
-                        <TabsTrigger value="files">File đính kèm</TabsTrigger>
-                        <TabsTrigger value="history">Lịch sử</TabsTrigger>
-                        <TabsTrigger value="usage">Nhật ký sử dụng</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="details" className="flex-grow overflow-hidden">
-                       <ScrollArea className="h-full pr-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 py-4">
-                                {(Object.keys(columnLabels) as Array<keyof Equipment>).map(key => {
-                                    if (key === 'id') return null;
+          <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle>Chi tiết thiết bị: {selectedEquipment.ten_thiet_bi}</DialogTitle>
+              <DialogDescription>
+                Mã thiết bị: {selectedEquipment.ma_thiet_bi}
+              </DialogDescription>
+            </DialogHeader>
+            <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex-grow flex flex-col overflow-hidden">
+              <TabsList className="shrink-0">
+                <TabsTrigger value="details">Thông tin chi tiết</TabsTrigger>
+                <TabsTrigger value="files">File đính kèm</TabsTrigger>
+                <TabsTrigger value="history">Lịch sử</TabsTrigger>
+                <TabsTrigger value="usage">Nhật ký sử dụng</TabsTrigger>
+              </TabsList>
+              <TabsContent value="details" className="flex-grow overflow-hidden">
+                <ScrollArea className="h-full pr-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 py-4">
+                    {(Object.keys(columnLabels) as Array<keyof Equipment>).map(key => {
+                      if (key === 'id') return null;
 
-                                    const renderValue = () => {
-                                        const value = selectedEquipment[key];
-                                        if (key === 'tinh_trang_hien_tai') {
-                                            const statusValue = value as Equipment["tinh_trang_hien_tai"];
-                                            return statusValue ? <Badge variant={getStatusVariant(statusValue)}>{statusValue}</Badge> : <div className="italic text-muted-foreground">Chưa có dữ liệu</div>;
-                                        }
-                                        if (key === 'phan_loai_theo_nd98') {
-                                            const classification = value as Equipment["phan_loai_theo_nd98"];
-                                            return classification ? <Badge variant={getClassificationVariant(classification)}>{classification.trim()}</Badge> : <div className="italic text-muted-foreground">Chưa có dữ liệu</div>;
-                                        }
-                                        if (key === 'gia_goc') {
-                                            return value ? `${Number(value).toLocaleString()} đ` : <div className="italic text-muted-foreground">Chưa có dữ liệu</div>;
-                                        }
-                                        if (value === null || value === undefined || value === "") {
-                                            return <div className="italic text-muted-foreground">Chưa có dữ liệu</div>;
-                                        }
-                                        return String(value);
-                                    };
+                      const renderValue = () => {
+                        const value = selectedEquipment[key];
+                        if (key === 'tinh_trang_hien_tai') {
+                          const statusValue = value as Equipment["tinh_trang_hien_tai"];
+                          return statusValue ? <Badge variant={getStatusVariant(statusValue)}>{statusValue}</Badge> : <div className="italic text-muted-foreground">Chưa có dữ liệu</div>;
+                        }
+                        if (key === 'phan_loai_theo_nd98') {
+                          const classification = value as Equipment["phan_loai_theo_nd98"];
+                          return classification ? <Badge variant={getClassificationVariant(classification)}>{classification.trim()}</Badge> : <div className="italic text-muted-foreground">Chưa có dữ liệu</div>;
+                        }
+                        if (key === 'gia_goc') {
+                          return value ? `${Number(value).toLocaleString()} đ` : <div className="italic text-muted-foreground">Chưa có dữ liệu</div>;
+                        }
+                        if (value === null || value === undefined || value === "") {
+                          return <div className="italic text-muted-foreground">Chưa có dữ liệu</div>;
+                        }
+                        return String(value);
+                      };
 
-                                    return (
-                                        <div key={key} className="border-b pb-2">
-                                            <p className="text-xs font-medium text-muted-foreground">{columnLabels[key]}</p>
-                                            <div className="font-semibold break-words">{renderValue()}</div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </ScrollArea>
-                    </TabsContent>
-                    <TabsContent value="files" className="flex-grow overflow-hidden">
-                        <div className="h-full flex flex-col gap-4 py-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg">Thêm file đính kèm mới</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <form onSubmit={handleAddAttachment} className="space-y-4">
-                                        <div className="space-y-1">
-                                            <Label htmlFor="file-name">Tên file</Label>
-                                            <Input id="file-name" placeholder="VD: Giấy chứng nhận hiệu chuẩn" value={newFileName} onChange={e => setNewFileName(e.target.value)} required disabled={isSubmittingAttachment}/>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label htmlFor="file-url">Đường dẫn (URL)</Label>
-                                            <Input id="file-url" type="url" placeholder="https://..." value={newFileUrl} onChange={e => setNewFileUrl(e.target.value)} required disabled={isSubmittingAttachment}/>
-                                        </div>
-                                        <Alert>
-                                            <AlertCircle className="h-4 w-4" />
-                                            <AlertTitle>Làm thế nào để lấy URL?</AlertTitle>
-                                            <AlertDescription>
-                                                Tải file của bạn lên{" "}
-                                                <a href="https://drive.google.com/open?id=1-lgEygGCIfxCbIIdgaCmh3GFJgAMr63e&usp=drive_fs" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
-                                                    thư mục Drive chung
-                                                </a>
-                                                , sau đó lấy link chia sẻ công khai và dán vào đây.
-                                            </AlertDescription>
-                                        </Alert>
-                                        <Button type="submit" disabled={isSubmittingAttachment || !newFileName || !newFileUrl}>
-                                            {isSubmittingAttachment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                            Lưu liên kết
-                                        </Button>
-                                    </form>
-                                </CardContent>
-                            </Card>
-                             <div className="flex-grow overflow-hidden">
-                                <p className="font-medium mb-2">Danh sách file đã đính kèm</p>
-                                <ScrollArea className="h-full pr-4">
-                                    {isLoadingAttachments ? (
-                                        <div className="space-y-2">
-                                            <Skeleton className="h-10 w-full" />
-                                            <Skeleton className="h-10 w-full" />
-                                            <Skeleton className="h-10 w-full" />
-                                        </div>
-                                    ) : attachments.length === 0 ? (
-                                        <p className="text-sm text-muted-foreground italic text-center py-4">Chưa có file nào được đính kèm.</p>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            {attachments.map(file => (
-                                                <div key={file.id} className="flex items-center justify-between p-2 border rounded-md bg-muted/50">
-                                                     <Link href={file.duong_dan_luu_tru} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline truncate">
-                                                        <LinkIcon className="h-4 w-4 shrink-0"/>
-                                                        <span className="truncate">{file.ten_file}</span>
-                                                    </Link>
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="icon" 
-                                                        className="h-8 w-8 text-destructive hover:bg-destructive/10" 
-                                                        onClick={() => handleDeleteAttachment(file.id)}
-                                                        disabled={!!deletingAttachmentId}
-                                                    >
-                                                        {deletingAttachmentId === file.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4"/>}
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </ScrollArea>
-                            </div>
+                      return (
+                        <div key={key} className="border-b pb-2">
+                          <p className="text-xs font-medium text-muted-foreground">{columnLabels[key]}</p>
+                          <div className="font-semibold break-words">{renderValue()}</div>
                         </div>
-                    </TabsContent>
-                    <TabsContent value="history" className="flex-grow overflow-hidden">
-                       <ScrollArea className="h-full pr-4 py-4">
-                            {isLoadingHistory ? (
-                                <div className="space-y-4">
-                                    <Skeleton className="h-20 w-full" />
-                                    <Skeleton className="h-20 w-full" />
-                                    <Skeleton className="h-20 w-full" />
-                                </div>
-                            ) : history.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-                                    <p className="font-semibold">Chưa có lịch sử</p>
-                                    <p className="text-sm">Mọi hoạt động sửa chữa, bảo trì sẽ được ghi lại tại đây.</p>
-                                </div>
-                            ) : (
-                                <div className="relative pl-6">
-                                    <div className="absolute left-0 top-0 h-full w-0.5 bg-border -translate-x-1/2 ml-3"></div>
-                                    {history.map((item) => (
-                                        <div key={item.id} className="relative mb-8 last:mb-0">
-                                            <div className="absolute left-0 top-1 w-3 h-3 rounded-full bg-primary ring-4 ring-background -translate-x-1/2 ml-3"></div>
-                                            <div className="pl-2">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
-                                                        {getHistoryIcon(item.loai_su_kien)}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-semibold">{item.loai_su_kien}</p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {format(parseISO(item.ngay_thuc_hien), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-2 ml-10 p-3 rounded-md bg-muted/50 border">
-                                                    <p className="text-sm font-medium">{item.mo_ta}</p>
-
-                                                    {/* Repair request details */}
-                                                    {item.chi_tiet?.mo_ta_su_co && <p className="text-sm text-muted-foreground mt-1">Sự cố: {item.chi_tiet.mo_ta_su_co}</p>}
-                                                    {item.chi_tiet?.hang_muc_sua_chua && <p className="text-sm text-muted-foreground">Hạng mục: {item.chi_tiet.hang_muc_sua_chua}</p>}
-                                                    {item.chi_tiet?.nguoi_yeu_cau && <p className="text-sm text-muted-foreground">Người yêu cầu: {item.chi_tiet.nguoi_yeu_cau}</p>}
-
-                                                    {/* Maintenance details */}
-                                                    {item.chi_tiet?.ten_ke_hoach && <p className="text-sm text-muted-foreground mt-1">Kế hoạch: {item.chi_tiet.ten_ke_hoach}</p>}
-                                                    {item.chi_tiet?.thang && <p className="text-sm text-muted-foreground">Tháng: {item.chi_tiet.thang}/{item.chi_tiet.nam}</p>}
-
-                                                    {/* Transfer details */}
-                                                    {item.chi_tiet?.ma_yeu_cau && <p className="text-sm text-muted-foreground mt-1">Mã yêu cầu: {item.chi_tiet.ma_yeu_cau}</p>}
-                                                    {item.chi_tiet?.loai_hinh && <p className="text-sm text-muted-foreground">Loại hình: {item.chi_tiet.loai_hinh === 'noi_bo' ? 'Nội bộ' : item.chi_tiet.loai_hinh === 'ben_ngoai' ? 'Bên ngoài' : 'Thanh lý'}</p>}
-                                                    {item.chi_tiet?.khoa_phong_hien_tai && item.chi_tiet?.khoa_phong_nhan && (
-                                                        <p className="text-sm text-muted-foreground">Từ: {item.chi_tiet.khoa_phong_hien_tai} → {item.chi_tiet.khoa_phong_nhan}</p>
-                                                    )}
-                                                    {item.chi_tiet?.don_vi_nhan && <p className="text-sm text-muted-foreground">Đơn vị nhận: {item.chi_tiet.don_vi_nhan}</p>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </ScrollArea>
-                    </TabsContent>
-                    <TabsContent value="usage" className="flex-grow overflow-hidden">
-                        <div className="h-full py-4">
-                            <UsageHistoryTab equipment={selectedEquipment} />
+                      )
+                    })}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+              <TabsContent value="files" className="flex-grow overflow-hidden">
+                <div className="h-full flex flex-col gap-4 py-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Thêm file đính kèm mới</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <form onSubmit={handleAddAttachment} className="space-y-4">
+                        <div className="space-y-1">
+                          <Label htmlFor="file-name">Tên file</Label>
+                          <Input id="file-name" placeholder="VD: Giấy chứng nhận hiệu chuẩn" value={newFileName} onChange={e => setNewFileName(e.target.value)} required disabled={isSubmittingAttachment} />
                         </div>
-                    </TabsContent>
-                </Tabs>
-                <DialogFooter className="shrink-0 pt-4 border-t">
-                     <Button variant="secondary" onClick={() => handleGenerateDeviceLabel(selectedEquipment)}>
-                        <QrCode className="mr-2 h-4 w-4" />
-                        Tạo nhãn thiết bị
-                    </Button>
-                    <Button onClick={() => handleGenerateProfileSheet(selectedEquipment)}>
-                        <Printer className="mr-2 h-4 w-4" />
-                        In lý lịch
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>Đóng</Button>
-                </DialogFooter>
-            </DialogContent>
+                        <div className="space-y-1">
+                          <Label htmlFor="file-url">Đường dẫn (URL)</Label>
+                          <Input id="file-url" type="url" placeholder="https://..." value={newFileUrl} onChange={e => setNewFileUrl(e.target.value)} required disabled={isSubmittingAttachment} />
+                        </div>
+                        <Alert>
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertTitle>Làm thế nào để lấy URL?</AlertTitle>
+                          <AlertDescription>
+                            Tải file của bạn lên{" "}
+                            <a href="https://drive.google.com/open?id=1-lgEygGCIfxCbIIdgaCmh3GFJgAMr63e&usp=drive_fs" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                              thư mục Drive chung
+                            </a>
+                            , sau đó lấy link chia sẻ công khai và dán vào đây.
+                          </AlertDescription>
+                        </Alert>
+                        <Button type="submit" disabled={isSubmittingAttachment || !newFileName || !newFileUrl}>
+                          {isSubmittingAttachment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Lưu liên kết
+                        </Button>
+                      </form>
+                    </CardContent>
+                  </Card>
+                  <div className="flex-grow overflow-hidden">
+                    <p className="font-medium mb-2">Danh sách file đã đính kèm</p>
+                    <ScrollArea className="h-full pr-4">
+                      {isLoadingAttachments ? (
+                        <div className="space-y-2">
+                          <Skeleton className="h-10 w-full" />
+                          <Skeleton className="h-10 w-full" />
+                          <Skeleton className="h-10 w-full" />
+                        </div>
+                      ) : attachments.length === 0 ? (
+                        <p className="text-sm text-muted-foreground italic text-center py-4">Chưa có file nào được đính kèm.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {attachments.map(file => (
+                            <div key={file.id} className="flex items-center justify-between p-2 border rounded-md bg-muted/50">
+                              <Link href={file.duong_dan_luu_tru} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline truncate">
+                                <LinkIcon className="h-4 w-4 shrink-0" />
+                                <span className="truncate">{file.ten_file}</span>
+                              </Link>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteAttachment(file.id)}
+                                disabled={!!deletingAttachmentId}
+                              >
+                                {deletingAttachmentId === file.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="history" className="flex-grow overflow-hidden">
+                <ScrollArea className="h-full pr-4 py-4">
+                  {isLoadingHistory ? (
+                    <div className="space-y-4">
+                      <Skeleton className="h-20 w-full" />
+                      <Skeleton className="h-20 w-full" />
+                      <Skeleton className="h-20 w-full" />
+                    </div>
+                  ) : history.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                      <p className="font-semibold">Chưa có lịch sử</p>
+                      <p className="text-sm">Mọi hoạt động sửa chữa, bảo trì sẽ được ghi lại tại đây.</p>
+                    </div>
+                  ) : (
+                    <div className="relative pl-6">
+                      <div className="absolute left-0 top-0 h-full w-0.5 bg-border -translate-x-1/2 ml-3"></div>
+                      {history.map((item) => (
+                        <div key={item.id} className="relative mb-8 last:mb-0">
+                          <div className="absolute left-0 top-1 w-3 h-3 rounded-full bg-primary ring-4 ring-background -translate-x-1/2 ml-3"></div>
+                          <div className="pl-2">
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center justify-center h-8 w-8 rounded-full bg-muted">
+                                {getHistoryIcon(item.loai_su_kien)}
+                              </div>
+                              <div>
+                                <p className="font-semibold">{item.loai_su_kien}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(parseISO(item.ngay_thuc_hien), 'dd/MM/yyyy HH:mm', { locale: vi })}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-2 ml-10 p-3 rounded-md bg-muted/50 border">
+                              <p className="text-sm font-medium">{item.mo_ta}</p>
+
+                              {/* Repair request details */}
+                              {item.chi_tiet?.mo_ta_su_co && <p className="text-sm text-muted-foreground mt-1">Sự cố: {item.chi_tiet.mo_ta_su_co}</p>}
+                              {item.chi_tiet?.hang_muc_sua_chua && <p className="text-sm text-muted-foreground">Hạng mục: {item.chi_tiet.hang_muc_sua_chua}</p>}
+                              {item.chi_tiet?.nguoi_yeu_cau && <p className="text-sm text-muted-foreground">Người yêu cầu: {item.chi_tiet.nguoi_yeu_cau}</p>}
+
+                              {/* Maintenance details */}
+                              {item.chi_tiet?.ten_ke_hoach && <p className="text-sm text-muted-foreground mt-1">Kế hoạch: {item.chi_tiet.ten_ke_hoach}</p>}
+                              {item.chi_tiet?.thang && <p className="text-sm text-muted-foreground">Tháng: {item.chi_tiet.thang}/{item.chi_tiet.nam}</p>}
+
+                              {/* Transfer details */}
+                              {item.chi_tiet?.ma_yeu_cau && <p className="text-sm text-muted-foreground mt-1">Mã yêu cầu: {item.chi_tiet.ma_yeu_cau}</p>}
+                              {item.chi_tiet?.loai_hinh && <p className="text-sm text-muted-foreground">Loại hình: {item.chi_tiet.loai_hinh === 'noi_bo' ? 'Nội bộ' : item.chi_tiet.loai_hinh === 'ben_ngoai' ? 'Bên ngoài' : 'Thanh lý'}</p>}
+                              {item.chi_tiet?.khoa_phong_hien_tai && item.chi_tiet?.khoa_phong_nhan && (
+                                <p className="text-sm text-muted-foreground">Từ: {item.chi_tiet.khoa_phong_hien_tai} → {item.chi_tiet.khoa_phong_nhan}</p>
+                              )}
+                              {item.chi_tiet?.don_vi_nhan && <p className="text-sm text-muted-foreground">Đơn vị nhận: {item.chi_tiet.don_vi_nhan}</p>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </TabsContent>
+              <TabsContent value="usage" className="flex-grow overflow-hidden">
+                <div className="h-full py-4">
+                  <UsageHistoryTab equipment={selectedEquipment as any} />
+                </div>
+              </TabsContent>
+            </Tabs>
+            <DialogFooter className="shrink-0 pt-4 border-t">
+              <Button variant="secondary" onClick={() => handleGenerateDeviceLabel(selectedEquipment)}>
+                <QrCode className="mr-2 h-4 w-4" />
+                Tạo nhãn thiết bị
+              </Button>
+              <Button onClick={() => handleGenerateProfileSheet(selectedEquipment)}>
+                <Printer className="mr-2 h-4 w-4" />
+                In lý lịch
+              </Button>
+              <Button variant="outline" onClick={() => setIsDetailModalOpen(false)}>Đóng</Button>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
       )}
       <Card>
         <CardHeader>
-          <CardTitle className="heading-responsive-h2">Danh mục thiết bị</CardTitle>
+          <CardTitle className="heading-responsive-h2">Danh mục thiết bị, máy móc chuyên môn</CardTitle>
           <CardDescription className="body-responsive-sm">
-            Quản lý danh sách các trang thiết bị y tế.
+            Quản lý danh sách các thiết bị y tế, máy móc chuyên môn của CDC.
           </CardDescription>
 
           {/* Phase 2: Enhanced department filter notification */}
@@ -1560,152 +1459,46 @@ export default function EquipmentPage() {
           />
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Mobile-optimized filters layout */}
-          <div className="space-y-3">
-            {/* Search bar - full width on mobile */}
-            <div className="w-full">
-              <Input
-                placeholder="Tìm kiếm chung..."
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                className="h-8 w-full"
-              />
-            </div>
-            
-            {/* Responsive filters layout */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Always show main filters */}
-              <DataTableFacetedFilter
-                column={table.getColumn("tinh_trang_hien_tai")}
-                title="Tình trạng"
-                options={statuses.map(s => ({label: s!, value: s!}))}
-              />
-              <DataTableFacetedFilter
-                column={table.getColumn("khoa_phong_quan_ly")}
-                title="Khoa/Phòng"
-                options={departments.map(d => ({label: d, value: d}))}
-              />
-              
-              {/* Desktop: Show all filters inline */}
-              {!isMobile && (
-                <>
-                  <DataTableFacetedFilter
-                    column={table.getColumn("nguoi_dang_truc_tiep_quan_ly")}
-                    title="Người sử dụng"
-                    options={users.map(d => ({label: d, value: d}))}
-                  />
-                  <DataTableFacetedFilter
-                    column={table.getColumn("phan_loai_theo_nd98")}
-                    title="Phân loại"
-                    options={classifications.map(c => ({label: c, value: c}))}
-                  />
-                </>
-              )}
-              
-              {/* Mobile: Show additional filters in dropdown */}
-              {isMobile && (
-                <MobileFiltersDropdown
-                  activeFiltersCount={
-                    ((table.getColumn("nguoi_dang_truc_tiep_quan_ly")?.getFilterValue() as string[])?.length || 0) +
-                    ((table.getColumn("phan_loai_theo_nd98")?.getFilterValue() as string[])?.length || 0)
-                  }
-                  onClearFilters={() => {
-                    table.getColumn("nguoi_dang_truc_tiep_quan_ly")?.setFilterValue([])
-                    table.getColumn("phan_loai_theo_nd98")?.setFilterValue([])
-                  }}
-                >
-                  <DataTableFacetedFilter
-                    column={table.getColumn("nguoi_dang_truc_tiep_quan_ly")}
-                    title="Người sử dụng"
-                    options={users.map(d => ({label: d, value: d}))}
-                  />
-                  <DataTableFacetedFilter
-                    column={table.getColumn("phan_loai_theo_nd98")}
-                    title="Phân loại"
-                    options={classifications.map(c => ({label: c, value: c}))}
-                  />
-                </MobileFiltersDropdown>
-              )}
-              
-              {/* Clear all filters button */}
-              {isFiltered && (
-                <Button
-                  variant="ghost"
-                  onClick={() => table.resetColumnFilters()}
-                  className="h-8 px-2 lg:px-3"
-                >
-                  <span className="hidden sm:inline">Xóa tất cả</span>
-                  <FilterX className="h-4 w-4 sm:ml-2" />
+          {/* Add Equipment Button */}
+          <div className="flex justify-end">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" className="h-8 gap-1 touch-target-sm md:h-8">
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Thêm thiết bị
+                  </span>
                 </Button>
-              )}
-            </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setIsAddDialogOpen(true)}>
+                  Thêm thủ công
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setIsImportDialogOpen(true)}>
+                  Nhập từ Excel
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          {/* Action buttons - responsive layout */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 order-2 sm:order-1">
-              {!isMobile && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-8 gap-1 touch-target-sm md:h-8">
-                      Hiện/ẩn cột
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="max-h-[50vh] overflow-y-auto">
-                    <DropdownMenuLabel>Hiện/Ẩn cột</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {table
-                      .getAllColumns()
-                      .filter((column) => column.getCanHide())
-                      .map((column) => {
-                        return (
-                          <DropdownMenuCheckboxItem
-                            key={column.id}
-                            className="capitalize"
-                            checked={column.getIsVisible()}
-                            onCheckedChange={(value) =>
-                              column.toggleVisibility(!!value)
-                            }
-                            onSelect={(e) => e.preventDefault()}
-                          >
-                            {columnLabels[column.id as keyof Equipment] || column.id}
-                          </DropdownMenuCheckboxItem>
-                        )
-                      })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-              <Button size="sm" variant="outline" className="h-8 gap-1 touch-target-sm md:h-8" onClick={handleDownloadTemplate}>
-                <File className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Excel mẫu
-                </span>
-              </Button>
-            </div>
-            
-            <div className="flex items-center gap-2 order-1 sm:order-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="h-8 gap-1 touch-target-sm md:h-8">
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                      Thêm thiết bị
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setIsAddDialogOpen(true)}>
-                    Thêm thủ công
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setIsImportDialogOpen(true)}>
-                    Nhập từ Excel
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        
+          {/* Redesigned Filter Toolbar */}
+          <EquipmentFilterBar
+            table={table}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            isMobile={isMobile}
+            onDownloadTemplate={handleDownloadTemplate}
+            onAddDialogOpen={() => setIsAddDialogOpen(true)}
+            onImportDialogOpen={() => setIsImportDialogOpen(true)}
+            filterData={{
+              departments: departments as string[],
+              locations: locations as string[],
+              users: users as string[],
+              classifications: classifications as string[],
+              statuses: statuses as string[],
+            }}
+          />
+
           <div className="mt-4">
             {renderContent()}
           </div>
@@ -1720,7 +1513,7 @@ export default function EquipmentPage() {
               totalPages={table.getPageCount()}
             />
           </div>
-          
+
           {/* Export and pagination controls */}
           <div className="flex flex-col gap-3 items-center order-1 sm:order-2 sm:items-end">
             <button
@@ -1730,7 +1523,7 @@ export default function EquipmentPage() {
             >
               Tải về file Excel
             </button>
-            
+
             {/* Mobile-optimized pagination */}
             <div className="flex flex-col gap-3 items-center sm:flex-row sm:gap-6">
               {/* Page size selector */}
@@ -1754,7 +1547,7 @@ export default function EquipmentPage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {/* Page info and navigation */}
               <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
                 <div className="text-sm font-medium hidden sm:block">
