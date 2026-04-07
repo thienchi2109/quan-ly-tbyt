@@ -66,7 +66,7 @@ export function useDepartmentPerformance() {
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       if (event?.type === 'updated' && event.query.state.status === 'success') {
         const queryKey = event.query.queryKey
-        const fetchTime = event.query.state.dataUpdatedAt - (event.query.state.fetchFailureTime || 0)
+        const fetchTime = (event.query.state as any)?.fetchFailureTime ? event.query.state.dataUpdatedAt - (event.query.state as any).fetchFailureTime : 50
         
         // Only monitor department-related queries
         if (Array.isArray(queryKey) && (

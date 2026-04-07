@@ -1,0 +1,199 @@
+src/ai/genkit.ts(1,22): error TS2307: Cannot find module 'genkit' or its corresponding type declarations.
+src/ai/genkit.ts(2,24): error TS2307: Cannot find module '@genkit-ai/googleai' or its corresponding type declarations.
+src/app/(app)/repair-requests/page.tsx(384,19): error TS2352: Conversion of type '{ id: any; thiet_bi_id: any; ngay_yeu_cau: any; trang_thai: any; mo_ta_su_co: any; hang_muc_sua_chua: any; ngay_mong_muon_hoan_thanh: any; nguoi_yeu_cau: any; ngay_duyet: any; ngay_hoan_thanh: any; ... 6 more ...; thiet_bi: { ...; }[]; }[]' to type 'RepairRequestWithEquipment[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ id: any; thiet_bi_id: any; ngay_yeu_cau: any; trang_thai: any; mo_ta_su_co: any; hang_muc_sua_chua: any; ngay_mong_muon_hoan_thanh: any; nguoi_yeu_cau: any; ngay_duyet: any; ngay_hoan_thanh: any; ... 6 more ...; thiet_bi: { ...; }[]; }' is not comparable to type 'RepairRequestWithEquipment'.
+    Types of property 'thiet_bi' are incompatible.
+      Type '{ ten_thiet_bi: any; ma_thiet_bi: any; model: any; serial: any; khoa_phong_quan_ly: any; }[]' is missing the following properties from type '{ ten_thiet_bi: string; ma_thiet_bi: string; model: string | null; serial: string | null; khoa_phong_quan_ly: string | null; }': ten_thiet_bi, ma_thiet_bi, model, serial, khoa_phong_quan_ly
+src/app/(app)/repair-requests/page.tsx(551,70): error TS18047: 'supabase' is possibly 'null'.
+src/app/(app)/repair-requests/page.tsx(579,31): error TS18047: 'supabase' is possibly 'null'.
+src/app/(app)/repair-requests/page.tsx(794,29): error TS18047: 'supabase' is possibly 'null'.
+src/app/(app)/repair-requests/page.tsx(1804,44): error TS2339: Property 'khoa_phong_quan_ly' does not exist on type 'EquipmentSelectItem'.
+src/app/(app)/repair-requests/page.tsx(1805,85): error TS2339: Property 'khoa_phong_quan_ly' does not exist on type 'EquipmentSelectItem'.
+src/app/(app)/reports/components/maintenance-report-tab.tsx(4,113): error TS2724: '"recharts"' has no exported member named 'Donut'. Did you mean 'Dot'?
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(6,61): error TS2307: Cannot find module '@jest/globals' or its corresponding type declarations.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(11,9): error TS2304: Cannot find name 'jest'.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(12,13): error TS2304: Cannot find name 'jest'.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(13,15): error TS2304: Cannot find name 'jest'.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(15,13): error TS2304: Cannot find name 'jest'.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(16,11): error TS2304: Cannot find name 'jest'.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(17,16): error TS2304: Cannot find name 'jest'.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(25,5): error TS2304: Cannot find name 'jest'.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(29,5): error TS2304: Cannot find name 'jest'.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(64,24): error TS2304: Cannot find name 'jest'.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(65,22): error TS2304: Cannot find name 'jest'.
+src/components/add-maintenance-plan-dialog.tsx(69,31): error TS18047: 'supabase' is possibly 'null'.
+src/components/admin/user-management.tsx(12,31): error TS2307: Cannot find module '@/contexts/secure-auth-context' or its corresponding type declarations.
+src/components/admin/user-management.tsx(43,37): error TS18047: 'supabase' is possibly 'null'.
+src/components/admin/user-management.tsx(76,37): error TS18047: 'supabase' is possibly 'null'.
+src/components/admin/user-management.tsx(115,37): error TS18047: 'supabase' is possibly 'null'.
+src/components/admin/user-management.tsx(146,31): error TS18047: 'supabase' is possibly 'null'.
+src/components/dynamic-chart.tsx(230,38): error TS7031: Binding element 'name' implicitly has an 'any' type.
+src/components/dynamic-chart.tsx(230,44): error TS7031: Binding element 'value' implicitly has an 'any' type.
+src/components/dynamic-chart.tsx(230,51): error TS7031: Binding element 'percent' implicitly has an 'any' type.
+src/components/edit-equipment-dialog.tsx(88,18): error TS2345: Argument of type '{ nam_san_xuat: number; gia_goc: number; id: number; ma_thiet_bi: string; ten_thiet_bi: string; model: string; serial: string; cau_hinh_thiet_bi: string; phu_kien_kem_theo: string; hang_san_xuat: string; ... 18 more ...; phan_loai_theo_nd98: string; }' is not assignable to parameter of type '{ khoa_phong_quan_ly: string; ma_thiet_bi: string; ten_thiet_bi: string; vi_tri_lap_dat: string; nguoi_dang_truc_tiep_quan_ly: string; model?: string | null | undefined; serial?: string | null | undefined; ... 12 more ...; phan_loai_theo_nd98?: "A" | ... 4 more ... | undefined; } | { ...; } | ResetAction<...> | unde...'.
+  Type '{ nam_san_xuat: number; gia_goc: number; id: number; ma_thiet_bi: string; ten_thiet_bi: string; model: string; serial: string; cau_hinh_thiet_bi: string; phu_kien_kem_theo: string; hang_san_xuat: string; ... 18 more ...; phan_loai_theo_nd98: string; }' is not assignable to type '{ khoa_phong_quan_ly?: string | undefined; ma_thiet_bi?: string | undefined; ten_thiet_bi?: string | undefined; vi_tri_lap_dat?: string | undefined; nguoi_dang_truc_tiep_quan_ly?: string | undefined; ... 14 more ...; phan_loai_theo_nd98?: "A" | ... 4 more ... | undefined; }'.
+    Types of property 'phan_loai_theo_nd98' are incompatible.
+      Type 'string' is not assignable to type '"A" | "B" | "C" | "D" | null | undefined'.
+src/components/edit-equipment-dialog.tsx(101,31): error TS18047: 'supabase' is possibly 'null'.
+src/components/edit-maintenance-plan-dialog.tsx(78,31): error TS18047: 'supabase' is possibly 'null'.
+src/components/import-equipment-dialog.tsx(211,31): error TS18047: 'supabase' is possibly 'null'.
+src/components/mobile-equipment-list-item.tsx(122,31): error TS2739: Type 'Equipment' is missing the following properties from type 'Equipment': tinh_trang, created_at, updated_at
+src/components/mobile-usage-actions.tsx(206,9): error TS2322: Type 'UsageLog | undefined' is not assignable to type 'UsageLog | null'.
+  Type 'undefined' is not assignable to type 'UsageLog | null'.
+src/components/qr-action-sheet.tsx(34,54): error TS18047: 'supabase' is possibly 'null'.
+src/components/repair-request-alert.tsx(100,28): error TS2322: Type '"destructive" | "warning"' is not assignable to type '"secondary" | "destructive" | "default" | "outline" | null | undefined'.
+  Type '"warning"' is not assignable to type '"secondary" | "destructive" | "default" | "outline" | null | undefined'.
+src/components/ui/avatar.tsx(4,34): error TS2307: Cannot find module '@radix-ui/react-avatar' or its corresponding type declarations.
+src/components/ui/chart.tsx(127,22): error TS2304: Cannot find name 'RechartsPrimitive'.
+src/components/ui/chart.tsx(131,31): error TS2304: Cannot find name 'RechartsPrimitive'.
+src/components/ui/chart.tsx(212,25): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/ui/chart.tsx(212,31): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/components/ui/chart.tsx(283,21): error TS2304: Cannot find name 'RechartsPrimitive'.
+src/components/ui/chart.tsx(288,10): error TS2503: Cannot find namespace 'RechartsPrimitive'.
+src/components/ui/chart.tsx(312,23): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/ui/menubar.tsx(4,35): error TS2307: Cannot find module '@radix-ui/react-menubar' or its corresponding type declarations.
+src/components/ui/slider.tsx(4,34): error TS2307: Cannot find module '@radix-ui/react-slider' or its corresponding type declarations.
+src/contexts/realtime-context.tsx(96,29): error TS2345: Argument of type 'readonly ["dashboard-stats"]' is not assignable to parameter of type 'string[]'.
+  The type 'readonly ["dashboard-stats"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+src/contexts/realtime-context.tsx(103,29): error TS2345: Argument of type 'readonly ["repair"]' is not assignable to parameter of type 'string[]'.
+  The type 'readonly ["repair"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+src/contexts/realtime-context.tsx(104,29): error TS2345: Argument of type 'readonly ["dashboard-stats"]' is not assignable to parameter of type 'string[]'.
+  The type 'readonly ["dashboard-stats"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+src/contexts/realtime-context.tsx(110,29): error TS2345: Argument of type 'readonly ["maintenance"]' is not assignable to parameter of type 'string[]'.
+  The type 'readonly ["maintenance"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+src/contexts/realtime-context.tsx(111,29): error TS2345: Argument of type 'readonly ["dashboard-stats"]' is not assignable to parameter of type 'string[]'.
+  The type 'readonly ["dashboard-stats"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+src/hooks/use-department-performance.ts(69,80): error TS2339: Property 'fetchFailureTime' does not exist on type 'QueryState<any, any>'.
+src/hooks/use-realtime-sync.ts(59,7): error TS18047: 'supabase' is possibly 'null'.
+src/hooks/use-realtime-sync.ts(138,7): error TS18047: 'supabase' is possibly 'null'.
+src/hooks/use-simple-realtime.ts(87,9): error TS18047: 'supabase' is possibly 'null'.
+src/hooks/use-usage-analytics.ts(246,23): error TS2339: Property 'lastUsed' does not exist on type 'EquipmentUsageStats | { id: any; ten_thiet_bi: any; ma_thiet_bi: any; khoa_phong_quan_ly: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; currentlyInUse: false; }'.
+  Property 'lastUsed' does not exist on type '{ id: any; ten_thiet_bi: any; ma_thiet_bi: any; khoa_phong_quan_ly: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; currentlyInUse: false; }'.
+src/hooks/use-usage-analytics.ts(246,87): error TS2339: Property 'lastUsed' does not exist on type 'EquipmentUsageStats | { id: any; ten_thiet_bi: any; ma_thiet_bi: any; khoa_phong_quan_ly: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; currentlyInUse: false; }'.
+  Property 'lastUsed' does not exist on type '{ id: any; ten_thiet_bi: any; ma_thiet_bi: any; khoa_phong_quan_ly: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; currentlyInUse: false; }'.
+src/hooks/use-usage-analytics.ts(247,20): error TS2339: Property 'lastUsed' does not exist on type 'EquipmentUsageStats | { id: any; ten_thiet_bi: any; ma_thiet_bi: any; khoa_phong_quan_ly: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; currentlyInUse: false; }'.
+  Property 'lastUsed' does not exist on type '{ id: any; ten_thiet_bi: any; ma_thiet_bi: any; khoa_phong_quan_ly: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; currentlyInUse: false; }'.
+src/hooks/use-usage-analytics.ts(324,23): error TS2339: Property 'lastActivity' does not exist on type 'UserUsageStats | { id: any; full_name: any; khoa_phong: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; equipmentUsed: Set<number>; }'.
+  Property 'lastActivity' does not exist on type '{ id: any; full_name: any; khoa_phong: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; equipmentUsed: Set<number>; }'.
+src/hooks/use-usage-analytics.ts(324,91): error TS2339: Property 'lastActivity' does not exist on type 'UserUsageStats | { id: any; full_name: any; khoa_phong: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; equipmentUsed: Set<number>; }'.
+  Property 'lastActivity' does not exist on type '{ id: any; full_name: any; khoa_phong: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; equipmentUsed: Set<number>; }'.
+src/hooks/use-usage-analytics.ts(325,20): error TS2339: Property 'lastActivity' does not exist on type 'UserUsageStats | { id: any; full_name: any; khoa_phong: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; equipmentUsed: Set<number>; }'.
+  Property 'lastActivity' does not exist on type '{ id: any; full_name: any; khoa_phong: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; equipmentUsed: Set<number>; }'.
+src/hooks/use-usage-analytics.ts(328,45): error TS2345: Argument of type 'UserUsageStats | { id: any; full_name: any; khoa_phong: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; equipmentUsed: Set<number>; }' is not assignable to parameter of type 'UserUsageStats'.
+  Type '{ id: any; full_name: any; khoa_phong: any; sessionCount: number; totalUsageTime: number; averageSessionTime: number; equipmentUsed: Set<number>; }' is not assignable to type 'UserUsageStats'.
+    Types of property 'equipmentUsed' are incompatible.
+      Type 'Set<number>' is not assignable to type 'number'.
+src/hooks/use-usage-analytics.ts(334,25): error TS2352: Conversion of type 'number' to type 'Set<number>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/hooks/use-usage-analytics.ts(381,11): error TS2322: Type 'Set<number>' is not assignable to type 'number'.
+src/hooks/use-usage-analytics.ts(382,11): error TS2322: Type 'Set<number>' is not assignable to type 'number'.
+src/hooks/use-usage-analytics.ts(402,14): error TS2352: Conversion of type 'number' to type 'Set<number>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/hooks/use-usage-analytics.ts(406,14): error TS2352: Conversion of type 'number' to type 'Set<number>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/hooks/use-usage-analytics.ts(415,25): error TS2352: Conversion of type 'number' to type 'Set<number>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/hooks/use-usage-analytics.ts(416,29): error TS2352: Conversion of type 'number' to type 'Set<number>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/lib/__tests__/department-utils.test.ts(7,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(8,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(9,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(10,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(11,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(14,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(15,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(16,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(19,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(20,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(21,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(22,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(25,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(26,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(27,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(28,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(29,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(32,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(33,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(34,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(35,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(38,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(39,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(40,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(41,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(42,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(45,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(46,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(47,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(48,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(51,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(52,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(53,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(57,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(58,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(60,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(61,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(62,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(65,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(67,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(68,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(71,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(72,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(73,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(74,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(75,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(78,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(80,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(85,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(86,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(87,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(90,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(91,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(94,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(95,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(98,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(99,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(102,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(103,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(104,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(107,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(108,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(109,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(113,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(114,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(116,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(117,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(120,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(122,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(123,7): error TS2304: Cannot find name 'expect'.
+src/lib/__tests__/department-utils.test.ts(126,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/lib/__tests__/department-utils.test.ts(136,9): error TS2304: Cannot find name 'expect'.
+src/lib/ai-utils.tsx(32,14): error TS2307: Cannot find module 'genkit' or its corresponding type declarations.
+src/lib/ai-utils.tsx(33,14): error TS2307: Cannot find module '@genkit-ai/googleai' or its corresponding type declarations.
+src/lib/excel-utils.ts(18,3): error TS2300: Duplicate identifier 'utils'.
+src/lib/excel-utils.ts(26,3): error TS2300: Duplicate identifier 'utils'.
+src/lib/excel-utils.ts(26,3): error TS2717: Subsequent property declarations must have the same type.  Property 'utils' must be of type '{ book_new(): WorkBook; book_append_sheet(workbook: WorkBook, worksheet: WorkSheet, name: string): void; aoa_to_sheet(data: any[][]): WorkSheet; json_to_sheet(data: any[]): WorkSheet; }', but here has type 'any'.
+src/lib/excel-utils.ts(163,21): error TS2339: Property 'sheet_to_json' does not exist on type '{ book_new(): WorkBook; book_append_sheet(workbook: WorkBook, worksheet: WorkSheet, name: string): void; aoa_to_sheet(data: any[][]): WorkSheet; json_to_sheet(data: any[]): WorkSheet; }'.
+src/lib/firebase-utils.tsx(48,14): error TS2307: Cannot find module 'firebase/app' or its corresponding type declarations.
+src/lib/firebase-utils.tsx(49,14): error TS2307: Cannot find module 'firebase/messaging' or its corresponding type declarations.
+src/lib/firebase-utils.tsx(148,29): error TS7006: Parameter 'payload' implicitly has an 'any' type.
+src/lib/firebase.ts(1,66): error TS2307: Cannot find module 'firebase/app' or its corresponding type declarations.
+src/lib/firebase.ts(2,64): error TS2307: Cannot find module 'firebase/messaging' or its corresponding type declarations.
+src/lib/firebase.ts(70,27): error TS7006: Parameter 'payload' implicitly has an 'any' type.
+supabase/functions/_shared/google-auth.ts(1,25): error TS2307: Cannot find module 'https://deno.land/x/jose@v4.14.4/jwt/sign.ts' or its corresponding type declarations.
+supabase/functions/_shared/google-auth.ts(65,23): error TS2304: Cannot find name 'Deno'.
+supabase/functions/_shared/google-auth.ts(66,22): error TS2304: Cannot find name 'Deno'.
+supabase/functions/_shared/google-auth.ts(67,21): error TS2304: Cannot find name 'Deno'.
+supabase/functions/_shared/google-auth.ts(76,21): error TS2304: Cannot find name 'Deno'.
+supabase/functions/_shared/google-auth.ts(79,16): error TS2304: Cannot find name 'Deno'.
+supabase/functions/save-fcm-token/index.ts(1,23): error TS2307: Cannot find module 'https://deno.land/std@0.177.0/http/server.ts' or its corresponding type declarations.
+supabase/functions/save-fcm-token/index.ts(2,30): error TS2307: Cannot find module 'https://esm.sh/@supabase/supabase-js@2' or its corresponding type declarations.
+supabase/functions/save-fcm-token/index.ts(3,29): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+supabase/functions/save-fcm-token/index.ts(5,14): error TS7006: Parameter 'req' implicitly has an 'any' type.
+supabase/functions/save-fcm-token/index.ts(13,7): error TS2304: Cannot find name 'Deno'.
+supabase/functions/save-fcm-token/index.ts(14,7): error TS2304: Cannot find name 'Deno'.
+supabase/functions/save-fcm-token/index.ts(58,49): error TS18046: 'err' is of type 'unknown'.
+supabase/functions/send-push-notification/index.ts(1,23): error TS2307: Cannot find module 'https://deno.land/std@0.177.0/http/server.ts' or its corresponding type declarations.
+supabase/functions/send-push-notification/index.ts(2,30): error TS2307: Cannot find module 'https://esm.sh/@supabase/supabase-js@2' or its corresponding type declarations.
+supabase/functions/send-push-notification/index.ts(3,29): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+supabase/functions/send-push-notification/index.ts(4,32): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+supabase/functions/send-push-notification/index.ts(51,37): error TS18046: 'error' is of type 'unknown'.
+supabase/functions/send-push-notification/index.ts(56,14): error TS7006: Parameter 'req' implicitly has an 'any' type.
+supabase/functions/send-push-notification/index.ts(82,7): error TS2304: Cannot find name 'Deno'.
+supabase/functions/send-push-notification/index.ts(83,7): error TS2304: Cannot find name 'Deno'.
+supabase/functions/send-push-notification/index.ts(108,23): error TS2304: Cannot find name 'Deno'.
+supabase/functions/send-push-notification/index.ts(131,49): error TS18046: 'err' is of type 'unknown'.

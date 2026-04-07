@@ -68,6 +68,7 @@ type EquipmentSelectItem = {
   id: number;
   ma_thiet_bi: string;
   ten_thiet_bi: string;
+  khoa_phong_quan_ly?: string | null;
 }
 
 // Export type để RepairRequestAlert có thể sử dụng nếu cần
@@ -381,7 +382,7 @@ export default function RepairRequestsPage() {
         setRequests([]);
       }
     } else {
-      setRequests(data as RepairRequestWithEquipment[]);
+      setRequests(data as unknown as RepairRequestWithEquipment[]);
       try {
         localStorage.setItem(cacheKey, JSON.stringify({ data }));
       } catch (e) {
@@ -509,6 +510,7 @@ export default function RepairRequestsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!supabase) return
     if (!selectedEquipment || !issueDescription || !repairItems) {
       toast({
         variant: "destructive",
@@ -779,6 +781,7 @@ export default function RepairRequestsPage() {
   }
 
   const handleUpdateRequest = async () => {
+    if (!supabase) return;
     if (!editingRequest || !editIssueDescription || !editRepairItems) {
       toast({ variant: "destructive", title: "Thiếu thông tin", description: "Mô tả sự cố và hạng mục không được để trống." });
       return;

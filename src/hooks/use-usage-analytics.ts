@@ -219,7 +219,7 @@ export function useEquipmentUsageStats(dateRange?: { from: Date; to: Date }) {
       usageLogs.forEach(log => {
         if (!log.thiet_bi) return
 
-        const existing = equipmentStats.get(log.thiet_bi.id) || {
+        const existing: EquipmentUsageStats = equipmentStats.get(log.thiet_bi.id) || {
           id: log.thiet_bi.id,
           ten_thiet_bi: log.thiet_bi.ten_thiet_bi,
           ma_thiet_bi: log.thiet_bi.ma_thiet_bi,
@@ -293,12 +293,13 @@ export function useUserUsageStats(dateRange?: { from: Date; to: Date }) {
       if (error) throw error
 
       // Group by user
-      const userStats = new Map<number, UserUsageStats>()
+      const userStats = new Map<number, Omit<UserUsageStats, 'equipmentUsed'> & { equipmentUsed: Set<number> }>()
 
       usageLogs.forEach(log => {
         if (!log.nguoi_su_dung) return
 
-        const existing = userStats.get(log.nguoi_su_dung.id) || {
+        type IntermUserStats = Omit<UserUsageStats, 'equipmentUsed'> & { equipmentUsed: Set<number> }
+        const existing: IntermUserStats = userStats.get(log.nguoi_su_dung.id) || {
           id: log.nguoi_su_dung.id,
           full_name: log.nguoi_su_dung.full_name,
           khoa_phong: log.nguoi_su_dung.khoa_phong,
@@ -318,7 +319,7 @@ export function useUserUsageStats(dateRange?: { from: Date; to: Date }) {
         }
 
         if (log.thiet_bi?.id) {
-          (existing.equipmentUsed as Set<number>).add(log.thiet_bi.id)
+          existing.equipmentUsed.add(log.thiet_bi.id)
         }
 
         if (!existing.lastActivity || new Date(log.thoi_gian_bat_dau) > new Date(existing.lastActivity)) {
@@ -329,9 +330,9 @@ export function useUserUsageStats(dateRange?: { from: Date; to: Date }) {
       })
 
       // Convert Set to number and calculate averages
-      const result = Array.from(userStats.values()).map(stats => ({
+      const result: UserUsageStats[] = Array.from(userStats.values()).map(stats => ({
         ...stats,
-        equipmentUsed: (stats.equipmentUsed as Set<number>).size,
+        equipmentUsed: stats.equipmentUsed.size,
         averageSessionTime: stats.sessionCount > 0 
           ? Math.round(stats.totalUsageTime / stats.sessionCount) 
           : 0
@@ -368,7 +369,7 @@ export function useDailyUsageData(days: number = 30) {
       if (error) throw error
 
       // Group by date
-      const dailyData = new Map<string, DailyUsageData>()
+      const dailyData = new Map<string, Omit<DailyUsageData, 'uniqueUsers' | 'uniqueEquipment'> & { uniqueUsers: Set<number>, uniqueEquipment: Set<number> }>()
 
       // Initialize all dates
       for (let i = 0; i < days; i++) {
@@ -399,21 +400,21 @@ export function useDailyUsageData(days: number = 30) {
           }
 
           if (log.nguoi_su_dung?.id) {
-            (existing.uniqueUsers as Set<number>).add(log.nguoi_su_dung.id)
+            existing.uniqueUsers.add(log.nguoi_su_dung.id)
           }
 
           if (log.thiet_bi?.id) {
-            (existing.uniqueEquipment as Set<number>).add(log.thiet_bi.id)
+            existing.uniqueEquipment.add(log.thiet_bi.id)
           }
         }
       })
 
       // Convert Sets to numbers and sort by date
       return Array.from(dailyData.values())
-        .map(data => ({
+        .map((data): DailyUsageData => ({
           ...data,
-          uniqueUsers: (data.uniqueUsers as Set<number>).size,
-          uniqueEquipment: (data.uniqueEquipment as Set<number>).size
+          uniqueUsers: data.uniqueUsers.size,
+          uniqueEquipment: data.uniqueEquipment.size
         }))
         .sort((a, b) => a.date.localeCompare(b.date))
     },

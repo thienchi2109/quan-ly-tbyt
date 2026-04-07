@@ -1,0 +1,60 @@
+src/app/(app)/repair-requests/page.tsx(384,19): error TS2352: Conversion of type '{ id: any; thiet_bi_id: any; ngay_yeu_cau: any; trang_thai: any; mo_ta_su_co: any; hang_muc_sua_chua: any; ngay_mong_muon_hoan_thanh: any; nguoi_yeu_cau: any; ngay_duyet: any; ngay_hoan_thanh: any; ... 6 more ...; thiet_bi: { ...; }[]; }[]' to type 'RepairRequestWithEquipment[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ id: any; thiet_bi_id: any; ngay_yeu_cau: any; trang_thai: any; mo_ta_su_co: any; hang_muc_sua_chua: any; ngay_mong_muon_hoan_thanh: any; nguoi_yeu_cau: any; ngay_duyet: any; ngay_hoan_thanh: any; ... 6 more ...; thiet_bi: { ...; }[]; }' is not comparable to type 'RepairRequestWithEquipment'.
+    Types of property 'thiet_bi' are incompatible.
+      Type '{ ten_thiet_bi: any; ma_thiet_bi: any; model: any; serial: any; khoa_phong_quan_ly: any; }[]' is missing the following properties from type '{ ten_thiet_bi: string; ma_thiet_bi: string; model: string | null; serial: string | null; khoa_phong_quan_ly: string | null; }': ten_thiet_bi, ma_thiet_bi, model, serial, khoa_phong_quan_ly
+src/app/(app)/repair-requests/page.tsx(551,70): error TS18047: 'supabase' is possibly 'null'.
+src/app/(app)/repair-requests/page.tsx(579,31): error TS18047: 'supabase' is possibly 'null'.
+src/app/(app)/repair-requests/page.tsx(794,29): error TS18047: 'supabase' is possibly 'null'.
+src/app/(app)/repair-requests/page.tsx(1804,44): error TS2339: Property 'khoa_phong_quan_ly' does not exist on type 'EquipmentSelectItem'.
+src/app/(app)/repair-requests/page.tsx(1805,85): error TS2339: Property 'khoa_phong_quan_ly' does not exist on type 'EquipmentSelectItem'.
+src/app/(app)/reports/components/maintenance-report-tab.tsx(4,113): error TS2724: '"recharts"' has no exported member named 'Donut'. Did you mean 'Dot'?
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(6,61): error TS2307: Cannot find module '@jest/globals' or its corresponding type declarations.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(95,14): error TS2554: Expected 0 arguments, but got 1.
+src/app/(app)/transfers/__tests__/transfer-history.test.ts(96,16): error TS2554: Expected 0 arguments, but got 1.
+src/components/add-maintenance-plan-dialog.tsx(69,31): error TS18047: 'supabase' is possibly 'null'.
+src/components/admin/user-management.tsx(12,31): error TS2307: Cannot find module '@/contexts/secure-auth-context' or its corresponding type declarations.
+src/components/admin/user-management.tsx(43,37): error TS18047: 'supabase' is possibly 'null'.
+src/components/admin/user-management.tsx(76,37): error TS18047: 'supabase' is possibly 'null'.
+src/components/admin/user-management.tsx(115,37): error TS18047: 'supabase' is possibly 'null'.
+src/components/admin/user-management.tsx(146,31): error TS18047: 'supabase' is possibly 'null'.
+src/components/dynamic-chart.tsx(230,38): error TS7031: Binding element 'name' implicitly has an 'any' type.
+src/components/dynamic-chart.tsx(230,44): error TS7031: Binding element 'value' implicitly has an 'any' type.
+src/components/dynamic-chart.tsx(230,51): error TS7031: Binding element 'percent' implicitly has an 'any' type.
+src/components/edit-equipment-dialog.tsx(88,18): error TS2345: Argument of type '{ nam_san_xuat: number; gia_goc: number; id: number; ma_thiet_bi: string; ten_thiet_bi: string; model: string; serial: string; cau_hinh_thiet_bi: string; phu_kien_kem_theo: string; hang_san_xuat: string; ... 18 more ...; phan_loai_theo_nd98: string; }' is not assignable to parameter of type '{ ten_thiet_bi: string; ma_thiet_bi: string; khoa_phong_quan_ly: string; vi_tri_lap_dat: string; nguoi_dang_truc_tiep_quan_ly: string; model?: string | null | undefined; serial?: string | null | undefined; ... 12 more ...; phan_loai_theo_nd98?: "A" | ... 4 more ... | undefined; } | { ...; } | ResetAction<...> | unde...'.
+  Type '{ nam_san_xuat: number; gia_goc: number; id: number; ma_thiet_bi: string; ten_thiet_bi: string; model: string; serial: string; cau_hinh_thiet_bi: string; phu_kien_kem_theo: string; hang_san_xuat: string; ... 18 more ...; phan_loai_theo_nd98: string; }' is not assignable to type '{ ten_thiet_bi?: string | undefined; ma_thiet_bi?: string | undefined; khoa_phong_quan_ly?: string | undefined; vi_tri_lap_dat?: string | undefined; nguoi_dang_truc_tiep_quan_ly?: string | undefined; ... 14 more ...; phan_loai_theo_nd98?: "A" | ... 4 more ... | undefined; }'.
+    Types of property 'phan_loai_theo_nd98' are incompatible.
+      Type 'string' is not assignable to type '"A" | "B" | "C" | "D" | null | undefined'.
+src/components/edit-equipment-dialog.tsx(101,31): error TS18047: 'supabase' is possibly 'null'.
+src/components/edit-maintenance-plan-dialog.tsx(78,31): error TS18047: 'supabase' is possibly 'null'.
+src/components/import-equipment-dialog.tsx(211,31): error TS18047: 'supabase' is possibly 'null'.
+src/components/mobile-equipment-list-item.tsx(122,31): error TS2739: Type 'Equipment' is missing the following properties from type 'Equipment': tinh_trang, created_at, updated_at
+src/components/mobile-usage-actions.tsx(206,9): error TS2322: Type 'UsageLog | undefined' is not assignable to type 'UsageLog | null'.
+  Type 'undefined' is not assignable to type 'UsageLog | null'.
+src/components/qr-action-sheet.tsx(34,54): error TS18047: 'supabase' is possibly 'null'.
+src/components/repair-request-alert.tsx(100,28): error TS2322: Type '"destructive" | "warning"' is not assignable to type '"secondary" | "destructive" | "default" | "outline" | null | undefined'.
+  Type '"warning"' is not assignable to type '"secondary" | "destructive" | "default" | "outline" | null | undefined'.
+src/components/ui/chart.tsx(127,22): error TS2304: Cannot find name 'RechartsPrimitive'.
+src/components/ui/chart.tsx(131,31): error TS2304: Cannot find name 'RechartsPrimitive'.
+src/components/ui/chart.tsx(212,25): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/ui/chart.tsx(212,31): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/components/ui/chart.tsx(283,21): error TS2304: Cannot find name 'RechartsPrimitive'.
+src/components/ui/chart.tsx(288,10): error TS2503: Cannot find namespace 'RechartsPrimitive'.
+src/components/ui/chart.tsx(312,23): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/contexts/realtime-context.tsx(96,29): error TS2345: Argument of type 'readonly ["dashboard-stats"]' is not assignable to parameter of type 'string[]'.
+  The type 'readonly ["dashboard-stats"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+src/contexts/realtime-context.tsx(103,29): error TS2345: Argument of type 'readonly ["repair"]' is not assignable to parameter of type 'string[]'.
+  The type 'readonly ["repair"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+src/contexts/realtime-context.tsx(104,29): error TS2345: Argument of type 'readonly ["dashboard-stats"]' is not assignable to parameter of type 'string[]'.
+  The type 'readonly ["dashboard-stats"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+src/contexts/realtime-context.tsx(110,29): error TS2345: Argument of type 'readonly ["maintenance"]' is not assignable to parameter of type 'string[]'.
+  The type 'readonly ["maintenance"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+src/contexts/realtime-context.tsx(111,29): error TS2345: Argument of type 'readonly ["dashboard-stats"]' is not assignable to parameter of type 'string[]'.
+  The type 'readonly ["dashboard-stats"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
+src/hooks/use-department-performance.ts(69,80): error TS2339: Property 'fetchFailureTime' does not exist on type 'QueryState<any, any>'.
+src/hooks/use-realtime-sync.ts(59,7): error TS18047: 'supabase' is possibly 'null'.
+src/hooks/use-realtime-sync.ts(138,7): error TS18047: 'supabase' is possibly 'null'.
+src/hooks/use-simple-realtime.ts(87,9): error TS18047: 'supabase' is possibly 'null'.
+src/lib/excel-utils.ts(18,3): error TS2300: Duplicate identifier 'utils'.
+src/lib/excel-utils.ts(26,3): error TS2300: Duplicate identifier 'utils'.
+src/lib/excel-utils.ts(26,3): error TS2717: Subsequent property declarations must have the same type.  Property 'utils' must be of type '{ book_new(): WorkBook; book_append_sheet(workbook: WorkBook, worksheet: WorkSheet, name: string): void; aoa_to_sheet(data: any[][]): WorkSheet; json_to_sheet(data: any[]): WorkSheet; }', but here has type 'any'.
+src/lib/excel-utils.ts(163,21): error TS2339: Property 'sheet_to_json' does not exist on type '{ book_new(): WorkBook; book_append_sheet(workbook: WorkBook, worksheet: WorkSheet, name: string): void; aoa_to_sheet(data: any[][]): WorkSheet; json_to_sheet(data: any[]): WorkSheet; }'.

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
-import { useSecureAuth } from '@/contexts/secure-auth-context'
+import { useAuth } from '@/contexts/auth-context'
 
 interface UserStatus {
   username: string;
@@ -26,7 +26,7 @@ interface UserStatus {
 }
 
 export function UserManagement() {
-  const { user } = useSecureAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = React.useState<UserStatus[]>([]);
   const [selectedUser, setSelectedUser] = React.useState<string>('');
@@ -36,7 +36,7 @@ export function UserManagement() {
 
   // Load user list
   const loadUsers = async () => {
-    if (!user || user.role !== 'admin') return;
+    if (!user || user.role !== 'admin' || !supabase) return;
 
     try {
       // Direct query (after rollback - admin_get_user_status function removed)
@@ -62,6 +62,7 @@ export function UserManagement() {
 
   // Reset password function
   const resetPassword = async () => {
+    if (!supabase) return;
     if (!selectedUser || !newPassword) {
       toast({
         variant: "destructive",
@@ -101,6 +102,7 @@ export function UserManagement() {
 
   // Generate temporary password
   const generateTempPassword = async () => {
+    if (!supabase) return;
     if (!selectedUser) {
       toast({
         variant: "destructive",
@@ -141,6 +143,7 @@ export function UserManagement() {
 
   // Toggle user status
   const toggleUserStatus = async (username: string, newStatus: boolean) => {
+    if (!supabase) return;
     setIsLoading(true);
     try {
       const { error } = await supabase.rpc('admin_toggle_user_status', {
