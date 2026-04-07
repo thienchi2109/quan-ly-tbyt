@@ -25,7 +25,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useEquipmentUsageLogs } from "@/hooks/use-usage-logs"
-import { type Equipment, type UsageLog } from "@/types/database"
+import { type Equipment } from "@/lib/data"
+import { type UsageLog } from "@/types/database"
 
 interface UsageLogPrintProps {
   equipment: Equipment

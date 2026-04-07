@@ -72,6 +72,10 @@ export function EditMaintenancePlanDialog({ open, onOpenChange, onSuccess, plan 
 
   async function onSubmit(values: PlanFormValues) {
     if (!plan) return;
+    if (!supabase) {
+      toast({ variant: "destructive", title: "Lỗi", description: "Không thể kết nối cơ sở dữ liệu." })
+      return
+    }
     
     setIsSubmitting(true)
     try {

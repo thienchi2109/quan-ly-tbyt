@@ -28,6 +28,11 @@ export function QRActionSheet({ qrCode, onClose, onAction }: QRActionSheetProps)
       try {
         setLoading(true)
         setError(null)
+        if (!supabase) {
+          setError("Không thể kết nối cơ sở dữ liệu")
+          setEquipment(null)
+          return
+        }
 
         console.log("Searching for equipment with ma_thiet_bi:", qrCode)
 

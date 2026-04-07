@@ -194,6 +194,14 @@ export function ImportEquipmentDialog({ open, onOpenChange, onSuccess }: ImportE
       })
       return
     }
+    if (!supabase) {
+      toast({
+        variant: "destructive",
+        title: "Lỗi kết nối",
+        description: "Không thể kết nối cơ sở dữ liệu.",
+      })
+      return
+    }
 
     setIsSubmitting(true)
     try {

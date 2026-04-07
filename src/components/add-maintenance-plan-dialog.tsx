@@ -64,6 +64,10 @@ export function AddMaintenancePlanDialog({ open, onOpenChange, onSuccess }: AddM
         toast({ variant: "destructive", title: "Lỗi", description: "Không tìm thấy thông tin người dùng." })
         return;
     }
+    if (!supabase) {
+      toast({ variant: "destructive", title: "Lỗi", description: "Không thể kết nối cơ sở dữ liệu." })
+      return
+    }
     setIsSubmitting(true)
     try {
       const { error } = await supabase.from("ke_hoach_bao_tri").insert([{ 

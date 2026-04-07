@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
 import { useStartUsageSession } from "@/hooks/use-usage-logs"
-import { type Equipment } from "@/types/database"
+import { type Equipment } from "@/lib/data"
 
 const equipmentStatusOptions = [
   "Hoạt động",

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import * as RechartsPrimitive from "recharts"
 import { cn } from "@/lib/utils"
 import { loadChartsLibrary } from "@/lib/chart-utils"
 import { ChartLoadingFallback } from "@/components/chart-fallbacks"
@@ -21,6 +22,12 @@ export type ChartConfig = {
 type ChartContextProps = {
   config: ChartConfig
 }
+
+type TooltipPayloadItem = NonNullable<React.ComponentProps<typeof RechartsPrimitive.Tooltip>["payload"]>[number]
+type LegendPayloadItem = NonNullable<RechartsPrimitive.LegendProps["payload"]>[number]
+type ResponsiveContainerComponent = React.ComponentType<
+  React.PropsWithChildren<RechartsPrimitive.ResponsiveContainerProps>
+>
 
 const ChartContext = React.createContext<ChartContextProps | null>(null)
 
@@ -43,7 +50,7 @@ const ChartContainer = React.forwardRef<
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()
   const chartId = `chart-${id || uniqueId.replace(/:/g, "")}`
-  const [ResponsiveContainer, setResponsiveContainer] = React.useState<any>(null)
+  const [ResponsiveContainer, setResponsiveContainer] = React.useState<ResponsiveContainerComponent | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
 
   React.useEffect(() => {
@@ -83,7 +90,7 @@ const ChartContainer = React.forwardRef<
       >
         <ChartStyle id={chartId} config={config} />
         <ResponsiveContainer>
-          {children}
+          {children as React.ReactElement}
         </ResponsiveContainer>
       </div>
     </ChartContext.Provider>
@@ -209,7 +216,7 @@ const ChartTooltipContent = React.forwardRef<
       >
         {!nestLabel ? tooltipLabel : null}
         <div className="grid gap-1.5">
-          {payload.map((item, index) => {
+          {payload.map((item: TooltipPayloadItem, index) => {
             const key = `${nameKey || item.name || item.dataKey || "value"}`
             const itemConfig = getPayloadConfigFromPayload(config, item, key)
             const indicatorColor = color || item.payload.fill || item.color
@@ -309,7 +316,7 @@ const ChartLegendContent = React.forwardRef<
           className
         )}
       >
-        {payload.map((item) => {
+        {payload.map((item: LegendPayloadItem) => {
           const key = `${nameKey || item.dataKey || "value"}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
 

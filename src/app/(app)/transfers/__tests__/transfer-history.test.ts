@@ -1,10 +1,9 @@
+/// <reference types="jest" />
+
 /**
  * Test suite for transfer history logging functionality
  * Tests the fix for missing transfer history in equipment history tab
  */
-
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { createClient } from '@supabase/supabase-js';
 
 // Mock Supabase client for testing
 const mockSupabase = {
@@ -61,8 +60,8 @@ describe('Transfer History Logging', () => {
     };
 
     // Mock the insert function
-    const mockInsert = jest.fn(() => Promise.resolve({ error: null }));
-    const mockFrom = jest.fn(() => ({ insert: mockInsert }));
+    const mockInsert = (_data: typeof historyData) => Promise.resolve({ error: null });
+    const mockFrom = (_table: string) => ({ insert: mockInsert });
     
     // Simulate the history logging logic from handleCompleteTransfer
     const loai_su_kien = mockTransfer.loai_hinh === 'noi_bo' 

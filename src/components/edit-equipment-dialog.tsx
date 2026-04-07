@@ -67,6 +67,12 @@ const equipmentFormSchema = z.object({
 
 type EquipmentFormValues = z.infer<typeof equipmentFormSchema>
 
+const ND98_CLASSIFICATIONS = ['A', 'B', 'C', 'D'] as const
+
+function isNd98Classification(value: string | null | undefined): value is EquipmentFormValues["phan_loai_theo_nd98"] {
+  return value !== null && ND98_CLASSIFICATIONS.includes(value as typeof ND98_CLASSIFICATIONS[number])
+}
+
 interface EditEquipmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -86,15 +92,36 @@ export function EditEquipmentDialog({ open, onOpenChange, onSuccess, equipment }
   React.useEffect(() => {
     if (equipment) {
       form.reset({
-        ...equipment,
+        ma_thiet_bi: equipment.ma_thiet_bi,
+        ten_thiet_bi: equipment.ten_thiet_bi,
+        model: equipment.model ?? null,
+        serial: equipment.serial ?? null,
+        hang_san_xuat: equipment.hang_san_xuat ?? null,
+        noi_san_xuat: equipment.noi_san_xuat ?? null,
         nam_san_xuat: equipment.nam_san_xuat ?? undefined,
+        ngay_nhap: equipment.ngay_nhap ?? null,
+        ngay_dua_vao_su_dung: equipment.ngay_dua_vao_su_dung ?? null,
+        nguon_kinh_phi: equipment.nguon_kinh_phi ?? null,
         gia_goc: equipment.gia_goc ?? undefined,
+        han_bao_hanh: equipment.han_bao_hanh ?? null,
+        vi_tri_lap_dat: equipment.vi_tri_lap_dat ?? "",
+        khoa_phong_quan_ly: equipment.khoa_phong_quan_ly ?? "",
+        nguoi_dang_truc_tiep_quan_ly: equipment.nguoi_dang_truc_tiep_quan_ly ?? "",
+        tinh_trang_hien_tai: equipment.tinh_trang_hien_tai,
+        cau_hinh_thiet_bi: equipment.cau_hinh_thiet_bi ?? null,
+        phu_kien_kem_theo: equipment.phu_kien_kem_theo ?? null,
+        ghi_chu: equipment.ghi_chu ?? null,
+        phan_loai_theo_nd98: isNd98Classification(equipment.phan_loai_theo_nd98) ? equipment.phan_loai_theo_nd98 : null,
       });
     }
   }, [equipment, form]);
 
   async function onSubmit(values: EquipmentFormValues) {
     if (!equipment) return;
+    if (!supabase) {
+      toast({ variant: "destructive", title: "Lỗi", description: "Không thể kết nối cơ sở dữ liệu." })
+      return
+    }
 
     setIsSubmitting(true)
     try {

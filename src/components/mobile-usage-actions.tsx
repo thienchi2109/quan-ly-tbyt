@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/sheet"
 import { useActiveUsageLogs } from "@/hooks/use-usage-logs"
 import { useAuth } from "@/contexts/auth-context"
-import { type Equipment } from "@/types/database"
+import { type Equipment } from "@/lib/data"
 import { StartUsageDialog } from "./start-usage-dialog"
 import { EndUsageDialog } from "./end-usage-dialog"
 
@@ -203,7 +203,7 @@ export function MobileUsageActions({ equipment, className = "" }: MobileUsageAct
       <EndUsageDialog
         open={isEndDialogOpen}
         onOpenChange={setIsEndDialogOpen}
-        usageLog={activeSession}
+        usageLog={activeSession ?? null}
       />
     </>
   )

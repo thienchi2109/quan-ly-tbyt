@@ -205,6 +205,12 @@ interface PieChartProps {
   outerRadius?: number
 }
 
+type PieChartLabelProps = {
+  name?: string | number
+  value?: string | number
+  percent?: number
+}
+
 export function DynamicPieChart({
   data,
   height = 300,
@@ -227,8 +233,8 @@ export function DynamicPieChart({
               cx="50%"
               cy="50%"
               outerRadius={outerRadius}
-              label={showLabels ? ({ name, value, percent }) => 
-                `${name}: ${value} (${(percent * 100).toFixed(0)}%)` : false
+              label={showLabels ? ({ name, value, percent }: PieChartLabelProps) =>
+                `${name ?? ""}: ${value ?? 0} (${((percent ?? 0) * 100).toFixed(0)}%)` : false
               }
             >
               {data.map((_, index) => (
