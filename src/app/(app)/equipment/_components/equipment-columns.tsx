@@ -22,14 +22,12 @@ import {
 } from "../_lib/equipment-page-config"
 
 type CreateEquipmentColumnsOptions = {
-  onShowDetails: (equipment: Equipment) => void
   onEdit: (equipment: Equipment) => void
   onCreateRepairRequest: (equipment: Equipment) => void
   canEditEquipment: (equipment: Equipment) => boolean
 }
 
 export const createEquipmentColumns = ({
-  onShowDetails,
   onEdit,
   onCreateRepairRequest,
   canEditEquipment,
@@ -109,9 +107,6 @@ export const createEquipmentColumns = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-            <DropdownMenuItem onSelect={() => onShowDetails(equipment)}>
-              Xem chi tiết
-            </DropdownMenuItem>
             {canEditEquipment(equipment) && (
               <DropdownMenuItem onSelect={() => onEdit(equipment)}>
                 Sửa thông tin

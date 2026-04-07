@@ -172,13 +172,12 @@ export default function EquipmentPage() {
   }, [user])
 
   const columns = React.useMemo(() => createEquipmentColumns({
-    onShowDetails: handleShowDetails,
     onEdit: setEditingEquipment,
     onCreateRepairRequest: (equipment) => {
       router.push(`/repair-requests?equipmentId=${equipment.id}`)
     },
     canEditEquipment,
-  }), [canEditEquipment, handleShowDetails, router])
+  }), [canEditEquipment, router])
 
   const fetchEquipment = React.useCallback(async () => {
     setIsLoading(true)

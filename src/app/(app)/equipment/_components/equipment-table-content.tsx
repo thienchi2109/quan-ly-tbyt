@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/table"
 import { MobileEquipmentListItem } from "@/components/mobile-equipment-list-item"
 import { type Equipment } from "@/lib/data"
+import { createRowClickHandler } from "@/lib/table-row-click"
 
 type EquipmentTableContentProps = {
   table: ReactTable<Equipment>
@@ -124,12 +125,20 @@ export function EquipmentTableContent({
               key={row.id}
               data-state={row.getIsSelected() && "selected"}
               data-equipment-id={row.original.id}
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={createRowClickHandler(row.original, onShowDetails)}
             >
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
+              {row.getVisibleCells().map((cell) => {
+                const isActionsCell = cell.column.id === "actions"
+                return (
+                  <TableCell
+                    key={cell.id}
+                    data-row-click-ignore={isActionsCell ? "true" : undefined}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                )
+              })}
             </TableRow>
           ))}
         </TableBody>

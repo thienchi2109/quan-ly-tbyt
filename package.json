@@ -63,6 +63,7 @@
   "devDependencies": {
     "@cloudflare/next-on-pages": "^1.13.12",
     "@tanstack/react-query-devtools": "^5.81.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
