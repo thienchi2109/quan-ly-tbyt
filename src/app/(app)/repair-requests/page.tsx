@@ -44,6 +44,7 @@ import {
 import { supabase, supabaseError } from "@/lib/supabase"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet"
 import { ArrowUpDown, Calendar as CalendarIcon, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronUp, Edit, FilterX, History, Loader2, MoreHorizontal, PlusCircle, Trash2 } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { vi } from 'date-fns/locale'
@@ -282,7 +283,7 @@ export default function RepairRequestsPage() {
   const [nonCompletionReason, setNonCompletionReason] = React.useState("");
 
   // UI state
-  const [showRequestsList, setShowRequestsList] = React.useState(false);
+  const [isCreateSheetOpen, setIsCreateSheetOpen] = React.useState(false);
 
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([
@@ -612,6 +613,7 @@ export default function RepairRequestsPage() {
         setExternalCompanyName("")
         // Invalidate cache and refetch requests
         invalidateCacheAndRefetch()
+        setIsCreateSheetOpen(false)
       }
     } catch (error) {
       console.error("Repair request creation failed:", error);
@@ -1758,25 +1760,41 @@ export default function RepairRequestsPage() {
       {/* Repair Request Alert */}
       <RepairRequestAlert requests={requests} />
 
-      <div className="space-y-6">
-        {/* Primary Action: Create Repair Request Form */}
-        <div className="w-full max-w-2xl mx-auto">
-          <Card className="border-2 border-primary/20 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <PlusCircle className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="heading-responsive-h2">Tạo yêu cầu sửa chữa</CardTitle>
-                  <CardDescription className="body-responsive-sm">
-                    Điền thông tin bên dưới để gửi yêu cầu mới.
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="mobile-card-spacing">
-              <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 fade-in pb-10">
+        {/* Header Section with Page Title and Action Button */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+              Yêu cầu sửa chữa
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-base">
+              Quản lý danh sách và tiến độ các yêu cầu sửa chữa thiết bị.
+            </p>
+          </div>
+          
+          <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
+            <SheetTrigger asChild>
+              <Button className="shadow-md hover:shadow-lg transition-all duration-300 gap-2 shrink-0">
+                <PlusCircle className="h-5 w-5" />
+                <span className="font-semibold">Tạo Yêu Cầu Mới</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent 
+              side="right" 
+              className="w-full sm:max-w-xl md:max-w-2xl overflow-y-auto"
+            >
+              <SheetHeader className="mb-6">
+                <SheetTitle className="text-2xl font-bold flex items-center gap-2">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <PlusCircle className="h-5 w-5 text-primary" />
+                  </div>
+                  Tạo yêu cầu sửa chữa
+                </SheetTitle>
+                <SheetDescription>
+                  Điền thông tin bên dưới để gửi yêu cầu mới cho thiết bị gặp sự cố.
+                </SheetDescription>
+              </SheetHeader>
+              <form onSubmit={handleSubmit} className="space-y-5 pb-8">
                 <div className="space-y-2">
                   <Label htmlFor="search-equipment">Thiết bị</Label>
                   <div className="relative">
@@ -1919,68 +1937,36 @@ export default function RepairRequestsPage() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full touch-target" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
-                </Button>
+                <SheetFooter className="mt-8 gap-3 sm:justify-end">
+                  <Button variant="outline" type="button" onClick={() => setIsCreateSheetOpen(false)}>Hủy</Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
+                  </Button>
+                </SheetFooter>
               </form>
-            </CardContent>
-          </Card>
-
-          {/* Toggle Button for Requests List */}
-          <div className="flex justify-center mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setShowRequestsList(!showRequestsList)}
-              className="touch-target gap-2 toggle-button w-full max-w-sm md:w-auto"
-            >
-              {showRequestsList ? (
-                <>
-                  <ChevronUp className="h-4 w-4" />
-                  <span className="button-text-responsive">Ẩn danh sách yêu cầu</span>
-                </>
-              ) : (
-                <>
-                  <History className="h-4 w-4" />
-                  <span className="button-text-responsive">
-                    <span className="hidden sm:inline">Xem danh sách yêu cầu</span>
-                    <span className="sm:hidden">Xem yêu cầu</span>
-                    {requests.length > 0 && ` (${requests.length})`}
-                  </span>
-                </>
-              )}
-            </Button>
-          </div>
-
-          {/* Visual indicator when requests list is hidden */}
-          {!showRequestsList && requests.length > 0 && (
-            <div className="text-center mt-4">
-              <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                <span className="caption-responsive">
-                  {requests.length} yêu cầu sửa chữa đã ghi nhận
-                </span>
-              </div>
-            </div>
-          )}
+            </SheetContent>
+          </Sheet>
         </div>
 
-        {/* Secondary Action: View Existing Requests */}
-        {showRequestsList && (
-          <div className="w-full collapsible-enter">
-            <Card className="overflow-hidden">
-              <CardHeader>
-                <CardTitle className="heading-responsive-h2">Danh sách yêu cầu</CardTitle>
-                <CardDescription className="body-responsive-sm">
-                  Tất cả các yêu cầu sửa chữa đã được ghi nhận.
-                </CardDescription>
+        {/* Main List view */}
+        <div className="w-full">
+          <Card className="overflow-hidden border-border/40 shadow-sm bg-card/50 backdrop-blur-sm">
+            <CardHeader className="bg-gradient-to-b from-muted/50 to-transparent border-b pb-4">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <History className="h-5 w-5 text-primary/70" />
+                Danh sách trạng thái 
+                <Badge variant="secondary" className="ml-2 py-0.5">{requests.length}</Badge>
+              </CardTitle>
+              <CardDescription>
+                Bạn có thể lọc, tìm kiếm và phân loại các yêu cầu tại đây.
+              </CardDescription>
 
-                {/* Phase 2: Department filter notification for repair requests */}
-                <RepairRequestFilterStatus
-                  itemCount={requests.length}
-                  className="mt-3"
-                />
-              </CardHeader>
+              <RepairRequestFilterStatus
+                itemCount={requests.length}
+                className="mt-3"
+              />
+            </CardHeader>
               <CardContent className="p-3 md:p-6 gap-3 md:gap-4">
                 <div className="flex items-center justify-between gap-2 flex-wrap mb-3 md:mb-4">
                   <div className="flex flex-1 items-center gap-2">
@@ -2284,7 +2270,6 @@ export default function RepairRequestsPage() {
               </CardFooter>
             </Card>
           </div>
-        )}
       </div>
     </>
   )
