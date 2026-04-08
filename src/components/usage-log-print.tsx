@@ -24,12 +24,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useEquipmentUsageLogs } from "@/hooks/use-usage-logs"
 import { type Equipment } from "@/lib/data"
+import {
+  getVisibleUsageLogs,
+  type UsageLogSortOrder,
+  type UsageLogStatusFilter,
+  USAGE_LOG_SORT_LABELS,
+} from "@/lib/usage-log-display"
 import { type UsageLog } from "@/types/database"
 
 interface UsageLogPrintProps {
   equipment: Equipment
+  sortOrder: UsageLogSortOrder
+  usageLogs: UsageLog[]
 }
 
 // Status filter options configuration
@@ -39,39 +46,21 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'dang_su_dung', label: 'Đang sử dụng' },
 ] as const
 
-export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
+export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrintProps) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [dateFrom, setDateFrom] = React.useState("")
   const [dateTo, setDateTo] = React.useState("")
-  const [statusFilter, setStatusFilter] = React.useState<string>("all")
-
-  const { data: usageLogs } = useEquipmentUsageLogs(equipment.id.toString())
+  const [statusFilter, setStatusFilter] = React.useState<UsageLogStatusFilter>("all")
 
   // Filter logs based on date range and status
   const filteredLogs = React.useMemo(() => {
-    if (!usageLogs) return []
-
-    // Pre-calculate date boundaries to avoid creating Date objects in loop
-    const fromDate = dateFrom ? new Date(dateFrom) : null
-    const toDate = dateTo ? (() => {
-      const date = new Date(dateTo)
-      date.setHours(23, 59, 59, 999) // End of day
-      return date
-    })() : null
-
-    return usageLogs.filter(log => {
-      // Date filtering with pre-calculated boundaries
-      const logDate = new Date(log.thoi_gian_bat_dau)
-
-      if (fromDate && logDate < fromDate) return false
-      if (toDate && logDate > toDate) return false
-
-      // Status filtering
-      if (statusFilter !== "all" && log.trang_thai !== statusFilter) return false
-
-      return true
+    return getVisibleUsageLogs(usageLogs, {
+      sortOrder,
+      dateFrom,
+      dateTo,
+      statusFilter,
     })
-  }, [usageLogs, dateFrom, dateTo, statusFilter])
+  }, [usageLogs, sortOrder, dateFrom, dateTo, statusFilter])
 
   const formatDuration = (startTime: string, endTime?: string) => {
     const start = new Date(startTime)
@@ -126,6 +115,7 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
       ? `(${dateFrom ? format(new Date(dateFrom), 'dd/MM/yyyy', { locale: vi }) : '...'} - ${dateTo ? format(new Date(dateTo), 'dd/MM/yyyy', { locale: vi }) : '...'})`
       : ''
     const activeUser = usageLogs?.find(log => log.trang_thai === 'dang_su_dung')?.nguoi_su_dung?.full_name || ''
+    const sortLabel = USAGE_LOG_SORT_LABELS[sortOrder]
 
     return `
       <!DOCTYPE html>
@@ -375,7 +365,7 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
         </div>
         
         <div class="print-info">
-          In ngày: ${currentDate} | Tổng số bản ghi: ${filteredLogs.length}
+          In ngày: ${currentDate} | Thứ tự: ${sortLabel} | Tổng số bản ghi: ${filteredLogs.length}
         </div>
         </div>
 
@@ -422,6 +412,7 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
       `"Nhật ký sử dụng thiết bị: ${equipment.ten_thiet_bi}"`,
       `"Mã thiết bị: ${equipment.ma_thiet_bi}"`,
       `"Xuất ngày: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: vi })}"`,
+      `"Thứ tự sắp xếp: ${USAGE_LOG_SORT_LABELS[sortOrder]}"`,
       '',
       headers.map(h => `"${h}"`).join(','),
       ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
@@ -470,7 +461,10 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
 
           <div className="space-y-2">
             <Label htmlFor="status-filter">Trạng thái</Label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => setStatusFilter(value as UsageLogStatusFilter)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Chọn trạng thái" />
               </SelectTrigger>
@@ -487,6 +481,9 @@ export function UsageLogPrint({ equipment }: UsageLogPrintProps) {
           <div className="p-3 bg-muted/50 rounded-lg">
             <p className="text-sm text-muted-foreground">
               Số bản ghi sẽ in: <span className="font-medium">{filteredLogs.length}</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Thứ tự: <span className="font-medium">{USAGE_LOG_SORT_LABELS[sortOrder]}</span>
             </p>
           </div>
         </div>

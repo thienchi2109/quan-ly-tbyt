@@ -14,6 +14,7 @@
     "lint": "next lint",
     "test": "jest",
     "typecheck": "tsc --noEmit",
+    "verify:no-explicit-any": "node scripts/verify-no-explicit-any.js",
     "cf:login": "wrangler login",
     "cf:preview": "npm run build:cloudflare && wrangler pages dev .vercel/output/static",
     "deploy:dual": "node scripts/deploy-dual.js",

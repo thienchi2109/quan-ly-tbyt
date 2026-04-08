@@ -3,7 +3,7 @@
 import React from "react"
 import { format, differenceInMinutes } from "date-fns"
 import { vi } from "date-fns/locale"
-import { Clock, User, FileText, Trash2, Play, Square } from "lucide-react"
+import { ArrowDown, Clock, User, FileText, Trash2, Play, Square } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +33,12 @@ import { useEquipmentUsageLogs, useDeleteUsageLog } from "@/hooks/use-usage-logs
 import { useAuth } from "@/contexts/auth-context"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { type Equipment } from "@/lib/data"
+import { cn } from "@/lib/utils"
+import {
+  getVisibleUsageLogs,
+  type UsageLogSortOrder,
+  USAGE_LOG_SORT_LABELS,
+} from "@/lib/usage-log-display"
 import { type UsageLog, USAGE_STATUS } from "@/types/database"
 import { StartUsageDialog } from "./start-usage-dialog"
 import { EndUsageDialog } from "./end-usage-dialog"
@@ -48,9 +54,14 @@ export function UsageHistoryTab({ equipment }: UsageHistoryTabProps) {
   const [isStartDialogOpen, setIsStartDialogOpen] = React.useState(false)
   const [isEndDialogOpen, setIsEndDialogOpen] = React.useState(false)
   const [selectedUsageLog, setSelectedUsageLog] = React.useState<UsageLog | null>(null)
+  const [sortOrder, setSortOrder] = React.useState<UsageLogSortOrder>("newest")
 
   const { data: usageLogs, isLoading } = useEquipmentUsageLogs(equipment.id.toString())
   const deleteUsageLogMutation = useDeleteUsageLog()
+  const visibleUsageLogs = React.useMemo(
+    () => getVisibleUsageLogs(usageLogs, { sortOrder }),
+    [usageLogs, sortOrder]
+  )
 
   // Find active usage session for current user
   const activeSession = usageLogs?.find(
@@ -91,6 +102,9 @@ export function UsageHistoryTab({ equipment }: UsageHistoryTabProps) {
 
   const canStartUsage = !activeSession && !isInUseByOther
   const canEndUsage = !!activeSession
+  const toggleSortOrder = () => {
+    setSortOrder((current) => (current === "newest" ? "oldest" : "newest"))
+  }
 
   if (isLoading) {
     return (
@@ -135,7 +149,27 @@ export function UsageHistoryTab({ equipment }: UsageHistoryTabProps) {
           </Button>
         )}
 
-        <UsageLogPrint equipment={equipment} />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          onClick={toggleSortOrder}
+        >
+          <ArrowDown
+            className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              sortOrder === "oldest" && "rotate-180"
+            )}
+          />
+          {USAGE_LOG_SORT_LABELS[sortOrder]}
+        </Button>
+
+        <UsageLogPrint
+          equipment={equipment}
+          sortOrder={sortOrder}
+          usageLogs={usageLogs ?? []}
+        />
       </div>
 
       {/* Status Messages */}
@@ -160,7 +194,7 @@ export function UsageHistoryTab({ equipment }: UsageHistoryTabProps) {
       <div>
         <h4 className="font-medium mb-3">Lịch sử sử dụng</h4>
         
-        {!usageLogs || usageLogs.length === 0 ? (
+        {!visibleUsageLogs.length ? (
           <div className="text-center py-8 text-muted-foreground">
             <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>Chưa có lịch sử sử dụng</p>
@@ -169,7 +203,7 @@ export function UsageHistoryTab({ equipment }: UsageHistoryTabProps) {
           // Mobile Card Layout
           <ScrollArea className="h-[400px]">
             <div className="space-y-3">
-              {usageLogs.map((log) => (
+              {visibleUsageLogs.map((log) => (
                 <Card key={log.id} className="mobile-card-spacing">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -267,7 +301,7 @@ export function UsageHistoryTab({ equipment }: UsageHistoryTabProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {usageLogs.map((log) => (
+                {visibleUsageLogs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="font-medium">
                       {log.nguoi_su_dung?.full_name || 'Không xác định'}
