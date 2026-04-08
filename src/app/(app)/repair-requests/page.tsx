@@ -36,13 +36,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { supabase, supabaseError } from "@/lib/supabase"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet"
-import { ArrowUpDown, Check, ChevronUp, Edit, FilterX, History, Loader2, MoreHorizontal, PlusCircle, Trash2 } from "lucide-react"
+import { ArrowUpDown, Check, ChevronUp, FilterX, History, Loader2, PlusCircle } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { vi } from 'date-fns/locale'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/contexts/auth-context"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -53,46 +52,15 @@ import { RepairRequestAlert } from "@/components/repair-request-alert"
 import { useRepairRealtimeSync } from "@/hooks/use-realtime-sync"
 import { MobileFiltersDropdown } from "@/components/mobile-filters-dropdown"
 import { RepairRequestFilterStatus } from "@/components/department-filter-status"
+import { RepairRequestActionsMenu } from "./_components/repair-request-actions-menu"
 import { RepairDeadlineProgress } from "./_components/repair-deadline-progress"
 import { RepairDesiredDateField } from "./_components/repair-desired-date-field"
 import { RepairExecutionUnitFields } from "./_components/repair-execution-unit-fields"
-
-
-type EquipmentSelectItem = {
-  id: number;
-  ma_thiet_bi: string;
-  ten_thiet_bi: string;
-  khoa_phong_quan_ly?: string | null;
-}
-
-// Export type để RepairRequestAlert có thể sử dụng nếu cần
-export type RepairRequestWithEquipment = {
-  id: number;
-  thiet_bi_id: number;
-  ngay_yeu_cau: string;
-  trang_thai: string;
-  mo_ta_su_co: string;
-  hang_muc_sua_chua: string | null;
-  ngay_mong_muon_hoan_thanh: string | null;
-  nguoi_yeu_cau: string | null;
-  ngay_duyet: string | null;
-  ngay_hoan_thanh: string | null;
-  nguoi_duyet: string | null;
-  nguoi_xac_nhan: string | null;
-  don_vi_thuc_hien: 'noi_bo' | 'thue_ngoai' | null;
-  ten_don_vi_thue: string | null;
-  ket_qua_sua_chua: string | null;
-  ly_do_khong_hoan_thanh: string | null;
-  thiet_bi: {
-    ten_thiet_bi: string;
-    ma_thiet_bi: string;
-    model: string | null;
-    serial: string | null;
-    khoa_phong_quan_ly: string | null;
-  } | null;
-};
-
-const requestStatuses = ['Chờ xử lý', 'Đã duyệt', 'Hoàn thành', 'Không HT'];
+import { getRepairRequestStatusVariant, requestStatuses } from "./constants"
+import type {
+  EquipmentSelectItem,
+  RepairRequestWithEquipment,
+} from "./types"
 
 export default function RepairRequestsPage() {
   const { toast } = useToast()
@@ -700,16 +668,6 @@ export default function RepairRequestsPage() {
     setRequestToDelete(null);
   }
 
-  const getStatusVariant = (status: string | null) => {
-    switch (status) {
-      case 'Chờ xử lý': return 'destructive';
-      case 'Đã duyệt': return 'secondary';
-      case 'Hoàn thành': return 'default';
-      case 'Không HT': return 'outline';
-      default: return 'outline';
-    }
-  }
-
   const handleGenerateRequestSheet = (request: RepairRequestWithEquipment) => {
     if (!request || !request.thiet_bi) {
       toast({
@@ -939,63 +897,6 @@ export default function RepairRequestsPage() {
     }
   }
 
-  const renderActions = (request: RepairRequestWithEquipment) => {
-    if (!user) return null;
-    const canManage = user.role === 'admin' || user.role === 'to_qltb';
-
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0 touch-target-sm md:h-8 md:w-8">
-            <span className="sr-only">Mở menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => handleGenerateRequestSheet(request)}>
-            Xem phiếu yêu cầu
-          </DropdownMenuItem>
-
-          {request.trang_thai === 'Chờ xử lý' && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => setEditingRequest(request)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Sửa
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setRequestToDelete(request)} className="text-destructive focus:text-destructive">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Xoá
-              </DropdownMenuItem>
-            </>
-          )}
-
-          {canManage && (
-            <>
-              <DropdownMenuSeparator />
-              {request.trang_thai === 'Chờ xử lý' && (
-                <DropdownMenuItem onClick={() => handleApproveRequest(request)}>
-                  Duyệt
-                </DropdownMenuItem>
-              )}
-              {request.trang_thai === 'Đã duyệt' && (
-                <>
-                  <DropdownMenuItem onClick={() => handleCompletion(request, 'Hoàn thành')}>
-                    Hoàn thành
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleCompletion(request, 'Không HT')}>
-                    Không hoàn thành
-                  </DropdownMenuItem>
-                </>
-              )}
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  };
-
   const columns: ColumnDef<RepairRequestWithEquipment>[] = [
     // 1. Thiết bị (với mô tả sự cố)
     {
@@ -1098,7 +999,7 @@ export default function RepairRequestsPage() {
         const request = row.original
         return (
           <div className="flex flex-col gap-1">
-            <Badge variant={getStatusVariant(request.trang_thai)} className="self-start">{request.trang_thai}</Badge>
+            <Badge variant={getRepairRequestStatusVariant(request.trang_thai)} className="self-start">{request.trang_thai}</Badge>
             {request.trang_thai === 'Đã duyệt' && request.ngay_duyet && (
               <div className="text-xs text-muted-foreground">
                 {format(parseISO(request.ngay_duyet), 'dd/MM/yyyy HH:mm', { locale: vi })}
@@ -1124,7 +1025,16 @@ export default function RepairRequestsPage() {
       id: "actions",
       cell: ({ row }) => (
         <div onClick={(e) => e.stopPropagation()}>
-          {renderActions(row.original)}
+          <RepairRequestActionsMenu
+            request={row.original}
+            visible={!!user}
+            canManage={!!user && (user.role === 'admin' || user.role === 'to_qltb')}
+            onGenerateRequestSheet={handleGenerateRequestSheet}
+            onEdit={setEditingRequest}
+            onDelete={setRequestToDelete}
+            onApprove={handleApproveRequest}
+            onCompletion={handleCompletion}
+          />
         </div>
       ),
     },
@@ -1406,7 +1316,7 @@ export default function RepairRequestsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-muted-foreground">Trạng thái</Label>
-                      <Badge variant={getStatusVariant(requestToView.trang_thai)} className="w-fit">
+                      <Badge variant={getRepairRequestStatusVariant(requestToView.trang_thai)} className="w-fit">
                         {requestToView.trang_thai}
                       </Badge>
                     </div>
@@ -1811,7 +1721,16 @@ export default function RepairRequestsPage() {
                                 </CardDescription>
                               </div>
                               <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                                {renderActions(request)}
+                                <RepairRequestActionsMenu
+                                  request={request}
+                                  visible={!!user}
+                                  canManage={!!user && (user.role === 'admin' || user.role === 'to_qltb')}
+                                  onGenerateRequestSheet={handleGenerateRequestSheet}
+                                  onEdit={setEditingRequest}
+                                  onDelete={setRequestToDelete}
+                                  onApprove={handleApproveRequest}
+                                  onCompletion={handleCompletion}
+                                />
                               </div>
                             </CardHeader>
                             <CardContent className="mobile-repair-card-content">
@@ -1850,7 +1769,7 @@ export default function RepairRequestsPage() {
                               {/* Trạng thái */}
                               <div className="mobile-repair-card-field">
                                 <span className="mobile-repair-card-label">Trạng thái</span>
-                                <Badge variant={getStatusVariant(request.trang_thai)} className="text-xs">
+                                <Badge variant={getRepairRequestStatusVariant(request.trang_thai)} className="text-xs">
                                   {request.trang_thai}
                                 </Badge>
                               </div>
