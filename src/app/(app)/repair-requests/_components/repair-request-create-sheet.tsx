@@ -5,15 +5,6 @@ import { Check, Loader2, PlusCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 
 import type {
@@ -22,6 +13,7 @@ import type {
 } from "../_hooks/types"
 import { RepairDesiredDateField } from "./repair-desired-date-field"
 import { RepairExecutionUnitFields } from "./repair-execution-unit-fields"
+import { RepairRequestSheetFrame } from "./repair-request-sheet-frame"
 
 interface RepairRequestCreateSheetProps {
   controller: RepairRequestCreateFormController
@@ -35,30 +27,47 @@ export function RepairRequestCreateSheet({
   canSetRepairUnit,
 }: RepairRequestCreateSheetProps) {
   return (
-    <Sheet open={controller.open} onOpenChange={controller.onOpenChange}>
-      <SheetTrigger asChild>
+    <RepairRequestSheetFrame
+      open={controller.open}
+      onOpenChange={controller.onOpenChange}
+      title={
+        <div className="flex items-center gap-2 text-2xl font-bold">
+          <div className="rounded-lg bg-primary/10 p-2">
+            <PlusCircle className="h-5 w-5 text-primary" />
+          </div>
+          Tạo yêu cầu sửa chữa
+        </div>
+      }
+      description="Điền thông tin bên dưới để gửi yêu cầu mới cho thiết bị gặp sự cố."
+      trigger={
         <Button className="shrink-0 gap-2 shadow-md transition-all duration-300 hover:shadow-lg">
           <PlusCircle className="h-5 w-5" />
           <span className="font-semibold">Tạo Yêu Cầu Mới</span>
         </Button>
-      </SheetTrigger>
-      <SheetContent
-        side="right"
-        className="w-full overflow-y-auto sm:max-w-xl md:max-w-2xl"
-      >
-        <SheetHeader className="mb-6">
-          <SheetTitle className="flex items-center gap-2 text-2xl font-bold">
-            <div className="rounded-lg bg-primary/10 p-2">
-              <PlusCircle className="h-5 w-5 text-primary" />
-            </div>
-            Tạo yêu cầu sửa chữa
-          </SheetTitle>
-          <SheetDescription>
-            Điền thông tin bên dưới để gửi yêu cầu mới cho thiết bị gặp sự cố.
-          </SheetDescription>
-        </SheetHeader>
-
-        <form onSubmit={controller.onSubmit} className="space-y-5 pb-8">
+      }
+      footer={
+        <>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => controller.onOpenChange(false)}
+          >
+            Hủy
+          </Button>
+          <Button type="submit" form="repair-request-create-form" disabled={controller.isSubmitting}>
+            {controller.isSubmitting && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            {controller.isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
+          </Button>
+        </>
+      }
+    >
+        <form
+          id="repair-request-create-form"
+          onSubmit={controller.onSubmit}
+          className="space-y-5 pb-2"
+        >
           <div className="space-y-2">
             <Label htmlFor="search-equipment">Thiết bị</Label>
             <div className="relative">
@@ -198,23 +207,7 @@ export function RepairRequestCreateSheet({
             />
           )}
 
-          <SheetFooter className="mt-8 gap-3 sm:justify-end">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => controller.onOpenChange(false)}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" disabled={controller.isSubmitting}>
-              {controller.isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              {controller.isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
-            </Button>
-          </SheetFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+    </RepairRequestSheetFrame>
   )
 }
