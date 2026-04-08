@@ -16,79 +16,39 @@ import {
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 
-import type { EquipmentSelectItem } from "../types"
+import type {
+  RepairRequestCreateFormController,
+  RepairRequestRouteUserProps,
+} from "../_hooks/types"
 import { RepairDesiredDateField } from "./repair-desired-date-field"
 import { RepairExecutionUnitFields } from "./repair-execution-unit-fields"
 
-interface UserLike {
-  role: string
-  khoa_phong?: string | null
-}
-
 interface RepairRequestCreateSheetProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSubmit: (e: React.FormEvent) => void
-  user: UserLike | null | undefined
-  searchQuery: string
-  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  filteredEquipment: EquipmentSelectItem[]
-  shouldShowNoResults: boolean
-  selectedEquipment: EquipmentSelectItem | null
-  onSelectEquipment: (equipment: EquipmentSelectItem) => void
-  issueDescription: string
-  onIssueDescriptionChange: (value: string) => void
-  repairItems: string
-  onRepairItemsChange: (value: string) => void
-  desiredDate?: Date
-  onDesiredDateChange: (date: Date | undefined) => void
+  controller: RepairRequestCreateFormController
+  user: RepairRequestRouteUserProps["user"]
   canSetRepairUnit: boolean
-  repairUnit: "noi_bo" | "thue_ngoai"
-  onRepairUnitChange: (value: "noi_bo" | "thue_ngoai") => void
-  externalCompanyName: string
-  onExternalCompanyNameChange: (value: string) => void
-  isSubmitting: boolean
 }
 
 export function RepairRequestCreateSheet({
-  open,
-  onOpenChange,
-  onSubmit,
+  controller,
   user,
-  searchQuery,
-  onSearchChange,
-  filteredEquipment,
-  shouldShowNoResults,
-  selectedEquipment,
-  onSelectEquipment,
-  issueDescription,
-  onIssueDescriptionChange,
-  repairItems,
-  onRepairItemsChange,
-  desiredDate,
-  onDesiredDateChange,
   canSetRepairUnit,
-  repairUnit,
-  onRepairUnitChange,
-  externalCompanyName,
-  onExternalCompanyNameChange,
-  isSubmitting,
 }: RepairRequestCreateSheetProps) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={controller.open} onOpenChange={controller.onOpenChange}>
       <SheetTrigger asChild>
-        <Button className="shadow-md hover:shadow-lg transition-all duration-300 gap-2 shrink-0">
+        <Button className="shrink-0 gap-2 shadow-md transition-all duration-300 hover:shadow-lg">
           <PlusCircle className="h-5 w-5" />
           <span className="font-semibold">Tạo Yêu Cầu Mới</span>
         </Button>
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-xl md:max-w-2xl overflow-y-auto"
+        className="w-full overflow-y-auto sm:max-w-xl md:max-w-2xl"
       >
         <SheetHeader className="mb-6">
-          <SheetTitle className="text-2xl font-bold flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
+          <SheetTitle className="flex items-center gap-2 text-2xl font-bold">
+            <div className="rounded-lg bg-primary/10 p-2">
               <PlusCircle className="h-5 w-5 text-primary" />
             </div>
             Tạo yêu cầu sửa chữa
@@ -97,7 +57,8 @@ export function RepairRequestCreateSheet({
             Điền thông tin bên dưới để gửi yêu cầu mới cho thiết bị gặp sự cố.
           </SheetDescription>
         </SheetHeader>
-        <form onSubmit={onSubmit} className="space-y-5 pb-8">
+
+        <form onSubmit={controller.onSubmit} className="space-y-5 pb-8">
           <div className="space-y-2">
             <Label htmlFor="search-equipment">Thiết bị</Label>
             <div className="relative">
@@ -110,19 +71,20 @@ export function RepairRequestCreateSheet({
                     ? `Tìm thiết bị thuộc ${user.khoa_phong}...`
                     : "Nhập tên hoặc mã để tìm kiếm..."
                 }
-                value={searchQuery}
-                onChange={onSearchChange}
+                value={controller.searchQuery}
+                onChange={controller.onSearchChange}
                 autoComplete="off"
                 required
               />
-              {filteredEquipment.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
+
+              {controller.filteredEquipment.length > 0 && (
+                <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border bg-popover shadow-lg">
                   <div className="p-1">
-                    {filteredEquipment.map((equipment) => (
+                    {controller.filteredEquipment.map((equipment) => (
                       <div
                         key={equipment.id}
-                        className="text-sm mobile-interactive hover:bg-accent rounded-sm cursor-pointer touch-target-sm"
-                        onClick={() => onSelectEquipment(equipment)}
+                        className="mobile-interactive touch-target-sm cursor-pointer rounded-sm text-sm hover:bg-accent"
+                        onClick={() => controller.onSelectEquipment(equipment)}
                       >
                         <div className="font-medium">{equipment.ten_thiet_bi}</div>
                         <div className="text-xs text-muted-foreground">
@@ -138,27 +100,30 @@ export function RepairRequestCreateSheet({
                   </div>
                 </div>
               )}
-              {shouldShowNoResults && (
-                <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-lg p-3">
-                  <div className="text-sm text-muted-foreground text-center">
+
+              {controller.shouldShowNoResults && (
+                <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover p-3 shadow-lg">
+                  <div className="text-center text-sm text-muted-foreground">
                     {user &&
                     !["admin", "to_qltb"].includes(user.role) &&
                     user.khoa_phong
-                      ? `Không tìm thấy thiết bị thuộc ${user.khoa_phong} phù hợp với từ khóa "${searchQuery}"`
-                      : `Không tìm thấy thiết bị phù hợp với từ khóa "${searchQuery}"`}
+                      ? `Không tìm thấy thiết bị thuộc ${user.khoa_phong} phù hợp với từ khóa "${controller.searchQuery}"`
+                      : `Không tìm thấy thiết bị phù hợp với từ khóa "${controller.searchQuery}"`}
                   </div>
                 </div>
               )}
             </div>
-            {selectedEquipment && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
+
+            {controller.selectedEquipment && (
+              <p className="flex items-center gap-1.5 pt-1 text-xs text-muted-foreground">
                 <Check className="h-3.5 w-3.5 text-green-600" />
                 <span>
-                  Đã chọn: {selectedEquipment.ten_thiet_bi} (
-                  {selectedEquipment.ma_thiet_bi})
+                  Đã chọn: {controller.selectedEquipment.ten_thiet_bi} (
+                  {controller.selectedEquipment.ma_thiet_bi})
                 </span>
               </p>
             )}
+
             {user &&
               !["admin", "to_qltb"].includes(user.role) &&
               user.khoa_phong && (
@@ -170,40 +135,48 @@ export function RepairRequestCreateSheet({
                   </span>
                 </div>
               )}
+
             {user &&
               (!user.khoa_phong || user.khoa_phong === "") &&
               !["admin", "to_qltb"].includes(user.role) && (
-                <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border">
+                <div className="rounded border bg-amber-50 p-2 text-xs text-amber-600">
                   ⚠️ Tài khoản của bạn chưa được phân công khoa/phòng. Vui lòng
                   liên hệ quản trị viên để được cấp quyền tạo yêu cầu sửa chữa.
                 </div>
               )}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="issue">Mô tả sự cố</Label>
             <Textarea
               id="issue"
               placeholder="Mô tả chi tiết vấn đề gặp phải..."
               rows={4}
-              value={issueDescription}
-              onChange={(e) => onIssueDescriptionChange(e.target.value)}
+              value={controller.issueDescription}
+              onChange={(event) =>
+                controller.onIssueDescriptionChange(event.target.value)
+              }
               required
             />
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="repair-items">Các hạng mục yêu cầu sửa chữa</Label>
             <Textarea
               id="repair-items"
               placeholder="VD: Thay màn hình, sửa nguồn..."
               rows={3}
-              value={repairItems}
-              onChange={(e) => onRepairItemsChange(e.target.value)}
+              value={controller.repairItems}
+              onChange={(event) =>
+                controller.onRepairItemsChange(event.target.value)
+              }
               required
             />
           </div>
+
           <RepairDesiredDateField
-            value={desiredDate}
-            onSelect={onDesiredDateChange}
+            value={controller.desiredDate}
+            onSelect={controller.onDesiredDateChange}
             buttonClassName="touch-target"
             disabledDate={(date) =>
               date < new Date(new Date().setHours(0, 0, 0, 0))
@@ -212,10 +185,12 @@ export function RepairRequestCreateSheet({
 
           {canSetRepairUnit && (
             <RepairExecutionUnitFields
-              unit={repairUnit}
-              onUnitChange={onRepairUnitChange}
-              externalCompanyName={externalCompanyName}
-              onExternalCompanyNameChange={onExternalCompanyNameChange}
+              unit={controller.repairUnit}
+              onUnitChange={controller.onRepairUnitChange}
+              externalCompanyName={controller.externalCompanyName}
+              onExternalCompanyNameChange={
+                controller.onExternalCompanyNameChange
+              }
               unitId="repair-unit"
               externalCompanyId="external-company"
               selectTriggerClassName="touch-target"
@@ -227,13 +202,15 @@ export function RepairRequestCreateSheet({
             <Button
               variant="outline"
               type="button"
-              onClick={() => onOpenChange(false)}
+              onClick={() => controller.onOpenChange(false)}
             >
               Hủy
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
+            <Button type="submit" disabled={controller.isSubmitting}>
+              {controller.isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {controller.isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
             </Button>
           </SheetFooter>
         </form>
