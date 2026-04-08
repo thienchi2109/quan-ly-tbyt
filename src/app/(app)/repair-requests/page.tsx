@@ -34,35 +34,28 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { supabase, supabaseError } from "@/lib/supabase"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet"
-import { ArrowUpDown, Calendar as CalendarIcon, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronUp, Edit, FilterX, History, Loader2, MoreHorizontal, PlusCircle, Trash2 } from "lucide-react"
+import { ArrowUpDown, Check, ChevronUp, Edit, FilterX, History, Loader2, MoreHorizontal, PlusCircle, Trash2 } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { vi } from 'date-fns/locale'
-import { cn } from "@/lib/utils"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/contexts/auth-context"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useSearchParams } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useSearchDebounce } from "@/hooks/use-debounce"
-import { Separator } from "@/components/ui/separator"
-import type { Column } from "@tanstack/react-table"
+import { DataTableFacetedFilter } from "@/components/data-table-faceted-filter"
+import { DataTablePagination } from "@/components/data-table-pagination"
 import { RepairRequestAlert } from "@/components/repair-request-alert"
 import { useRepairRealtimeSync } from "@/hooks/use-realtime-sync"
 import { MobileFiltersDropdown } from "@/components/mobile-filters-dropdown"
 import { RepairRequestFilterStatus } from "@/components/department-filter-status"
+import { RepairDeadlineProgress } from "./_components/repair-deadline-progress"
+import { RepairDesiredDateField } from "./_components/repair-desired-date-field"
+import { RepairExecutionUnitFields } from "./_components/repair-execution-unit-fields"
 
 
 type EquipmentSelectItem = {
@@ -99,137 +92,7 @@ export type RepairRequestWithEquipment = {
   } | null;
 };
 
-interface DataTableFacetedFilterProps<TData, TValue> {
-  column?: Column<TData, TValue>
-  title?: string
-  options: {
-    label: string
-    value: string
-  }[]
-}
-
-function DataTableFacetedFilter<TData, TValue>({
-  column,
-  title,
-  options,
-}: DataTableFacetedFilterProps<TData, TValue>) {
-  const selectedValues = new Set(column?.getFilterValue() as string[])
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed touch-target-sm md:h-8">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          {title}
-          {selectedValues?.size > 0 && (
-            <>
-              <Separator orientation="vertical" className="mx-2 h-4" />
-              <Badge
-                variant="secondary"
-                className="rounded-sm px-1 font-normal lg:hidden"
-              >
-                {selectedValues.size}
-              </Badge>
-              <div className="hidden space-x-1 lg:flex">
-                {selectedValues.size > 2 ? (
-                  <Badge
-                    variant="secondary"
-                    className="rounded-sm px-1 font-normal"
-                  >
-                    {selectedValues.size} đã chọn
-                  </Badge>
-                ) : (
-                  options
-                    .filter((option) => selectedValues.has(option.value))
-                    .map((option) => (
-                      <Badge
-                        variant="secondary"
-                        key={option.value}
-                        className="rounded-sm px-1 font-normal"
-                      >
-                        <span className="truncate max-w-[100px]">{option.label}</span>
-                      </Badge>
-                    ))
-                )}
-              </div>
-            </>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[200px]" align="start">
-        <DropdownMenuLabel>{title}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {options.map((option) => {
-          const isSelected = selectedValues.has(option.value)
-          return (
-            <DropdownMenuCheckboxItem
-              key={option.value}
-              checked={isSelected}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  selectedValues.add(option.value)
-                } else {
-                  selectedValues.delete(option.value)
-                }
-                const filterValues = Array.from(selectedValues)
-                column?.setFilterValue(
-                  filterValues.length ? filterValues : undefined
-                )
-              }}
-              onSelect={(e) => e.preventDefault()}
-            >
-              <span className="truncate">{option.label}</span>
-            </DropdownMenuCheckboxItem>
-          )
-        })}
-        {selectedValues.size > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onSelect={() => column?.setFilterValue(undefined)}
-              className="justify-center text-center"
-            >
-              Xóa bộ lọc
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
 const requestStatuses = ['Chờ xử lý', 'Đã duyệt', 'Hoàn thành', 'Không HT'];
-
-// Function to calculate days remaining and status
-const calculateDaysRemaining = (desiredDate: string | null) => {
-  if (!desiredDate) return null;
-
-  const today = new Date();
-  const targetDate = new Date(desiredDate);
-  const diffTime = targetDate.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  let status: 'success' | 'warning' | 'danger';
-  let color: string;
-
-  if (diffDays > 7) {
-    status = 'success';
-    color = 'bg-green-500';
-  } else if (diffDays > 0) {
-    status = 'warning';
-    color = 'bg-orange-500';
-  } else {
-    status = 'danger';
-    color = 'bg-red-500';
-  }
-
-  return {
-    days: diffDays,
-    status,
-    color,
-    text: diffDays > 0 ? `Còn ${diffDays} ngày` : diffDays === 0 ? 'Hôm nay' : `Quá hạn ${Math.abs(diffDays)} ngày`
-  };
-};
 
 export default function RepairRequestsPage() {
   const { toast } = useToast()
@@ -1209,35 +1072,15 @@ export default function RepairRequestsPage() {
           );
         }
 
-        // Chỉ hiển thị progress bar cho yêu cầu chưa hoàn thành
-        const isCompleted = request.trang_thai === 'Hoàn thành' || request.trang_thai === 'Không HT';
-        const daysInfo = !isCompleted ? calculateDaysRemaining(ngayMongMuon) : null;
-
         return (
           <div className="space-y-1">
             <div className="text-sm font-medium">
               {format(parseISO(ngayMongMuon), 'dd/MM/yyyy', { locale: vi })}
             </div>
-            {daysInfo && (
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${daysInfo.color} transition-all duration-300`}
-                    style={{
-                      width: daysInfo.days > 0
-                        ? `${Math.min(100, Math.max(10, (daysInfo.days / 14) * 100))}%`
-                        : '100%'
-                    }}
-                  />
-                </div>
-                <span className={`text-xs font-medium ${
-                  daysInfo.status === 'success' ? 'text-green-600' :
-                  daysInfo.status === 'warning' ? 'text-orange-600' : 'text-red-600'
-                }`}>
-                  {daysInfo.text}
-                </span>
-              </div>
-            )}
+            <RepairDeadlineProgress
+              desiredDate={ngayMongMuon}
+              requestStatus={request.trang_thai}
+            />
           </div>
         );
       },
@@ -1342,65 +1185,29 @@ export default function RepairRequestsPage() {
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Ngày mong muốn hoàn thành (nếu có)</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full justify-start text-left font-normal touch-target",
-                        !editDesiredDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {editDesiredDate ? format(editDesiredDate, "dd/MM/yyyy") : <span>Chọn ngày</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={editDesiredDate}
-                      onSelect={setEditDesiredDate}
-                      initialFocus
-                      disabled={(date) => {
-                        const requestDate = editingRequest?.ngay_yeu_cau
-                          ? new Date(editingRequest.ngay_yeu_cau)
-                          : new Date();
-                        return date < new Date(requestDate.setHours(0, 0, 0, 0));
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+              <RepairDesiredDateField
+                value={editDesiredDate}
+                onSelect={setEditDesiredDate}
+                buttonClassName="touch-target"
+                disabledDate={(date) => {
+                  const requestDate = editingRequest?.ngay_yeu_cau
+                    ? new Date(editingRequest.ngay_yeu_cau)
+                    : new Date()
+                  return date < new Date(requestDate.setHours(0, 0, 0, 0))
+                }}
+              />
 
               {canSetRepairUnit && (
-                <div className="space-y-2">
-                  <Label htmlFor="edit-repair-unit">Đơn vị thực hiện</Label>
-                  <Select value={editRepairUnit} onValueChange={(value: 'noi_bo' | 'thue_ngoai') => setEditRepairUnit(value)}>
-                    <SelectTrigger className="touch-target">
-                      <SelectValue placeholder="Chọn đơn vị thực hiện" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="noi_bo">Nội bộ</SelectItem>
-                      <SelectItem value="thue_ngoai">Thuê ngoài</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {canSetRepairUnit && editRepairUnit === 'thue_ngoai' && (
-                <div className="space-y-2">
-                  <Label htmlFor="edit-external-company">Tên đơn vị được thuê</Label>
-                  <Input
-                    id="edit-external-company"
-                    placeholder="Nhập tên đơn vị được thuê sửa chữa..."
-                    value={editExternalCompanyName}
-                    onChange={(e) => setEditExternalCompanyName(e.target.value)}
-                    required
-                    className="touch-target"
-                  />
-                </div>
+                <RepairExecutionUnitFields
+                  unit={editRepairUnit}
+                  onUnitChange={setEditRepairUnit}
+                  externalCompanyName={editExternalCompanyName}
+                  onExternalCompanyNameChange={setEditExternalCompanyName}
+                  unitId="edit-repair-unit"
+                  externalCompanyId="edit-external-company"
+                  selectTriggerClassName="touch-target"
+                  inputClassName="touch-target"
+                />
               )}
             </div>
             <DialogFooter>
@@ -1457,30 +1264,17 @@ export default function RepairRequestsPage() {
                   )}
                 </div>
               )}
-              <div>
-                <Label htmlFor="approval-repair-unit">Đơn vị thực hiện</Label>
-                <Select value={approvalRepairUnit} onValueChange={(value: 'noi_bo' | 'thue_ngoai') => setApprovalRepairUnit(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="noi_bo">Nội bộ</SelectItem>
-                    <SelectItem value="thue_ngoai">Thuê ngoài</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {approvalRepairUnit === 'thue_ngoai' && (
-                <div>
-                  <Label htmlFor="approval-external-company">Tên đơn vị thực hiện sửa chữa</Label>
-                  <Input
-                    id="approval-external-company"
-                    value={approvalExternalCompanyName}
-                    onChange={(e) => setApprovalExternalCompanyName(e.target.value)}
-                    placeholder="Nhập tên đơn vị được thuê sửa chữa"
-                    disabled={isApproving}
-                  />
-                </div>
-              )}
+              <RepairExecutionUnitFields
+                unit={approvalRepairUnit}
+                onUnitChange={setApprovalRepairUnit}
+                externalCompanyName={approvalExternalCompanyName}
+                onExternalCompanyNameChange={setApprovalExternalCompanyName}
+                unitId="approval-repair-unit"
+                externalCompanyId="approval-external-company"
+                externalCompanyLabel="Tên đơn vị thực hiện sửa chữa"
+                externalCompanyPlaceholder="Nhập tên đơn vị được thuê sửa chữa"
+                disabled={isApproving}
+              />
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setRequestToApprove(null)} disabled={isApproving}>
@@ -1881,60 +1675,26 @@ export default function RepairRequestsPage() {
                     required
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Ngày mong muốn hoàn thành (nếu có)</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal touch-target",
-                          !desiredDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {desiredDate ? format(desiredDate, "dd/MM/yyyy") : <span>Chọn ngày</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={desiredDate}
-                        onSelect={setDesiredDate}
-                        initialFocus
-                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                <RepairDesiredDateField
+                  value={desiredDate}
+                  onSelect={setDesiredDate}
+                  buttonClassName="touch-target"
+                  disabledDate={(date) =>
+                    date < new Date(new Date().setHours(0, 0, 0, 0))
+                  }
+                />
 
                 {canSetRepairUnit && (
-                  <div className="space-y-2">
-                    <Label htmlFor="repair-unit">Đơn vị thực hiện</Label>
-                    <Select value={repairUnit} onValueChange={(value: 'noi_bo' | 'thue_ngoai') => setRepairUnit(value)}>
-                      <SelectTrigger className="touch-target">
-                        <SelectValue placeholder="Chọn đơn vị thực hiện" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="noi_bo">Nội bộ</SelectItem>
-                        <SelectItem value="thue_ngoai">Thuê ngoài</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {canSetRepairUnit && repairUnit === 'thue_ngoai' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="external-company">Tên đơn vị được thuê</Label>
-                    <Input
-                      id="external-company"
-                      placeholder="Nhập tên đơn vị được thuê sửa chữa..."
-                      value={externalCompanyName}
-                      onChange={(e) => setExternalCompanyName(e.target.value)}
-                      required
-                      className="touch-target"
-                    />
-                  </div>
+                  <RepairExecutionUnitFields
+                    unit={repairUnit}
+                    onUnitChange={setRepairUnit}
+                    externalCompanyName={externalCompanyName}
+                    onExternalCompanyNameChange={setExternalCompanyName}
+                    unitId="repair-unit"
+                    externalCompanyId="external-company"
+                    selectTriggerClassName="touch-target"
+                    inputClassName="touch-target"
+                  />
                 )}
 
                 <SheetFooter className="mt-8 gap-3 sm:justify-end">
@@ -1984,6 +1744,7 @@ export default function RepairRequestsPage() {
                           column={table.getColumn("trang_thai")}
                           title="Trạng thái"
                           options={requestStatuses.map(s => ({ label: s, value: s }))}
+                          triggerClassName="touch-target-sm md:h-8"
                         />
                       </>
                     )}
@@ -2002,6 +1763,7 @@ export default function RepairRequestsPage() {
                           column={table.getColumn("trang_thai")}
                           title="Trạng thái"
                           options={requestStatuses.map(s => ({ label: s, value: s }))}
+                          triggerClassName="touch-target-sm md:h-8"
                         />
                       </MobileFiltersDropdown>
                     )}
@@ -2078,31 +1840,10 @@ export default function RepairRequestsPage() {
                                       {format(parseISO(request.ngay_mong_muon_hoan_thanh), 'dd/MM/yyyy', { locale: vi })}
                                     </span>
                                   </div>
-                                  {(() => {
-                                    // Chỉ hiển thị progress bar cho yêu cầu chưa hoàn thành
-                                    const isCompleted = request.trang_thai === 'Hoàn thành' || request.trang_thai === 'Không HT';
-                                    const daysInfo = !isCompleted ? calculateDaysRemaining(request.ngay_mong_muon_hoan_thanh) : null;
-                                    return daysInfo && (
-                                      <div className="flex items-center gap-2">
-                                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                          <div
-                                            className={`h-2 rounded-full ${daysInfo.color} transition-all duration-300`}
-                                            style={{
-                                              width: daysInfo.days > 0
-                                                ? `${Math.min(100, Math.max(10, (daysInfo.days / 14) * 100))}%`
-                                                : '100%'
-                                            }}
-                                          />
-                                        </div>
-                                        <span className={`text-xs font-medium ${
-                                          daysInfo.status === 'success' ? 'text-green-600' :
-                                          daysInfo.status === 'warning' ? 'text-orange-600' : 'text-red-600'
-                                        }`}>
-                                          {daysInfo.text}
-                                        </span>
-                                      </div>
-                                    );
-                                  })()}
+                                  <RepairDeadlineProgress
+                                    desiredDate={request.ngay_mong_muon_hoan_thanh}
+                                    requestStatus={request.trang_thai}
+                                  />
                                 </div>
                               )}
 
@@ -2198,75 +1939,23 @@ export default function RepairRequestsPage() {
                 )}
               </CardContent>
               <CardFooter>
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex-1 text-sm text-muted-foreground">
-                    {table.getFilteredRowModel().rows.length} trên {requests.length} yêu cầu.
-                  </div>
-                  <div className="flex items-center space-x-6 lg:space-x-8">
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium">Số dòng</p>
-                      <Select
-                        value={`${table.getState().pagination.pageSize}`}
-                        onValueChange={(value) => {
-                          table.setPageSize(Number(value))
-                        }}
-                      >
-                        <SelectTrigger className="h-8 w-[70px] touch-target-sm md:h-8">
-                          <SelectValue placeholder={table.getState().pagination.pageSize} />
-                        </SelectTrigger>
-                        <SelectContent side="top">
-                          {[10, 20, 50, 100].map((pageSize) => (
-                            <SelectItem key={pageSize} value={`${pageSize}`}>
-                              {pageSize}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                      Trang {table.getState().pagination.pageIndex + 1} /{" "}
-                      {table.getPageCount()}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        className="hidden h-8 w-8 p-0 lg:flex touch-target-sm md:h-8 md:w-8"
-                        onClick={() => table.setPageIndex(0)}
-                        disabled={!table.getCanPreviousPage()}
-                      >
-                        <span className="sr-only">Go to first page</span>
-                        <ChevronsLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="h-8 w-8 p-0 touch-target-sm md:h-8 md:w-8"
-                        onClick={() => table.previousPage()}
-                        disabled={!table.getCanPreviousPage()}
-                      >
-                        <span className="sr-only">Go to previous page</span>
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="h-8 w-8 p-0 touch-target-sm md:h-8 md:w-8"
-                        onClick={() => table.nextPage()}
-                        disabled={!table.getCanNextPage()}
-                      >
-                        <span className="sr-only">Go to next page</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="hidden h-8 w-8 p-0 lg:flex touch-target-sm md:h-8 md:w-8"
-                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                        disabled={!table.getCanNextPage()}
-                      >
-                        <span className="sr-only">Go to last page</span>
-                        <ChevronsRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+                <DataTablePagination
+                  table={table}
+                  summary={
+                    <>
+                      {table.getFilteredRowModel().rows.length} trên {requests.length} yêu cầu.
+                    </>
+                  }
+                  selectTriggerClassName="touch-target-sm md:h-8"
+                  buttonClassName="touch-target-sm md:h-8 md:w-8"
+                  firstLastButtonClassName="touch-target-sm md:h-8 md:w-8"
+                  labels={{
+                    first: "Go to first page",
+                    previous: "Go to previous page",
+                    next: "Go to next page",
+                    last: "Go to last page",
+                  }}
+                />
               </CardFooter>
             </Card>
           </div>

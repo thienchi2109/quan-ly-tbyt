@@ -48,6 +48,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
 import { AddUserDialog } from "@/components/add-user-dialog"
+import { DataTablePagination } from "@/components/data-table-pagination"
 import { EditUserDialog } from "@/components/edit-user-dialog"
 import { USER_ROLES, type User } from "@/types/database"
 import { Input } from "@/components/ui/input"
@@ -456,75 +457,26 @@ export default function UsersPage() {
           )}
           {/* Pagination - common for both views */}
           {users.length > 0 && (
-            <div className="flex items-center justify-between space-x-2 py-4">
-              <div className="flex-1 text-sm text-muted-foreground">
-                Hiển thị {table.getRowModel().rows.length} trên {users.length} người dùng.
-              </div>
-              <div className="flex items-center gap-x-2 sm:gap-x-4 md:gap-x-6 lg:gap-x-8">
-                <div className="flex items-center space-x-2">
-                  <p className="text-sm font-medium hidden sm:block">Số dòng</p>
-                  <Select
-                    value={`${table.getState().pagination.pageSize}`}
-                    onValueChange={(value) => {
-                      table.setPageSize(Number(value))
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-[60px] sm:w-[70px]">
-                      <SelectValue placeholder={table.getState().pagination.pageSize} />
-                    </SelectTrigger>
-                    <SelectContent side="top">
-                      {[10, 20, 50, 100].map((pageSize) => (
-                        <SelectItem key={pageSize} value={`${pageSize}`}>
-                          {pageSize}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex w-[80px] sm:w-[100px] items-center justify-center text-sm font-medium">
-                  Trang {table.getState().pagination.pageIndex + 1} /{" "}
-                  {table.getPageCount()}
-                </div>
-                <div className="flex items-center space-x-1 sm:space-x-2">
-                  <Button
-                    variant="outline"
-                    className="hidden h-8 w-8 p-0 lg:flex"
-                    onClick={() => table.setPageIndex(0)}
-                    disabled={!table.getCanPreviousPage()}
-                  >
-                    <span className="sr-only">Về trang đầu</span>
-                    <ChevronsLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 w-8 p-0"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                  >
-                    <span className="sr-only">Trang trước</span>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-8 w-8 p-0"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                  >
-                    <span className="sr-only">Trang sau</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="hidden h-8 w-8 p-0 lg:flex"
-                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                    disabled={!table.getCanNextPage()}
-                  >
-                    <span className="sr-only">Đến trang cuối</span>
-                    <ChevronsRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <DataTablePagination
+              table={table}
+              summary={
+                <>
+                  Hiển thị {table.getRowModel().rows.length} trên {users.length} người dùng.
+                </>
+              }
+              className="py-4"
+              pageSizeLabelClassName="hidden sm:block"
+              selectTriggerClassName="w-[60px] sm:w-[70px]"
+              pageIndicatorClassName="w-[80px] sm:w-[100px]"
+              buttonClassName="h-8 w-8 p-0"
+              firstLastButtonClassName="h-8 w-8 p-0"
+              labels={{
+                first: "Về trang đầu",
+                previous: "Trang trước",
+                next: "Trang sau",
+                last: "Đến trang cuối",
+              }}
+            />
           )}
         </CardContent>
       </Card>
