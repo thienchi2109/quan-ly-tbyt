@@ -53,9 +53,12 @@ import { useRepairRealtimeSync } from "@/hooks/use-realtime-sync"
 import { MobileFiltersDropdown } from "@/components/mobile-filters-dropdown"
 import { RepairRequestFilterStatus } from "@/components/department-filter-status"
 import { RepairRequestActionsMenu } from "./_components/repair-request-actions-menu"
+import { RepairRequestCreateSheet } from "./_components/repair-request-create-sheet"
 import { RepairDeadlineProgress } from "./_components/repair-deadline-progress"
 import { RepairDesiredDateField } from "./_components/repair-desired-date-field"
+import { RepairRequestDialogs } from "./_components/repair-request-dialogs"
 import { RepairExecutionUnitFields } from "./_components/repair-execution-unit-fields"
+import { openRepairRequestSheet } from "./_lib/repair-request-print"
 import { getRepairRequestStatusVariant, requestStatuses } from "./constants"
 import type {
   EquipmentSelectItem,
@@ -124,7 +127,7 @@ export default function RepairRequestsPage() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const debouncedSearch = useSearchDebounce(searchTerm);
 
-  const canSetRepairUnit = user && ['admin', 'to_qltb'].includes(user.role);
+  const canSetRepairUnit = !!user && ['admin', 'to_qltb'].includes(user.role);
 
   React.useEffect(() => {
     if (editingRequest) {
@@ -669,231 +672,12 @@ export default function RepairRequestsPage() {
   }
 
   const handleGenerateRequestSheet = (request: RepairRequestWithEquipment) => {
-    if (!request || !request.thiet_bi) {
+    if (!openRepairRequestSheet(request)) {
       toast({
         variant: "destructive",
         title: "Lỗi",
         description: "Không đủ thông tin để tạo phiếu yêu cầu.",
-      });
-      return;
-    }
-
-    const formatValue = (value: any) => value ?? "";
-
-    const requestDate = request.ngay_yeu_cau ? parseISO(request.ngay_yeu_cau) : new Date();
-    const day = format(requestDate, 'dd');
-    const month = format(requestDate, 'MM');
-    const year = format(requestDate, 'yyyy');
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html lang="vi">
-      <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Đề Nghị Sửa Chữa - ${formatValue(request.thiet_bi.ma_thiet_bi)}</title>
-          <script src="https://cdn.tailwindcss.com"></script>
-          <style>
-              body { font-family: 'Times New Roman', Times, serif; font-size: 14px; color: #000; line-height: 1.2; background-color: #e5e7eb; }
-              .a4-page { width: 21cm; min-height: 29.7cm; padding: 1.5cm 2cm; margin: 1cm auto; background: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); position: relative; }
-              .form-input-line { font-family: inherit; font-size: inherit; border: none; border-bottom: 1px dotted #000; background-color: transparent; padding: 2px 1px; outline: none; text-align: center; }
-              .form-textarea { font-family: inherit; font-size: inherit; border: 1px dotted #000; background-color: transparent; padding: 8px; outline: none; width: 100%; resize: none; }
-              .form-input-line:focus, .form-textarea:focus { border-style: solid; }
-              h1, h2, h3, .font-bold { font-weight: 700; }
-              .title-main { font-size: 20px; }
-              .title-sub { font-size: 16px; }
-              .signature-area { display: flex; flex-direction: column; align-items: center; }
-              .signature-space { height: 65px; }
-              .signature-name-input { border: none; background-color: transparent; text-align: center; font-weight: 700; width: 200px; }
-              .signature-name-input:focus { outline: none; }
-              .page-break { page-break-before: always; }
-              .print-footer { position: absolute; bottom: 0; left: 0; right: 0; }
-              @media print {
-                  body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: #e5e7eb !important; }
-                  .a4-page { width: 21cm !important; height: 29.7cm !important; margin: 0 !important; padding: 1.5cm 2cm !important; box-shadow: none !important; border: none !important; position: relative !important; }
-                  .page-break { page-break-before: always !important; }
-                  .print-footer { position: absolute !important; bottom: 1.5cm !important; left: 2cm !important; right: 2cm !important; width: calc(100% - 4cm) !important; }
-                  body > *:not(.a4-page) { display: none; }
-                  .form-input-line, .form-textarea, input[type="date"] { border-bottom: 1px dotted #000 !important; }
-                  .signature-name-input { border: none !important; }
-                  .form-textarea { border: 1px dotted #000 !important; }
-              }
-          </style>
-      </head>
-      <body>
-          <div class="a4-page">
-              <header class="text-center mb-8">
-                  <div class="flex justify-between items-start">
-                      <div class="text-center">
-                          <img src="https://i.postimg.cc/W1ym4T74/cdc-logo-150.png" alt="Logo CDC" class="w-[70px] mx-auto mb-1" onerror="this.onerror=null;this.src='https://placehold.co/100x100/e2e8f0/e2e8f0?text=Logo';">
-                      </div>
-                      <div class="flex-grow">
-                          <h2 class="title-sub uppercase font-bold">TRUNG TÂM KIỂM SOÁT BỆNH TẬT THÀNH PHỐ CẦN THƠ</h2>
-                          <h1 class="title-main uppercase mt-4 font-bold">PHIẾU ĐỀ NGHỊ SỬA CHỮA THIẾT BỊ</h1>
-                      </div>
-                      <div class="w-16"></div> <!-- Spacer -->
-                  </div>
-                  <div class="flex items-baseline mt-6">
-                      <label for="department-request" class="font-bold whitespace-nowrap">Khoa/Phòng đề nghị:</label>
-                      <input type="text" id="department-request" class="form-input-line ml-2" value="${formatValue(request.thiet_bi.khoa_phong_quan_ly)}">
-                  </div>
-              </header>
-              <section>
-                  <h3 class="font-bold text-base">I. THÔNG TIN THIẾT BỊ</h3>
-                  <div class="space-y-4 mt-3">
-                      <div>
-                          <label for="device-name" class="whitespace-nowrap">Tên thiết bị:</label>
-                          <input type="text" id="device-name" class="form-input-line ml-2 w-full" value="${formatValue(request.thiet_bi.ten_thiet_bi)}">
-                      </div>
-                      <div class="grid grid-cols-3 gap-x-8">
-                          <div class="flex items-baseline">
-                              <label for="device-id" class="whitespace-nowrap">Mã TB:</label>
-                              <input type="text" id="device-id" class="form-input-line ml-2" value="${formatValue(request.thiet_bi.ma_thiet_bi)}">
-                          </div>
-                          <div class="flex items-baseline">
-                              <label for="model" class="whitespace-nowrap">Model:</label>
-                              <input type="text" id="model" class="form-input-line ml-2" value="${formatValue(request.thiet_bi.model)}">
-                          </div>
-                          <div class="flex items-baseline">
-                              <label for="serial-no" class="whitespace-nowrap">Serial N⁰:</label>
-                              <input type="text" id="serial-no" class="form-input-line ml-2" value="${formatValue(request.thiet_bi.serial)}">
-                          </div>
-                      </div>
-                      <div>
-                          <label for="damage-description" class="block">Mô tả sự cố của thiết bị:</label>
-                          <textarea id="damage-description" rows="1" class="form-textarea mt-1">${formatValue(request.mo_ta_su_co)}</textarea>
-                      </div>
-                      <div>
-                          <label for="repair-request" class="block">Các hạng mục yêu cầu sửa chữa:</label>
-                          <textarea id="repair-request" rows="1" class="form-textarea mt-1">${formatValue(request.hang_muc_sua_chua)}</textarea>
-                      </div>
-                      <div class="flex items-baseline">
-                          <label for="completion-date" class="whitespace-nowrap">Ngày mong muốn hoàn thành (nếu có):</label>
-                          <input type="date" id="completion-date" class="form-input-line ml-2" value="${formatValue(request.ngay_mong_muon_hoan_thanh)}">
-                      </div>
-                      
-                      
-                  </div>
-              </section>
-              <div class="mt-8">
-                  <div class="flex justify-end mb-4">
-                      <p class="italic">Cần Thơ, ngày <input type="text" class="w-8 form-input-line inline-block text-center" value="${day}"> tháng <input type="text" class="w-8 form-input-line inline-block text-center" value="${month}"> năm <input type="text" class="w-12 form-input-line inline-block text-center" value="${year}"></p>
-                  </div>
-                  <div class="flex justify-around">
-                      <div class="signature-area">
-                          <p class="font-bold">Lãnh đạo Khoa/phòng</p>
-                          <div class="signature-space"></div>
-                          <input type="text" id="leader-name" class="signature-name-input">
-                      </div>
-                      <div class="signature-area">
-                          <p class="font-bold">Người đề nghị</p>
-                          <div class="signature-space"></div>
-                          <input type="text" id="requester-name" class="signature-name-input" value="${formatValue(request.nguoi_yeu_cau)}">
-                      </div>
-                  </div>
-              </div>
-              <section class="mt-6 border-t-2 border-dashed border-gray-400 pt-6">
-                  <h3 class="font-bold text-base">II. BỘ PHẬN SỬA CHỮA</h3>
-                  <div class="mt-4 flex items-center space-x-10">
-                      <label class="flex items-center">
-                          <input type="checkbox" class="h-4 w-4">
-                          <span class="ml-2">Tự sửa chữa được</span>
-                      </label>
-                      <label class="flex items-center">
-                          <input type="checkbox" class="h-4 w-4">
-                          <span class="ml-2">Không tự sửa chữa được</span>
-                      </label>
-                  </div>
-                  <div class="mt-4">
-                      <label for="tbyt-opinion" class="block">Ý kiến của Tổ Quản lý TBYT:</label>
-                      <input type='text' id="tbyt-opinion" class="form-input-line ml-2 min-w-[400px]" value="${request.don_vi_thuc_hien === 'noi_bo' ? 'Tự sửa chữa nội bộ' : request.don_vi_thuc_hien === 'thue_ngoai' && request.ten_don_vi_thue ? `Thuê đơn vị ${request.ten_don_vi_thue} sửa chữa` : ''}">
-                  </div>
-              </section>
-              <div class="mt-8 flex justify-around">
-                  <div class="signature-area">
-                      <p class="font-bold">Tổ Quản lý TBYT</p>
-                      <div class="signature-space"></div>
-                      <input type="text" id="tbyt-name" class="signature-name-input">
-                  </div>
-                  <div class="signature-area">
-                      <p class="font-bold">Người sửa chữa</p>
-                      <div class="signature-space"></div>
-                      <input type="text" id="repairer-name" class="signature-name-input">
-                  </div>
-              </div>
-              <footer class="mt-12 flex justify-between items-center text-xs text-gray-500">
-                  <span>QLTB-BM.07</span>
-                  <span>BH.01 (05/2024)</span>
-                  <span>Trang: 1/2</span>
-              </footer>
-          </div>
-
-          <!-- Page 2: Repair Result Form -->
-          <div class="a4-page page-break">
-              <div class="content-body">
-                  <!-- Header -->
-                  <header class="text-center mb-8">
-                      <div class="flex items-center">
-                          <div class="text-center">
-                              <img src="https://i.postimg.cc/W1ym4T74/cdc-logo-150.png" alt="Logo CDC" class="w-[70px] mx-auto mb-1" onerror="this.onerror=null;this.src='https://placehold.co/100x100/e2e8f0/e2e8f0?text=Logo';">
-                          </div>
-                          <div class="flex-grow">
-                              <h2 class="title-sub uppercase font-bold">TRUNG TÂM KIỂM SOÁT BỆNH TẬT THÀNH PHỐ CẦN THƠ</h2>
-                          </div>
-                          <div class="w-16"></div> <!-- Spacer -->
-                      </div>
-                  </header>
-
-                  <!-- Main Content -->
-                  <main class="mt-8">
-                      <h3 class="text-base font-bold">III. KẾT QUẢ, TÌNH TRẠNG THIẾT BỊ SAU KHI XỬ LÝ</h3>
-                      <div class="mt-4">
-                          <textarea class="form-textarea" rows="5" placeholder="Nhập kết quả và tình trạng thiết bị...">${request.ket_qua_sua_chua || request.ly_do_khong_hoan_thanh || ''}</textarea>
-                      </div>
-                  </main>
-
-                  <!-- Signature section -->
-                  <section class="mt-8">
-                       <div class="flex justify-end mb-4">
-                           <p class="italic">
-                              Cần Thơ, ngày <input type="text" class="form-input-line w-12" value="${day}">
-                              tháng <input type="text" class="form-input-line w-12" value="${month}">
-                              năm <input type="text" class="form-input-line w-20" value="${year}">
-                          </p>
-                      </div>
-                       <div class="flex justify-around">
-                          <div class="signature-area w-1/2">
-                              <p class="font-bold">Tổ Quản lý TBYT</p>
-                              <p class="italic">(Ký, ghi rõ họ, tên)</p>
-                              <div class="signature-space"></div>
-                              <input type="text" class="signature-name-input" placeholder="(Họ và tên)">
-                          </div>
-                          <div class="signature-area w-1/2">
-                               <p class="font-bold">Người đề nghị</p>
-                               <p class="italic">(Ký, ghi rõ họ, tên)</p>
-                               <div class="signature-space"></div>
-                               <input type="text" class="signature-name-input" placeholder="(Họ và tên)" value="${formatValue(request.nguoi_yeu_cau)}">
-                          </div>
-                      </div>
-                  </section>
-              </div>
-
-              <!-- Footer -->
-              <footer class="print-footer flex justify-between items-center text-xs">
-                  <span>QLTB-BM.07</span>
-                  <span>BH.01 (05/2024)</span>
-                  <span>Trang: 2/2</span>
-              </footer>
-          </div>
-      </body>
-      </html>
-    `;
-
-    const newWindow = window.open("", "_blank");
-    if (newWindow) {
-      newWindow.document.open();
-      newWindow.document.write(htmlContent);
-      newWindow.document.close();
+      })
     }
   }
 
@@ -1063,403 +847,46 @@ export default function RepairRequestsPage() {
 
   return (
     <>
-      {editingRequest && (
-        <Dialog open={!!editingRequest} onOpenChange={(open) => !open && setEditingRequest(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Sửa yêu cầu sửa chữa</DialogTitle>
-              <DialogDescription>
-                Cập nhật thông tin cho yêu cầu của thiết bị: {editingRequest.thiet_bi?.ten_thiet_bi}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4 mobile-card-spacing">
-              <div className="space-y-2">
-                <Label htmlFor="edit-issue">Mô tả sự cố</Label>
-                <Textarea
-                  id="edit-issue"
-                  placeholder="Mô tả chi tiết vấn đề gặp phải..."
-                  rows={4}
-                  value={editIssueDescription}
-                  onChange={(e) => setEditIssueDescription(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-repair-items">Các hạng mục yêu cầu sửa chữa</Label>
-                <Textarea
-                  id="edit-repair-items"
-                  placeholder="VD: Thay màn hình, sửa nguồn..."
-                  rows={3}
-                  value={editRepairItems}
-                  onChange={(e) => setEditRepairItems(e.target.value)}
-                  required
-                />
-              </div>
-              <RepairDesiredDateField
-                value={editDesiredDate}
-                onSelect={setEditDesiredDate}
-                buttonClassName="touch-target"
-                disabledDate={(date) => {
-                  const requestDate = editingRequest?.ngay_yeu_cau
-                    ? new Date(editingRequest.ngay_yeu_cau)
-                    : new Date()
-                  return date < new Date(requestDate.setHours(0, 0, 0, 0))
-                }}
-              />
-
-              {canSetRepairUnit && (
-                <RepairExecutionUnitFields
-                  unit={editRepairUnit}
-                  onUnitChange={setEditRepairUnit}
-                  externalCompanyName={editExternalCompanyName}
-                  onExternalCompanyNameChange={setEditExternalCompanyName}
-                  unitId="edit-repair-unit"
-                  externalCompanyId="edit-external-company"
-                  selectTriggerClassName="touch-target"
-                  inputClassName="touch-target"
-                />
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingRequest(null)} disabled={isEditSubmitting} className="touch-target">Hủy</Button>
-              <Button onClick={handleUpdateRequest} disabled={isEditSubmitting} className="touch-target">
-                {isEditSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Lưu thay đổi
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {requestToDelete && (
-        <AlertDialog open={!!requestToDelete} onOpenChange={(open) => !open && setRequestToDelete(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Hành động này không thể hoàn tác. Yêu cầu sửa chữa cho thiết bị
-                <strong> {requestToDelete.thiet_bi?.ten_thiet_bi} </strong>
-                sẽ bị xóa vĩnh viễn.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteRequest} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
-                {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Xóa
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-
-      {requestToApprove && (
-        <Dialog open={!!requestToApprove} onOpenChange={(open) => !open && setRequestToApprove(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Duyệt yêu cầu sửa chữa</DialogTitle>
-              <DialogDescription>
-                Duyệt yêu cầu sửa chữa cho thiết bị <strong>{requestToApprove.thiet_bi?.ten_thiet_bi}</strong>
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              {requestToApprove.nguoi_duyet && (
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="text-sm font-medium text-blue-800">Đã được duyệt bởi:</div>
-                  <div className="text-sm text-blue-600">{requestToApprove.nguoi_duyet}</div>
-                  {requestToApprove.ngay_duyet && (
-                    <div className="text-xs text-blue-500">
-                      {format(parseISO(requestToApprove.ngay_duyet), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                    </div>
-                  )}
-                </div>
-              )}
-              <RepairExecutionUnitFields
-                unit={approvalRepairUnit}
-                onUnitChange={setApprovalRepairUnit}
-                externalCompanyName={approvalExternalCompanyName}
-                onExternalCompanyNameChange={setApprovalExternalCompanyName}
-                unitId="approval-repair-unit"
-                externalCompanyId="approval-external-company"
-                externalCompanyLabel="Tên đơn vị thực hiện sửa chữa"
-                externalCompanyPlaceholder="Nhập tên đơn vị được thuê sửa chữa"
-                disabled={isApproving}
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setRequestToApprove(null)} disabled={isApproving}>
-                Hủy
-              </Button>
-              <Button onClick={handleConfirmApproval} disabled={isApproving}>
-                {isApproving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Xác nhận duyệt
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {requestToComplete && (
-        <Dialog open={!!requestToComplete} onOpenChange={(open) => !open && setRequestToComplete(null)}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>
-                {completionType === 'Hoàn thành' ? 'Ghi nhận hoàn thành sửa chữa' : 'Ghi nhận không hoàn thành'}
-              </DialogTitle>
-              <DialogDescription>
-                {completionType === 'Hoàn thành'
-                  ? `Ghi nhận kết quả sửa chữa cho thiết bị ${requestToComplete.thiet_bi?.ten_thiet_bi}`
-                  : `Ghi nhận lý do không hoàn thành sửa chữa cho thiết bị ${requestToComplete.thiet_bi?.ten_thiet_bi}`
-                }
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              {requestToComplete.nguoi_xac_nhan && (
-                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                  <div className="text-sm font-medium text-green-800">Đã được xác nhận bởi:</div>
-                  <div className="text-sm text-green-600">{requestToComplete.nguoi_xac_nhan}</div>
-                  {requestToComplete.ngay_hoan_thanh && (
-                    <div className="text-xs text-green-500">
-                      {format(parseISO(requestToComplete.ngay_hoan_thanh), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                    </div>
-                  )}
-                </div>
-              )}
-              {completionType === 'Hoàn thành' ? (
-                <div>
-                  <Label htmlFor="completion-result">Kết quả sửa chữa</Label>
-                  <Textarea
-                    id="completion-result"
-                    value={completionResult}
-                    onChange={(e) => setCompletionResult(e.target.value)}
-                    placeholder="Nhập kết quả và tình trạng thiết bị sau khi sửa chữa..."
-                    rows={4}
-                    disabled={isCompleting}
-                  />
-                </div>
-              ) : (
-                <div>
-                  <Label htmlFor="non-completion-reason">Lý do không hoàn thành</Label>
-                  <Textarea
-                    id="non-completion-reason"
-                    value={nonCompletionReason}
-                    onChange={(e) => setNonCompletionReason(e.target.value)}
-                    placeholder="Nhập lý do không thể hoàn thành sửa chữa..."
-                    rows={4}
-                    disabled={isCompleting}
-                  />
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setRequestToComplete(null)} disabled={isCompleting}>
-                Hủy
-              </Button>
-              <Button onClick={handleConfirmCompletion} disabled={isCompleting}>
-                {isCompleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {completionType === 'Hoàn thành' ? 'Xác nhận hoàn thành' : 'Xác nhận không hoàn thành'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Request Detail Dialog */}
-      {requestToView && (
-        <Dialog open={!!requestToView} onOpenChange={(open) => !open && setRequestToView(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-            <DialogHeader className="flex-shrink-0">
-              <DialogTitle className="text-lg font-semibold">
-                Chi tiết yêu cầu sửa chữa
-              </DialogTitle>
-              <DialogDescription>
-                Thông tin chi tiết về yêu cầu sửa chữa thiết bị
-              </DialogDescription>
-            </DialogHeader>
-
-            <ScrollArea className="flex-1 pr-4">
-              <div className="space-y-6 py-4">
-                {/* Equipment Information */}
-                <div className="space-y-3">
-                  <h3 className="text-base font-semibold text-foreground border-b pb-2">
-                    Thông tin thiết bị
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-muted-foreground">Tên thiết bị</Label>
-                      <div className="text-sm font-medium">{requestToView.thiet_bi?.ten_thiet_bi || 'N/A'}</div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-muted-foreground">Mã thiết bị</Label>
-                      <div className="text-sm">{requestToView.thiet_bi?.ma_thiet_bi || 'N/A'}</div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-muted-foreground">Model</Label>
-                      <div className="text-sm">{requestToView.thiet_bi?.model || 'N/A'}</div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-muted-foreground">Serial</Label>
-                      <div className="text-sm">{requestToView.thiet_bi?.serial || 'N/A'}</div>
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label className="text-sm font-medium text-muted-foreground">Khoa/Phòng quản lý</Label>
-                      <div className="text-sm">{requestToView.thiet_bi?.khoa_phong_quan_ly || 'N/A'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Request Information */}
-                <div className="space-y-3">
-                  <h3 className="text-base font-semibold text-foreground border-b pb-2">
-                    Thông tin yêu cầu
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-muted-foreground">Trạng thái</Label>
-                      <Badge variant={getRepairRequestStatusVariant(requestToView.trang_thai)} className="w-fit">
-                        {requestToView.trang_thai}
-                      </Badge>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-muted-foreground">Ngày yêu cầu</Label>
-                      <div className="text-sm">
-                        {format(parseISO(requestToView.ngay_yeu_cau), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-muted-foreground">Người yêu cầu</Label>
-                      <div className="text-sm">{requestToView.nguoi_yeu_cau || 'N/A'}</div>
-                    </div>
-                    {requestToView.ngay_mong_muon_hoan_thanh && (
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-muted-foreground">Ngày mong muốn hoàn thành</Label>
-                        <div className="text-sm">
-                          {format(parseISO(requestToView.ngay_mong_muon_hoan_thanh), 'dd/MM/yyyy', { locale: vi })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-muted-foreground">Mô tả sự cố</Label>
-                    <div className="text-sm bg-muted/50 p-3 rounded-md whitespace-pre-wrap">
-                      {requestToView.mo_ta_su_co}
-                    </div>
-                  </div>
-
-                  {requestToView.hang_muc_sua_chua && (
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-muted-foreground">Hạng mục sửa chữa</Label>
-                      <div className="text-sm bg-muted/50 p-3 rounded-md whitespace-pre-wrap">
-                        {requestToView.hang_muc_sua_chua}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Execution Information */}
-                {(requestToView.don_vi_thuc_hien || requestToView.ten_don_vi_thue) && (
-                  <div className="space-y-3">
-                    <h3 className="text-base font-semibold text-foreground border-b pb-2">
-                      Thông tin thực hiện
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {requestToView.don_vi_thuc_hien && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-muted-foreground">Đơn vị thực hiện</Label>
-                          <Badge variant="outline" className="w-fit">
-                            {requestToView.don_vi_thuc_hien === 'noi_bo' ? 'Nội bộ' : 'Thuê ngoài'}
-                          </Badge>
-                        </div>
-                      )}
-                      {requestToView.ten_don_vi_thue && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-muted-foreground">Tên đơn vị thuê</Label>
-                          <div className="text-sm">{requestToView.ten_don_vi_thue}</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Approval Information */}
-                {(requestToView.ngay_duyet || requestToView.nguoi_duyet) && (
-                  <div className="space-y-3">
-                    <h3 className="text-base font-semibold text-foreground border-b pb-2">
-                      Thông tin phê duyệt
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {requestToView.nguoi_duyet && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-muted-foreground">Người duyệt</Label>
-                          <div className="text-sm">{requestToView.nguoi_duyet}</div>
-                        </div>
-                      )}
-                      {requestToView.ngay_duyet && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-muted-foreground">Ngày duyệt</Label>
-                          <div className="text-sm">
-                            {format(parseISO(requestToView.ngay_duyet), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Completion Information */}
-                {(requestToView.ngay_hoan_thanh || requestToView.ket_qua_sua_chua || requestToView.ly_do_khong_hoan_thanh || requestToView.nguoi_xac_nhan) && (
-                  <div className="space-y-3">
-                    <h3 className="text-base font-semibold text-foreground border-b pb-2">
-                      Thông tin hoàn thành
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {requestToView.nguoi_xac_nhan && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-muted-foreground">Người xác nhận</Label>
-                          <div className="text-sm">{requestToView.nguoi_xac_nhan}</div>
-                        </div>
-                      )}
-                      {requestToView.ngay_hoan_thanh && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-muted-foreground">Ngày hoàn thành</Label>
-                          <div className="text-sm">
-                            {format(parseISO(requestToView.ngay_hoan_thanh), 'dd/MM/yyyy HH:mm', { locale: vi })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {requestToView.ket_qua_sua_chua && (
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-muted-foreground">Kết quả sửa chữa</Label>
-                        <div className="text-sm bg-green-50 border border-green-200 p-3 rounded-md whitespace-pre-wrap">
-                          {requestToView.ket_qua_sua_chua}
-                        </div>
-                      </div>
-                    )}
-
-                    {requestToView.ly_do_khong_hoan_thanh && (
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-muted-foreground">Lý do không hoàn thành</Label>
-                        <div className="text-sm bg-red-50 border border-red-200 p-3 rounded-md whitespace-pre-wrap">
-                          {requestToView.ly_do_khong_hoan_thanh}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-
-            <DialogFooter className="flex-shrink-0">
-              <Button variant="outline" onClick={() => setRequestToView(null)}>
-                Đóng
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      <RepairRequestDialogs
+        editingRequest={editingRequest}
+        onEditingRequestChange={setEditingRequest}
+        editIssueDescription={editIssueDescription}
+        onEditIssueDescriptionChange={setEditIssueDescription}
+        editRepairItems={editRepairItems}
+        onEditRepairItemsChange={setEditRepairItems}
+        editDesiredDate={editDesiredDate}
+        onEditDesiredDateChange={setEditDesiredDate}
+        canSetRepairUnit={canSetRepairUnit}
+        editRepairUnit={editRepairUnit}
+        onEditRepairUnitChange={setEditRepairUnit}
+        editExternalCompanyName={editExternalCompanyName}
+        onEditExternalCompanyNameChange={setEditExternalCompanyName}
+        isEditSubmitting={isEditSubmitting}
+        onUpdateRequest={handleUpdateRequest}
+        requestToDelete={requestToDelete}
+        onRequestToDeleteChange={setRequestToDelete}
+        isDeleting={isDeleting}
+        onDeleteRequest={handleDeleteRequest}
+        requestToApprove={requestToApprove}
+        onRequestToApproveChange={setRequestToApprove}
+        isApproving={isApproving}
+        approvalRepairUnit={approvalRepairUnit}
+        onApprovalRepairUnitChange={setApprovalRepairUnit}
+        approvalExternalCompanyName={approvalExternalCompanyName}
+        onApprovalExternalCompanyNameChange={setApprovalExternalCompanyName}
+        onConfirmApproval={handleConfirmApproval}
+        requestToComplete={requestToComplete}
+        onRequestToCompleteChange={setRequestToComplete}
+        completionType={completionType}
+        isCompleting={isCompleting}
+        completionResult={completionResult}
+        onCompletionResultChange={setCompletionResult}
+        nonCompletionReason={nonCompletionReason}
+        onNonCompletionReasonChange={setNonCompletionReason}
+        onConfirmCompletion={handleConfirmCompletion}
+        requestToView={requestToView}
+        onRequestToViewChange={setRequestToView}
+      />
 
       {/* Repair Request Alert */}
       <RepairRequestAlert requests={requests} />
@@ -1476,147 +903,30 @@ export default function RepairRequestsPage() {
             </p>
           </div>
           
-          <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
-            <SheetTrigger asChild>
-              <Button className="shadow-md hover:shadow-lg transition-all duration-300 gap-2 shrink-0">
-                <PlusCircle className="h-5 w-5" />
-                <span className="font-semibold">Tạo Yêu Cầu Mới</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent 
-              side="right" 
-              className="w-full sm:max-w-xl md:max-w-2xl overflow-y-auto"
-            >
-              <SheetHeader className="mb-6">
-                <SheetTitle className="text-2xl font-bold flex items-center gap-2">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <PlusCircle className="h-5 w-5 text-primary" />
-                  </div>
-                  Tạo yêu cầu sửa chữa
-                </SheetTitle>
-                <SheetDescription>
-                  Điền thông tin bên dưới để gửi yêu cầu mới cho thiết bị gặp sự cố.
-                </SheetDescription>
-              </SheetHeader>
-              <form onSubmit={handleSubmit} className="space-y-5 pb-8">
-                <div className="space-y-2">
-                  <Label htmlFor="search-equipment">Thiết bị</Label>
-                  <div className="relative">
-                    <Input
-                      id="search-equipment"
-                      placeholder={
-                        user && !['admin', 'to_qltb'].includes(user.role) && user.khoa_phong
-                          ? `Tìm thiết bị thuộc ${user.khoa_phong}...`
-                          : "Nhập tên hoặc mã để tìm kiếm..."
-                      }
-                      value={searchQuery}
-                      onChange={handleSearchChange}
-                      autoComplete="off"
-                      required
-                    />
-                    {filteredEquipment.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                        <div className="p-1">
-                          {filteredEquipment.map((equipment) => (
-                            <div
-                              key={equipment.id}
-                              className="text-sm mobile-interactive hover:bg-accent rounded-sm cursor-pointer touch-target-sm"
-                              onClick={() => handleSelectEquipment(equipment)}
-                            >
-                              <div className="font-medium">{equipment.ten_thiet_bi}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {equipment.ma_thiet_bi}
-                                {equipment.khoa_phong_quan_ly && (
-                                  <span className="ml-2 text-blue-600">• {equipment.khoa_phong_quan_ly}</span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {shouldShowNoResults && (
-                      <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-lg p-3">
-                        <div className="text-sm text-muted-foreground text-center">
-                          {user && !['admin', 'to_qltb'].includes(user.role) && user.khoa_phong
-                            ? `Không tìm thấy thiết bị thuộc ${user.khoa_phong} phù hợp với từ khóa "${searchQuery}"`
-                            : `Không tìm thấy thiết bị phù hợp với từ khóa "${searchQuery}"`
-                          }
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  {selectedEquipment && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 pt-1">
-                      <Check className="h-3.5 w-3.5 text-green-600" />
-                      <span>Đã chọn: {selectedEquipment.ten_thiet_bi} ({selectedEquipment.ma_thiet_bi})</span>
-                    </p>
-                  )}
-                  {user && !['admin', 'to_qltb'].includes(user.role) && user.khoa_phong && (
-                    <div className="text-xs text-muted-foreground">
-                      💡 Bạn chỉ có thể tạo yêu cầu sửa chữa cho thiết bị thuộc khoa/phòng: <span className="font-medium text-blue-600">{user.khoa_phong}</span>
-                    </div>
-                  )}
-                  {user && (!user.khoa_phong || user.khoa_phong === '') && !['admin', 'to_qltb'].includes(user.role) && (
-                    <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border">
-                      ⚠️ Tài khoản của bạn chưa được phân công khoa/phòng. Vui lòng liên hệ quản trị viên để được cấp quyền tạo yêu cầu sửa chữa.
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="issue">Mô tả sự cố</Label>
-                  <Textarea
-                    id="issue"
-                    placeholder="Mô tả chi tiết vấn đề gặp phải..."
-                    rows={4}
-                    value={issueDescription}
-                    onChange={(e) => setIssueDescription(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="repair-items">Các hạng mục yêu cầu sửa chữa</Label>
-                  <Textarea
-                    id="repair-items"
-                    placeholder="VD: Thay màn hình, sửa nguồn..."
-                    rows={3}
-                    value={repairItems}
-                    onChange={(e) => setRepairItems(e.target.value)}
-                    required
-                  />
-                </div>
-                <RepairDesiredDateField
-                  value={desiredDate}
-                  onSelect={setDesiredDate}
-                  buttonClassName="touch-target"
-                  disabledDate={(date) =>
-                    date < new Date(new Date().setHours(0, 0, 0, 0))
-                  }
-                />
-
-                {canSetRepairUnit && (
-                  <RepairExecutionUnitFields
-                    unit={repairUnit}
-                    onUnitChange={setRepairUnit}
-                    externalCompanyName={externalCompanyName}
-                    onExternalCompanyNameChange={setExternalCompanyName}
-                    unitId="repair-unit"
-                    externalCompanyId="external-company"
-                    selectTriggerClassName="touch-target"
-                    inputClassName="touch-target"
-                  />
-                )}
-
-                <SheetFooter className="mt-8 gap-3 sm:justify-end">
-                  <Button variant="outline" type="button" onClick={() => setIsCreateSheetOpen(false)}>Hủy</Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
-                  </Button>
-                </SheetFooter>
-              </form>
-            </SheetContent>
-          </Sheet>
+          <RepairRequestCreateSheet
+            open={isCreateSheetOpen}
+            onOpenChange={setIsCreateSheetOpen}
+            onSubmit={handleSubmit}
+            user={user}
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            filteredEquipment={filteredEquipment}
+            shouldShowNoResults={shouldShowNoResults}
+            selectedEquipment={selectedEquipment}
+            onSelectEquipment={handleSelectEquipment}
+            issueDescription={issueDescription}
+            onIssueDescriptionChange={setIssueDescription}
+            repairItems={repairItems}
+            onRepairItemsChange={setRepairItems}
+            desiredDate={desiredDate}
+            onDesiredDateChange={setDesiredDate}
+            canSetRepairUnit={canSetRepairUnit}
+            repairUnit={repairUnit}
+            onRepairUnitChange={setRepairUnit}
+            externalCompanyName={externalCompanyName}
+            onExternalCompanyNameChange={setExternalCompanyName}
+            isSubmitting={isSubmitting}
+          />
         </div>
 
         {/* Main List view */}
