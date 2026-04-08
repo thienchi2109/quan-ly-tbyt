@@ -27,6 +27,10 @@ type CreateEquipmentColumnsOptions = {
   canEditEquipment: (equipment: Equipment) => boolean
 }
 
+function scheduleDropdownAction(action: () => void) {
+  window.setTimeout(action, 0)
+}
+
 export const createEquipmentColumns = ({
   onEdit,
   onCreateRepairRequest,
@@ -98,7 +102,7 @@ export const createEquipmentColumns = ({
       const equipment = row.original
 
       return (
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0 touch-target-sm md:h-8 md:w-8">
               <span className="sr-only">Open menu</span>
@@ -108,11 +112,11 @@ export const createEquipmentColumns = ({
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
             {canEditEquipment(equipment) && (
-              <DropdownMenuItem onSelect={() => onEdit(equipment)}>
+              <DropdownMenuItem onSelect={() => scheduleDropdownAction(() => onEdit(equipment))}>
                 Sửa thông tin
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onSelect={() => onCreateRepairRequest(equipment)}>
+            <DropdownMenuItem onSelect={() => scheduleDropdownAction(() => onCreateRepairRequest(equipment))}>
               Tạo yêu cầu sửa chữa
             </DropdownMenuItem>
           </DropdownMenuContent>

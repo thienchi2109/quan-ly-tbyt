@@ -30,6 +30,10 @@ interface MobileEquipmentListItemProps {
   onEdit: (equipment: Equipment) => void
 }
 
+function scheduleDropdownAction(action: () => void) {
+  window.setTimeout(action, 0)
+}
+
 const getStatusVariant = (status: Equipment["tinh_trang_hien_tai"]) => {
   switch (status) {
     case "Hoạt động":
@@ -82,7 +86,7 @@ export function MobileEquipmentListItem({
                 {equipment.tinh_trang_hien_tai}
               </Badge>
             )}
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -97,17 +101,17 @@ export function MobileEquipmentListItem({
               <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => onShowDetails(equipment)}>
+                <DropdownMenuItem onSelect={() => scheduleDropdownAction(() => onShowDetails(equipment))}>
                   <Eye className="mr-2 h-4 w-4" />
                   Xem chi tiết
                 </DropdownMenuItem>
                 {canEdit && (
-                  <DropdownMenuItem onSelect={() => onEdit(equipment)}>
+                  <DropdownMenuItem onSelect={() => scheduleDropdownAction(() => onEdit(equipment))}>
                     <Edit className="mr-2 h-4 w-4" />
                     Sửa thông tin
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onSelect={() => router.push(`/repair-requests?equipmentId=${equipment.id}`)}>
+                <DropdownMenuItem onSelect={() => scheduleDropdownAction(() => router.push(`/repair-requests?equipmentId=${equipment.id}`))}>
                   <Wrench className="mr-2 h-4 w-4" />
                   Báo sửa chữa
                 </DropdownMenuItem>

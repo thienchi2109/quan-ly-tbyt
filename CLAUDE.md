@@ -1,9 +1,9 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **quan-ly-tbyt** (1143 symbols, 3129 relationships, 82 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **quan-ly-tbyt-supabase** (1156 symbols, 3195 relationships, 83 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+> If any GitNexus tool warns the index is stale, check `.gitnexus/meta.json` first. If `stats.embeddings > 0`, you MUST preserve semantic search by running `npx gitnexus analyze --embeddings` instead of plain `npx gitnexus analyze`.
 
 ## Always Do
 
@@ -17,7 +17,7 @@ This project is indexed by GitNexus as **quan-ly-tbyt** (1143 symbols, 3129 rela
 
 1. `gitnexus_query({query: "<error or symptom>"})` — find execution flows related to the issue
 2. `gitnexus_context({name: "<suspect function>"})` — see all callers, callees, and process participation
-3. `READ gitnexus://repo/quan-ly-tbyt/process/{processName}` — trace the full execution flow step by step
+3. `READ gitnexus://repo/quan-ly-tbyt-supabase/process/{processName}` — trace the full execution flow step by step
 4. For regressions: `gitnexus_detect_changes({scope: "compare", base_ref: "main"})` — see what your branch changed
 
 ## When Refactoring
@@ -32,6 +32,7 @@ This project is indexed by GitNexus as **quan-ly-tbyt** (1143 symbols, 3129 rela
 - NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
 - NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
 - NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
+- NEVER run `npx gitnexus analyze` blindly. Always inspect `.gitnexus/meta.json` first; if the repo previously had embeddings, plain analyze will delete them.
 
 ## Tools Quick Reference
 
@@ -56,10 +57,10 @@ This project is indexed by GitNexus as **quan-ly-tbyt** (1143 symbols, 3129 rela
 
 | Resource | Use for |
 |----------|---------|
-| `gitnexus://repo/quan-ly-tbyt/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/quan-ly-tbyt/clusters` | All functional areas |
-| `gitnexus://repo/quan-ly-tbyt/processes` | All execution flows |
-| `gitnexus://repo/quan-ly-tbyt/process/{name}` | Step-by-step execution trace |
+| `gitnexus://repo/quan-ly-tbyt-supabase/context` | Codebase overview, check index freshness |
+| `gitnexus://repo/quan-ly-tbyt-supabase/clusters` | All functional areas |
+| `gitnexus://repo/quan-ly-tbyt-supabase/processes` | All execution flows |
+| `gitnexus://repo/quan-ly-tbyt-supabase/process/{name}` | Step-by-step execution trace |
 
 ## Self-Check Before Finishing
 
@@ -71,7 +72,14 @@ Before completing any code modification task, verify:
 
 ## Keeping the Index Fresh
 
-After committing code changes, the GitNexus index becomes stale. Re-run analyze to update it:
+After committing code changes, the GitNexus index becomes stale. Before re-running analyze, inspect `.gitnexus/meta.json`:
+
+```bash
+# If stats.embeddings > 0, preserve semantic search
+npx gitnexus analyze --embeddings
+```
+
+Only use plain analyze when `.gitnexus/meta.json` confirms `stats.embeddings` is `0`:
 
 ```bash
 npx gitnexus analyze
@@ -83,7 +91,7 @@ If the index previously included embeddings, preserve them by adding `--embeddin
 npx gitnexus analyze --embeddings
 ```
 
-To check whether embeddings exist, inspect `.gitnexus/meta.json` — the `stats.embeddings` field shows the count (0 means no embeddings). **Running analyze without `--embeddings` will delete any previously generated embeddings.**
+To check whether embeddings exist, inspect `.gitnexus/meta.json` — the `stats.embeddings` field shows the count (0 means no embeddings). **Running analyze without `--embeddings` will delete any previously generated embeddings. Treat plain `analyze` as unsafe unless you already confirmed `stats.embeddings === 0`.**
 
 > Claude Code users: A PostToolUse hook handles this automatically after `git commit` and `git merge`.
 
