@@ -39,8 +39,8 @@ import {
 } from "@/components/ui/card"
 import {
   DropdownMenu,
+  DropdownMenuActionItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -661,12 +661,12 @@ export default function EquipmentPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => setIsAddDialogOpen(true)}>
+                <DropdownMenuActionItem onSelectAction={() => setIsAddDialogOpen(true)}>
                   Thêm thủ công
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setIsImportDialogOpen(true)}>
+                </DropdownMenuActionItem>
+                <DropdownMenuActionItem onSelectAction={() => setIsImportDialogOpen(true)}>
                   Nhập từ Excel
-                </DropdownMenuItem>
+                </DropdownMenuActionItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

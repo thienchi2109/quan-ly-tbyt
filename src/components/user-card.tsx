@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/card"
 import {
   DropdownMenu,
+  DropdownMenuActionItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -64,20 +64,20 @@ export function UserCard({ user, onEdit, onDelete }: UserCardProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-              <DropdownMenuItem onSelect={() => onEdit(user)}>
+              <DropdownMenuActionItem onSelectAction={() => onEdit(user)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Chỉnh sửa
-              </DropdownMenuItem>
+              </DropdownMenuActionItem>
               {!isCurrentUserTheUserInCard && ( // Không cho xóa chính mình
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={() => onDelete(user)}
+                  <DropdownMenuActionItem
+                    onSelectAction={() => onDelete(user)}
                     className="text-destructive focus:text-destructive"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Xoá
-                  </DropdownMenuItem>
+                  </DropdownMenuActionItem>
                 </>
               )}
             </DropdownMenuContent>

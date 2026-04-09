@@ -29,8 +29,8 @@ import {
 } from "@/components/ui/card"
 import {
   DropdownMenu,
+  DropdownMenuActionItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -251,24 +251,24 @@ export default function UsersPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Hành động</DropdownMenuLabel>
-              <DropdownMenuItem onSelect={() => setEditingUser(user)}>
+              <DropdownMenuActionItem onSelectAction={() => setEditingUser(user)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Chỉnh sửa
-              </DropdownMenuItem>
+              </DropdownMenuActionItem>
               {!isCurrentUser && (
                 <>
-                  <DropdownMenuItem onSelect={() => setUserToReset(user)}>
+                  <DropdownMenuActionItem onSelectAction={() => setUserToReset(user)}>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Đặt lại mật khẩu
-                  </DropdownMenuItem>
+                  </DropdownMenuActionItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onSelect={() => setUserToDelete(user)} 
+                  <DropdownMenuActionItem
+                    onSelectAction={() => setUserToDelete(user)}
                     className="text-destructive focus:text-destructive"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Xoá
-                  </DropdownMenuItem>
+                  </DropdownMenuActionItem>
                 </>
               )}
             </DropdownMenuContent>

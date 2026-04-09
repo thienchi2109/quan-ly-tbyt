@@ -7,8 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
+  DropdownMenuActionItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
@@ -25,10 +25,6 @@ type CreateEquipmentColumnsOptions = {
   onEdit: (equipment: Equipment) => void
   onCreateRepairRequest: (equipment: Equipment) => void
   canEditEquipment: (equipment: Equipment) => boolean
-}
-
-function scheduleDropdownAction(action: () => void) {
-  window.setTimeout(action, 0)
 }
 
 export const createEquipmentColumns = ({
@@ -102,7 +98,7 @@ export const createEquipmentColumns = ({
       const equipment = row.original
 
       return (
-        <DropdownMenu modal={false}>
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0 touch-target-sm md:h-8 md:w-8">
               <span className="sr-only">Open menu</span>
@@ -112,13 +108,13 @@ export const createEquipmentColumns = ({
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
             {canEditEquipment(equipment) && (
-              <DropdownMenuItem onSelect={() => scheduleDropdownAction(() => onEdit(equipment))}>
+              <DropdownMenuActionItem onSelectAction={() => onEdit(equipment)}>
                 Sửa thông tin
-              </DropdownMenuItem>
+              </DropdownMenuActionItem>
             )}
-            <DropdownMenuItem onSelect={() => scheduleDropdownAction(() => onCreateRepairRequest(equipment))}>
+            <DropdownMenuActionItem onSelectAction={() => onCreateRepairRequest(equipment)}>
               Tạo yêu cầu sửa chữa
-            </DropdownMenuItem>
+            </DropdownMenuActionItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )

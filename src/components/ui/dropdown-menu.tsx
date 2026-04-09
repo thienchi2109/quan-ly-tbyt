@@ -6,7 +6,15 @@ import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const DropdownMenu = DropdownMenuPrimitive.Root
+type DropdownMenuProps = React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Root>
+
+function queueDropdownMenuAction(action: () => void) {
+  window.setTimeout(action, 0)
+}
+
+const DropdownMenu = ({ modal = false, ...props }: DropdownMenuProps) => (
+  <DropdownMenuPrimitive.Root modal={modal} {...props} />
+)
 
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 
@@ -91,6 +99,28 @@ const DropdownMenuItem = React.forwardRef<
   />
 ))
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
+
+type DropdownMenuActionItemProps = React.ComponentPropsWithoutRef<typeof DropdownMenuItem> & {
+  onSelectAction?: () => void
+}
+
+const DropdownMenuActionItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Item>,
+  DropdownMenuActionItemProps
+>(({ onSelect, onSelectAction, ...props }, ref) => (
+  <DropdownMenuItem
+    ref={ref}
+    {...props}
+    onSelect={(event) => {
+      onSelect?.(event)
+
+      if (!event.defaultPrevented && onSelectAction) {
+        queueDropdownMenuAction(onSelectAction)
+      }
+    }}
+  />
+))
+DropdownMenuActionItem.displayName = "DropdownMenuActionItem"
 
 const DropdownMenuCheckboxItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
@@ -186,6 +216,7 @@ export {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuActionItem,
   DropdownMenuCheckboxItem,
   DropdownMenuRadioItem,
   DropdownMenuLabel,
@@ -197,4 +228,5 @@ export {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
+  queueDropdownMenuAction,
 }

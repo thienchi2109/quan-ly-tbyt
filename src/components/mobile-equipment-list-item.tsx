@@ -14,8 +14,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
   DropdownMenu,
+  DropdownMenuActionItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -28,10 +28,6 @@ interface MobileEquipmentListItemProps {
   equipment: Equipment
   onShowDetails: (equipment: Equipment) => void
   onEdit: (equipment: Equipment) => void
-}
-
-function scheduleDropdownAction(action: () => void) {
-  window.setTimeout(action, 0)
 }
 
 const getStatusVariant = (status: Equipment["tinh_trang_hien_tai"]) => {
@@ -86,7 +82,7 @@ export function MobileEquipmentListItem({
                 {equipment.tinh_trang_hien_tai}
               </Badge>
             )}
-            <DropdownMenu modal={false}>
+            <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -101,20 +97,20 @@ export function MobileEquipmentListItem({
               <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuLabel>Hành động</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => scheduleDropdownAction(() => onShowDetails(equipment))}>
+                <DropdownMenuActionItem onSelectAction={() => onShowDetails(equipment)}>
                   <Eye className="mr-2 h-4 w-4" />
                   Xem chi tiết
-                </DropdownMenuItem>
+                </DropdownMenuActionItem>
                 {canEdit && (
-                  <DropdownMenuItem onSelect={() => scheduleDropdownAction(() => onEdit(equipment))}>
+                  <DropdownMenuActionItem onSelectAction={() => onEdit(equipment)}>
                     <Edit className="mr-2 h-4 w-4" />
                     Sửa thông tin
-                  </DropdownMenuItem>
+                  </DropdownMenuActionItem>
                 )}
-                <DropdownMenuItem onSelect={() => scheduleDropdownAction(() => router.push(`/repair-requests?equipmentId=${equipment.id}`))}>
+                <DropdownMenuActionItem onSelectAction={() => router.push(`/repair-requests?equipmentId=${equipment.id}`)}>
                   <Wrench className="mr-2 h-4 w-4" />
                   Báo sửa chữa
-                </DropdownMenuItem>
+                </DropdownMenuActionItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
