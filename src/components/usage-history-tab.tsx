@@ -294,8 +294,7 @@ export function UsageHistoryTab({ equipment }: UsageHistoryTabProps) {
                   <TableHead>Thời gian bắt đầu</TableHead>
                   <TableHead>Thời gian kết thúc</TableHead>
                   <TableHead>Thời lượng</TableHead>
-                  <TableHead>Tình trạng TB</TableHead>
-                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Tình trạng thiết bị</TableHead>
                   <TableHead>Ghi chú</TableHead>
                   {user?.role === 'admin' && <TableHead className="w-[50px]"></TableHead>}
                 </TableRow>
@@ -320,11 +319,9 @@ export function UsageHistoryTab({ equipment }: UsageHistoryTabProps) {
                     </TableCell>
                     <TableCell>{log.tinh_trang_thiet_bi || '-'}</TableCell>
                     <TableCell>
-                      <Badge variant={log.trang_thai === 'dang_su_dung' ? 'default' : 'secondary'}>
-                        {USAGE_STATUS[log.trang_thai]}
-                      </Badge>
+                      {log.tinh_trang_thiet_bi || '-'}
                     </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
+                    <TableCell className="max-w-[240px] truncate">
                       {log.ghi_chu || '-'}
                     </TableCell>
                     {user?.role === 'admin' && (

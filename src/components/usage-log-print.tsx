@@ -81,11 +81,14 @@ export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrint
     const printWindow = window.open('', '_blank')
 
     if (printWindow) {
-      // Use modern approach to avoid deprecated document.write
-      printWindow.document.documentElement.innerHTML = printContent
-      printWindow.focus()
-      printWindow.print()
-      printWindow.close()
+      printWindow.onload = () => {
+        printWindow.focus()
+        printWindow.print()
+      }
+
+      printWindow.document.open()
+      printWindow.document.write(printContent)
+      printWindow.document.close()
     }
 
     setIsDialogOpen(false)
@@ -116,6 +119,122 @@ export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrint
       : ''
     const activeUser = usageLogs?.find(log => log.trang_thai === 'dang_su_dung')?.nguoi_su_dung?.full_name || ''
     const sortLabel = USAGE_LOG_SORT_LABELS[sortOrder]
+    const rowsPerPage = 10
+    const paginatedLogs = filteredLogs.length > 0
+      ? Array.from({ length: Math.ceil(filteredLogs.length / rowsPerPage) }, (_, index) =>
+          filteredLogs.slice(index * rowsPerPage, (index + 1) * rowsPerPage)
+        )
+      : [[]]
+
+    const totalPages = paginatedLogs.length
+
+    const pagesMarkup = paginatedLogs.map((logsOnPage, pageIndex) => {
+      const isLastPage = pageIndex === totalPages - 1
+
+      return `
+        <section class="print-page${pageIndex < totalPages - 1 ? ' page-break' : ''}">
+          <div class="page-content">
+            <div class="header">
+              <img src="/cdc-logo-400x400.png" alt="Logo CDC" class="header-logo" onerror="this.style.display='none';">
+              <div class="header-content">
+                <h2 style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0; text-transform: uppercase;">TRUNG TÂM KIỂM SOÁT BỆNH TẬT THÀNH PHỐ CẦN THƠ</h2>
+                <h1>NHẬT KÝ SỬ DỤNG THIẾT BỊ</h1>
+                <h2>${equipment.ten_thiet_bi}</h2>
+                <div>Mã thiết bị: ${equipment.ma_thiet_bi} ${dateRange}</div>
+              </div>
+              <div class="header-spacer"></div>
+            </div>
+
+            <div class="equipment-info">
+              <div>
+                <div class="info-item">
+                  <span class="info-label">Tên thiết bị:</span>
+                  <span>${equipment.ten_thiet_bi}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Mã thiết bị:</span>
+                  <span>${equipment.ma_thiet_bi}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Khoa/Phòng:</span>
+                  <span>${equipment.khoa_phong_quan_ly || 'Chưa xác định'}</span>
+                </div>
+              </div>
+              <div>
+                <div class="info-item">
+                  <span class="info-label">Hãng sản xuất:</span>
+                  <span>${equipment.hang_san_xuat || 'Chưa có thông tin'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Model:</span>
+                  <span>${equipment.model || 'Chưa có thông tin'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Tình trạng hiện tại:</span>
+                  <span>${equipment.tinh_trang_hien_tai || 'Chưa xác định'}</span>
+                </div>
+              </div>
+            </div>
+
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Người sử dụng</th>
+                  <th>Thời gian bắt đầu</th>
+                  <th>Thời gian kết thúc</th>
+                  <th>Thời lượng</th>
+                  <th>Tình trạng thiết bị</th>
+                  <th>Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${logsOnPage.length > 0 ? logsOnPage.map((log, index) => `
+                  <tr>
+                    <td style="text-align: center;">${pageIndex * rowsPerPage + index + 1}</td>
+                    <td>${log.nguoi_su_dung?.full_name || 'Không xác định'}</td>
+                    <td>${format(new Date(log.thoi_gian_bat_dau), 'dd/MM/yyyy HH:mm', { locale: vi })}</td>
+                    <td>${log.thoi_gian_ket_thuc ? format(new Date(log.thoi_gian_ket_thuc), 'dd/MM/yyyy HH:mm', { locale: vi }) : '-'}</td>
+                    <td>${formatDuration(log.thoi_gian_bat_dau, log.thoi_gian_ket_thuc)}</td>
+                    <td>${log.tinh_trang_thiet_bi || '-'}</td>
+                    <td>${log.ghi_chu || '-'}</td>
+                  </tr>
+                `).join('') : `
+                  <tr>
+                    <td colspan="7" style="text-align: center;">Không có dữ liệu nhật ký sử dụng trong khoảng lọc đã chọn</td>
+                  </tr>
+                `}
+              </tbody>
+            </table>
+
+            ${isLastPage ? `
+              <div class="footer">
+                <div class="signature-section">
+                  <div class="signature-title">Người lập báo cáo</div>
+                  <div class="signature-space"></div>
+                  <div class="signature-name">${activeUser}</div>
+                </div>
+                <div class="signature-section">
+                  <div class="signature-title">Phụ trách thiết bị</div>
+                  <div class="signature-space"></div>
+                  <div class="signature-name">${equipment.nguoi_dang_truc_tiep_quan_ly || ''}</div>
+                </div>
+              </div>
+
+              <div class="print-info">
+                In ngày: ${currentDate} | Thứ tự: ${sortLabel} | Tổng số bản ghi: ${filteredLogs.length}
+              </div>
+            ` : ''}
+          </div>
+
+          <footer class="print-footer">
+            <span>QLTB-BM.06</span>
+            <span>BH.01 (05/2024)</span>
+            <span>Trang: ${pageIndex + 1}/${totalPages}</span>
+          </footer>
+        </section>
+      `
+    }).join('')
 
     return `
       <!DOCTYPE html>
@@ -126,7 +245,7 @@ export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrint
         <style>
           @page {
             size: A4 landscape;
-            margin: 1cm 1cm 1.8cm 1cm;
+            margin: 1cm;
           }
           
           body {
@@ -136,6 +255,22 @@ export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrint
             margin: 0;
             padding: 0;
             color: #000;
+            background: #fff;
+          }
+
+          .print-page {
+            position: relative;
+            min-height: 18.7cm;
+            box-sizing: border-box;
+            padding-bottom: 1.3cm;
+          }
+
+          .page-content {
+            min-height: 100%;
+          }
+
+          .page-break {
+            page-break-after: always;
           }
           
           .header {
@@ -164,7 +299,7 @@ export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrint
 
           /* Print footer styles */
           .print-footer {
-            position: fixed;
+            position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
@@ -172,14 +307,7 @@ export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrint
             justify-content: space-between;
             align-items: center;
             font-size: 11px;
-          }
-
-          .page-number::after {
-            content: "Trang: " counter(page) "/" counter(pages);
-          }
-
-          .content-body {
-            padding-bottom: 50px; /* Space for fixed footer */
+            background: #fff;
           }
           
           .header h1 {
@@ -235,12 +363,12 @@ export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrint
             text-align: center;
           }
           
-          .data-table td:nth-child(1) { width: 6%; } /* STT */
+          .data-table td:nth-child(1) { width: 4%; } /* STT */
           .data-table td:nth-child(2) { width: 20%; } /* Người sử dụng */
           .data-table td:nth-child(3) { width: 15%; } /* Thời gian bắt đầu */
           .data-table td:nth-child(4) { width: 15%; } /* Thời gian kết thúc */
           .data-table td:nth-child(5) { width: 10%; } /* Thời lượng */
-          .data-table td:nth-child(6) { width: 14%; } /* Trạng thái */
+          .data-table td:nth-child(6) { width: 16%; } /* Tình trạng thiết bị */
           .data-table td:nth-child(7) { width: 12%; } /* Ghi chú */
           
           .footer {
@@ -279,102 +407,7 @@ export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrint
         </style>
       </head>
       <body>
-        <div class="content-body">
-        <div class="header">
-          <img src="https://i.postimg.cc/W1ym4T74/cdc-logo-150.png" alt="Logo CDC" class="header-logo" onerror="this.onerror=null;this.src='https://i.postimg.cc/W1ym4T74/cdc-logo-150.png';">
-          <div class="header-content">
-            <h2 style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0; text-transform: uppercase;">TRUNG TÂM KIỂM SOÁT BỆNH TẬT THÀNH PHỐ CẦN THƠ</h2>
-            <h1>NHẬT KÝ SỬ DỤNG THIẾT BỊ</h1>
-            <h2>${equipment.ten_thiet_bi}</h2>
-            <div>Mã thiết bị: ${equipment.ma_thiet_bi} ${dateRange}</div>
-          </div>
-          <div class="header-spacer"></div>
-        </div>
-        
-        <div class="equipment-info">
-          <div>
-            <div class="info-item">
-              <span class="info-label">Tên thiết bị:</span>
-              <span>${equipment.ten_thiet_bi}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Mã thiết bị:</span>
-              <span>${equipment.ma_thiet_bi}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Khoa/Phòng:</span>
-              <span>${equipment.khoa_phong_quan_ly || 'Chưa xác định'}</span>
-            </div>
-          </div>
-          <div>
-            <div class="info-item">
-              <span class="info-label">Hãng sản xuất:</span>
-              <span>${equipment.hang_san_xuat || 'Chưa có thông tin'}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Model:</span>
-              <span>${equipment.model || 'Chưa có thông tin'}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Tình trạng hiện tại:</span>
-              <span>${equipment.tinh_trang_hien_tai || 'Chưa xác định'}</span>
-            </div>
-          </div>
-        </div>
-        
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>STT</th>
-              <th>Người sử dụng</th>
-              <th>Thời gian bắt đầu</th>
-              <th>Thời gian kết thúc</th>
-              <th>Thời lượng</th>
-              <th>Trạng thái</th>
-              <th>Ghi chú</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filteredLogs.map((log, index) => `
-              <tr>
-                <td style="text-align: center;">${index + 1}</td>
-                <td>${log.nguoi_su_dung?.full_name || 'Không xác định'}</td>
-                <td>${format(new Date(log.thoi_gian_bat_dau), 'dd/MM/yyyy HH:mm', { locale: vi })}</td>
-                <td>${log.thoi_gian_ket_thuc ? format(new Date(log.thoi_gian_ket_thuc), 'dd/MM/yyyy HH:mm', { locale: vi }) : '-'}</td>
-                <td>${formatDuration(log.thoi_gian_bat_dau, log.thoi_gian_ket_thuc)}</td>
-                <td class="${log.trang_thai === 'dang_su_dung' ? 'status-active' : 'status-completed'}">
-                  ${log.trang_thai === 'dang_su_dung' ? 'Đang sử dụng' : 'Hoàn thành'}
-                </td>
-                <td>${log.ghi_chu || '-'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        
-        <div class="footer">
-          <div class="signature-section">
-            <div class="signature-title">Người lập báo cáo</div>
-            <div class="signature-space"></div>
-            <div class="signature-name">${activeUser}</div>
-          </div>
-          <div class="signature-section">
-            <div class="signature-title">Phụ trách thiết bị</div>
-            <div class="signature-space"></div>
-            <div class="signature-name">${equipment.nguoi_dang_truc_tiep_quan_ly || ''}</div>
-          </div>
-        </div>
-        
-        <div class="print-info">
-          In ngày: ${currentDate} | Thứ tự: ${sortLabel} | Tổng số bản ghi: ${filteredLogs.length}
-        </div>
-        </div>
-
-        <!-- Footer -->
-        <footer class="print-footer">
-          <span>QLTB-BM.06</span>
-          <span>BH.01 (05/2024)</span>
-          <span class="page-number"></span>
-        </footer>
+        ${pagesMarkup}
       </body>
       </html>
     `
@@ -389,7 +422,6 @@ export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrint
       'Thời gian kết thúc',
       'Thời lượng (phút)',
       'Tình trạng thiết bị',
-      'Trạng thái',
       'Ghi chú'
     ]
 
@@ -404,7 +436,6 @@ export function UsageLogPrint({ equipment, sortOrder, usageLogs }: UsageLogPrint
         new Date(log.thoi_gian_bat_dau)
       ),
       log.tinh_trang_thiet_bi || '',
-      log.trang_thai === 'dang_su_dung' ? 'Đang sử dụng' : 'Hoàn thành',
       log.ghi_chu || ''
     ])
 

@@ -25,30 +25,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
 import { useStartUsageSession } from "@/hooks/use-usage-logs"
 import { type Equipment } from "@/lib/data"
 
-const equipmentStatusOptions = [
-  "Hoạt động",
-  "Chờ sửa chữa", 
-  "Chờ bảo trì",
-  "Chờ hiệu chuẩn/kiểm định",
-  "Ngưng sử dụng",
-  "Chưa có nhu cầu sử dụng"
-] as const
-
 const startUsageSchema = z.object({
-  tinh_trang_thiet_bi: z.string().optional(),
   ghi_chu: z.string().optional(),
 })
 
@@ -71,7 +53,6 @@ export function StartUsageDialog({
   const form = useForm<StartUsageFormData>({
     resolver: zodResolver(startUsageSchema),
     defaultValues: {
-      tinh_trang_thiet_bi: equipment?.tinh_trang_hien_tai || "",
       ghi_chu: "",
     },
   })
@@ -79,7 +60,6 @@ export function StartUsageDialog({
   React.useEffect(() => {
     if (equipment && open) {
       form.reset({
-        tinh_trang_thiet_bi: equipment.tinh_trang_hien_tai || "",
         ghi_chu: "",
       })
     }
@@ -92,7 +72,6 @@ export function StartUsageDialog({
       await startUsageMutation.mutateAsync({
         thiet_bi_id: equipment.id,
         nguoi_su_dung_id: user.id,
-        tinh_trang_thiet_bi: data.tinh_trang_thiet_bi,
         ghi_chu: data.ghi_chu,
       })
       
@@ -133,32 +112,6 @@ export function StartUsageDialog({
               </div>
             </div>
 
-            {/* Equipment Status */}
-            <FormField
-              control={form.control}
-              name="tinh_trang_thiet_bi"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tình trạng thiết bị</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn tình trạng thiết bị" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {equipmentStatusOptions.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             {/* Notes */}
             <FormField
               control={form.control}
@@ -168,7 +121,7 @@ export function StartUsageDialog({
                   <FormLabel>Ghi chú</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Ghi chú về việc sử dụng thiết bị..."
+                      placeholder="Ghi chú mẫu sắp phân tích hoặc mục đích sử dụng..."
                       className="min-h-[80px]"
                       {...field}
                     />

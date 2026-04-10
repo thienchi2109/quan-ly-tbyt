@@ -33,17 +33,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { useEndUsageSession } from "@/hooks/use-usage-logs"
 import { type UsageLog } from "@/types/database"
-
-const equipmentStatusOptions = [
-  "Hoạt động",
-  "Chờ sửa chữa", 
-  "Chờ bảo trì",
-  "Chờ hiệu chuẩn/kiểm định",
-  "Ngưng sử dụng",
-  "Chưa có nhu cầu sử dụng"
-] as const
+import {
+  getUsageDeviceConditionPresetValue,
+  USAGE_DEVICE_CONDITION_PRESETS,
+} from "@/lib/usage-device-condition"
 
 const endUsageSchema = z.object({
   tinh_trang_thiet_bi: z.string().optional(),
@@ -163,20 +159,32 @@ export function EndUsageDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tình trạng thiết bị sau khi sử dụng</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <div className="space-y-3">
+                    <Select
+                      onValueChange={field.onChange}
+                      value={getUsageDeviceConditionPresetValue(field.value)}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn tình trạng gợi ý" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {USAGE_DEVICE_CONDITION_PRESETS.map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Chọn tình trạng thiết bị" />
-                      </SelectTrigger>
+                      <Input
+                        placeholder="Hoặc nhập tình trạng thực tế sau khi sử dụng"
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      {equipmentStatusOptions.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
