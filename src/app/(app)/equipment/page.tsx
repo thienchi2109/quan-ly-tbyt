@@ -3,7 +3,10 @@
 import * as React from "react"
 import {
   ColumnFiltersState,
+  functionalUpdate,
+  type PaginationState,
   SortingState,
+  type Updater,
   VisibilityState,
   getCoreRowModel,
   getFacetedRowModel,
@@ -57,6 +60,12 @@ import { createEquipmentColumns } from "./_components/equipment-columns"
 import { EquipmentDetailDialog } from "./_components/equipment-detail-dialog"
 import { EquipmentTableContent } from "./_components/equipment-table-content"
 import { type Attachment, columnLabels, type HistoryItem } from "./_lib/equipment-page-config"
+import {
+  beginMutationPaginationPreservation,
+  resetPaginationForUserTableChange,
+  resolveMutationPaginationPreservation,
+  shouldAutoResetEquipmentPageIndex,
+} from "./_lib/pagination-state"
 import { generateEquipmentDeviceLabel, generateEquipmentProfileSheet } from "./_lib/equipment-print"
 
 const CACHE_KEY = "equipment_data"
@@ -94,10 +103,11 @@ export default function EquipmentPage() {
   const [history, setHistory] = React.useState<HistoryItem[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = React.useState(false)
 
-  const [preservePageState, setPreservePageState] = React.useState<{
-    pageIndex: number
-    pageSize: number
-  } | null>(null)
+  const [paginationState, setPaginationState] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+    preservePageOnNextDataUpdate: false,
+  })
 
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
     id: false,
@@ -253,6 +263,8 @@ export default function EquipmentPage() {
   }, [toast, user])
 
   const onDataMutationSuccess = React.useCallback(() => {
+    setPaginationState((currentState) => beginMutationPaginationPreservation(currentState))
+
     try {
       localStorage.removeItem(CACHE_KEY)
       if (user?.khoa_phong) {
@@ -262,7 +274,7 @@ export default function EquipmentPage() {
       console.error("Failed to invalidate cache", error)
     }
 
-    fetchEquipment()
+    void fetchEquipment()
   }, [fetchEquipment, user?.khoa_phong])
 
   React.useEffect(() => {
@@ -405,6 +417,42 @@ export default function EquipmentPage() {
     fetchHistory(selectedEquipment.id)
   }, [fetchAttachments, fetchHistory, isDetailModalOpen, selectedEquipment])
 
+  React.useEffect(() => {
+    if (isLoading || !paginationState.preservePageOnNextDataUpdate) return
+
+    setPaginationState((currentState) => resolveMutationPaginationPreservation(currentState))
+  }, [isLoading, paginationState.preservePageOnNextDataUpdate])
+
+  const handleSortingChange = React.useCallback((updater: Updater<SortingState>) => {
+    setSorting((currentSorting) => functionalUpdate(updater, currentSorting))
+    setPaginationState((currentState) => resetPaginationForUserTableChange(currentState))
+  }, [])
+
+  const handleColumnFiltersChange = React.useCallback((updater: Updater<ColumnFiltersState>) => {
+    setColumnFilters((currentFilters) => functionalUpdate(updater, currentFilters))
+    setPaginationState((currentState) => resetPaginationForUserTableChange(currentState))
+  }, [])
+
+  const handlePaginationChange = React.useCallback((updater: Updater<PaginationState>) => {
+    setPaginationState((currentState) => {
+      const nextPagination = functionalUpdate(updater, {
+        pageIndex: currentState.pageIndex,
+        pageSize: currentState.pageSize,
+      })
+
+      return {
+        ...currentState,
+        pageIndex: nextPagination.pageIndex,
+        pageSize: nextPagination.pageSize,
+      }
+    })
+  }, [])
+
+  const handleSearchChange = React.useCallback((value: string) => {
+    setSearchTerm(value)
+    setPaginationState((currentState) => resetPaginationForUserTableChange(currentState))
+  }, [])
+
   const handleAddAttachment = React.useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
     if (!newFileName || !newFileUrl || !selectedEquipment) return
@@ -491,42 +539,33 @@ export default function EquipmentPage() {
   const table = useReactTable({
     data,
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
+    onSortingChange: handleSortingChange,
+    onColumnFiltersChange: handleColumnFiltersChange,
+    onPaginationChange: handlePaginationChange,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: (value: string) => setSearchTerm(value),
+    onGlobalFilterChange: handleSearchChange,
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    autoResetPageIndex: shouldAutoResetEquipmentPageIndex(paginationState),
     state: {
       sorting,
       columnFilters,
       columnVisibility,
       globalFilter: debouncedSearch,
+      pagination: {
+        pageIndex: paginationState.pageIndex,
+        pageSize: paginationState.pageSize,
+      },
     },
   })
 
-  React.useEffect(() => {
-    if (!preservePageState || isLoading || data.length === 0) return
-
-    setTimeout(() => {
-      table.setPageIndex(preservePageState.pageIndex)
-      table.setPageSize(preservePageState.pageSize)
-      setPreservePageState(null)
-    }, 150)
-  }, [data.length, isLoading, preservePageState, table])
-
   const onDataMutationSuccessWithStatePreservation = React.useCallback(() => {
-    const currentState = table.getState()
-    setPreservePageState({
-      pageIndex: currentState.pagination.pageIndex,
-      pageSize: currentState.pagination.pageSize,
-    })
     onDataMutationSuccess()
-  }, [onDataMutationSuccess, table])
+  }, [onDataMutationSuccess])
 
   const handleExportData = React.useCallback(async () => {
     const rowsToExport = table.getFilteredRowModel().rows
@@ -674,7 +713,7 @@ export default function EquipmentPage() {
           <EquipmentFilterBar
             table={table}
             searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
+            onSearchChange={handleSearchChange}
             isMobile={isMobile}
             onDownloadTemplate={handleDownloadTemplate}
             onAddDialogOpen={() => setIsAddDialogOpen(true)}
