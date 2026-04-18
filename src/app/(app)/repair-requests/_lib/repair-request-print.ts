@@ -30,11 +30,14 @@ export function openRepairRequestSheet(
               body { font-family: 'Times New Roman', Times, serif; font-size: 14px; color: #000; line-height: 1.2; background-color: #e5e7eb; }
               .a4-page { width: 21cm; min-height: 29.7cm; padding: 1.5cm 2cm; margin: 1cm auto; background: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); position: relative; }
               .form-input-line { font-family: inherit; font-size: inherit; border: none; border-bottom: 1px dotted #000; background-color: transparent; padding: 2px 1px; outline: none; text-align: center; }
-              .form-textarea { font-family: inherit; font-size: inherit; border: 1px dotted #000; background-color: transparent; padding: 8px; outline: none; width: 100%; resize: none; }
+              .form-textarea { font-family: inherit; font-size: inherit; border: 1px dotted #000; background-color: transparent; padding: 8px; outline: none; width: 100%; resize: none; overflow: hidden; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+              .form-inline-textarea { font-family: inherit; font-size: inherit; border: none; border-bottom: 1px dotted #000; background-color: transparent; padding: 2px 1px; outline: none; width: 100%; resize: none; overflow: hidden; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
               .form-input-line:focus, .form-textarea:focus { border-style: solid; }
               h1, h2, h3, .font-bold { font-weight: 700; }
               .title-main { font-size: 20px; }
               .title-sub { font-size: 16px; }
+              .field-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; align-items: start; }
+              .field-stack { display: flex; flex-direction: column; gap: 4px; }
               .signature-area { display: flex; flex-direction: column; align-items: center; }
               .signature-space { height: 65px; }
               .signature-name-input { border: none; background-color: transparent; text-align: center; font-weight: 700; width: 200px; }
@@ -47,7 +50,7 @@ export function openRepairRequestSheet(
                   .page-break { page-break-before: always !important; }
                   .print-footer { position: absolute !important; bottom: 1.5cm !important; left: 2cm !important; right: 2cm !important; width: calc(100% - 4cm) !important; }
                   body > *:not(.a4-page) { display: none; }
-                  .form-input-line, .form-textarea, input[type="date"] { border-bottom: 1px dotted #000 !important; }
+                  .form-input-line, .form-inline-textarea, input[type="date"] { border-bottom: 1px dotted #000 !important; }
                   .signature-name-input { border: none !important; }
                   .form-textarea { border: 1px dotted #000 !important; }
               }
@@ -66,17 +69,17 @@ export function openRepairRequestSheet(
                       </div>
                       <div class="w-16"></div> <!-- Spacer -->
                   </div>
-                  <div class="flex items-baseline mt-6">
+                  <div class="field-grid mt-6">
                       <label for="department-request" class="font-bold whitespace-nowrap">Khoa/Phòng đề nghị:</label>
-                      <input type="text" id="department-request" class="form-input-line ml-2" value="${formatValue(request.thiet_bi.khoa_phong_quan_ly)}">
+                      <textarea id="department-request" rows="1" class="form-inline-textarea auto-expand-field">${formatValue(request.thiet_bi.khoa_phong_quan_ly)}</textarea>
                   </div>
               </header>
               <section>
                   <h3 class="font-bold text-base">I. THÔNG TIN THIẾT BỊ</h3>
                   <div class="space-y-4 mt-3">
-                      <div>
+                      <div class="field-stack">
                           <label for="device-name" class="whitespace-nowrap">Tên thiết bị:</label>
-                          <input type="text" id="device-name" class="form-input-line ml-2 w-full" value="${formatValue(request.thiet_bi.ten_thiet_bi)}">
+                          <textarea id="device-name" rows="1" class="form-inline-textarea auto-expand-field">${formatValue(request.thiet_bi.ten_thiet_bi)}</textarea>
                       </div>
                       <div class="grid grid-cols-3 gap-x-8">
                           <div class="flex items-baseline">
@@ -94,11 +97,11 @@ export function openRepairRequestSheet(
                       </div>
                       <div>
                           <label for="damage-description" class="block">Mô tả sự cố của thiết bị:</label>
-                          <textarea id="damage-description" rows="1" class="form-textarea mt-1">${formatValue(request.mo_ta_su_co)}</textarea>
+                          <textarea id="damage-description" rows="3" class="form-textarea mt-1 auto-expand-field">${formatValue(request.mo_ta_su_co)}</textarea>
                       </div>
                       <div>
                           <label for="repair-request" class="block">Các hạng mục yêu cầu sửa chữa:</label>
-                          <textarea id="repair-request" rows="1" class="form-textarea mt-1">${formatValue(request.hang_muc_sua_chua)}</textarea>
+                          <textarea id="repair-request" rows="3" class="form-textarea mt-1 auto-expand-field">${formatValue(request.hang_muc_sua_chua)}</textarea>
                       </div>
                       <div class="flex items-baseline">
                           <label for="completion-date" class="whitespace-nowrap">Ngày mong muốn hoàn thành (nếu có):</label>
@@ -137,7 +140,7 @@ export function openRepairRequestSheet(
                   </div>
                   <div class="mt-4">
                       <label for="tbyt-opinion" class="block">Ý kiến của Tổ Quản lý TBYT:</label>
-                      <input type='text' id="tbyt-opinion" class="form-input-line ml-2 min-w-[400px]" value="${request.don_vi_thuc_hien === 'noi_bo' ? 'Tự sửa chữa nội bộ' : request.don_vi_thuc_hien === 'thue_ngoai' && request.ten_don_vi_thue ? `Thuê đơn vị ${request.ten_don_vi_thue} sửa chữa` : ''}">
+                      <textarea id="tbyt-opinion" rows="2" class="form-textarea mt-1 auto-expand-field">${request.don_vi_thuc_hien === 'noi_bo' ? 'Tự sửa chữa nội bộ' : request.don_vi_thuc_hien === 'thue_ngoai' && request.ten_don_vi_thue ? `Thuê đơn vị ${request.ten_don_vi_thue} sửa chữa` : ''}</textarea>
                   </div>
               </section>
               <div class="mt-8 flex justify-around">
@@ -179,7 +182,7 @@ export function openRepairRequestSheet(
                   <main class="mt-8">
                       <h3 class="text-base font-bold">III. KẾT QUẢ, TÌNH TRẠNG THIẾT BỊ SAU KHI XỬ LÝ</h3>
                       <div class="mt-4">
-                          <textarea class="form-textarea" rows="5" placeholder="Nhập kết quả và tình trạng thiết bị...">${request.ket_qua_sua_chua || request.ly_do_khong_hoan_thanh || ""}</textarea>
+                          <textarea class="form-textarea auto-expand-field" rows="5" placeholder="Nhập kết quả và tình trạng thiết bị...">${request.ket_qua_sua_chua || request.ly_do_khong_hoan_thanh || ""}</textarea>
                       </div>
                   </main>
 
@@ -216,6 +219,22 @@ export function openRepairRequestSheet(
                   <span>Trang: 2/2</span>
               </footer>
           </div>
+          <script>
+              const resizeTextarea = (field) => {
+                  field.style.height = "auto";
+                  field.style.height = field.scrollHeight + "px";
+              };
+
+              const autoExpandFields = Array.from(document.querySelectorAll(".auto-expand-field"));
+              autoExpandFields.forEach((field) => {
+                  resizeTextarea(field);
+                  field.addEventListener("input", () => resizeTextarea(field));
+              });
+
+              window.addEventListener("load", () => {
+                  autoExpandFields.forEach((field) => resizeTextarea(field));
+              });
+          </script>
       </body>
       </html>
     `
