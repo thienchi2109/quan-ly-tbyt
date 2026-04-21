@@ -92,7 +92,7 @@ jest.mock("@/hooks/use-usage-logs", () => ({
   }),
 }))
 
-import { EndUsageDialog } from "@/components/end-usage-dialog"
+import { EndUsageDialog, endUsageSchema } from "@/components/end-usage-dialog"
 import { StartUsageDialog } from "@/components/start-usage-dialog"
 
 describe("usage session dialogs", () => {
@@ -139,5 +139,11 @@ describe("usage session dialogs", () => {
     )
 
     expect(screen.getByText("Tình trạng thiết bị sau khi sử dụng")).toBeTruthy()
+  })
+
+  it("requires equipment condition when ending usage", () => {
+    expect(endUsageSchema.safeParse({ tinh_trang_thiet_bi: "", ghi_chu: "" }).success).toBe(false)
+    expect(endUsageSchema.safeParse({ tinh_trang_thiet_bi: "   ", ghi_chu: "" }).success).toBe(false)
+    expect(endUsageSchema.safeParse({ tinh_trang_thiet_bi: "Hoạt động tốt", ghi_chu: "" }).success).toBe(true)
   })
 })

@@ -41,8 +41,8 @@ import {
   USAGE_DEVICE_CONDITION_PRESETS,
 } from "@/lib/usage-device-condition"
 
-const endUsageSchema = z.object({
-  tinh_trang_thiet_bi: z.string().optional(),
+export const endUsageSchema = z.object({
+  tinh_trang_thiet_bi: z.string().trim().min(1, "Vui lòng nhập tình trạng thiết bị sau khi sử dụng"),
   ghi_chu: z.string().optional(),
 })
 
@@ -126,28 +126,28 @@ export function EndUsageDialog({
             {/* Usage Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Mã thiết bị</label>
+                <span className="text-sm font-medium text-muted-foreground">Mã thiết bị</span>
                 <p className="text-sm font-mono">{usageLog?.thiet_bi?.ma_thiet_bi}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Người sử dụng</label>
+                <span className="text-sm font-medium text-muted-foreground">Người sử dụng</span>
                 <p className="text-sm">{usageLog?.nguoi_su_dung?.full_name}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Thời gian bắt đầu</label>
+                <span className="text-sm font-medium text-muted-foreground">Thời gian bắt đầu</span>
                 <p className="text-sm">
                   {usageLog && format(new Date(usageLog.thoi_gian_bat_dau), "dd/MM/yyyy HH:mm", { locale: vi })}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Thời gian kết thúc</label>
+                <span className="text-sm font-medium text-muted-foreground">Thời gian kết thúc</span>
                 <p className="text-sm">{format(new Date(), "dd/MM/yyyy HH:mm", { locale: vi })}</p>
               </div>
               <div className="col-span-1 sm:col-span-2">
-                <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                <span className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                   <Clock className="h-4 w-4" />
                   Thời gian sử dụng
-                </label>
+                </span>
                 <p className="text-sm font-medium text-primary">{formatDuration(usageDuration)}</p>
               </div>
             </div>
