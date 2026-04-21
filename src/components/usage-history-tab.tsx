@@ -3,7 +3,7 @@
 import React from "react"
 import { format, differenceInMinutes } from "date-fns"
 import { vi } from "date-fns/locale"
-import { ArrowDown, Clock, User, FileText, Trash2, Play, Square } from "lucide-react"
+import { ArrowDown, Clock, User, FileText, Trash2, Play, Square, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +29,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useEquipmentUsageLogs, useDeleteUsageLog } from "@/hooks/use-usage-logs"
+import { useActiveEquipmentUsageLog, useEquipmentUsageLogs, useDeleteUsageLog } from "@/hooks/use-usage-logs"
 import { useAuth } from "@/contexts/auth-context"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { type Equipment } from "@/lib/data"
@@ -56,22 +56,22 @@ export function UsageHistoryTab({ equipment }: UsageHistoryTabProps) {
   const [selectedUsageLog, setSelectedUsageLog] = React.useState<UsageLog | null>(null)
   const [sortOrder, setSortOrder] = React.useState<UsageLogSortOrder>("newest")
 
-  const { data: usageLogs, isLoading } = useEquipmentUsageLogs(equipment.id.toString())
+  const {
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    usageLogs,
+  } = useEquipmentUsageLogs(equipment.id.toString(), sortOrder)
+  const { data: activeSession } = useActiveEquipmentUsageLog(equipment.id.toString())
   const deleteUsageLogMutation = useDeleteUsageLog()
   const visibleUsageLogs = React.useMemo(
     () => getVisibleUsageLogs(usageLogs, { sortOrder }),
     [usageLogs, sortOrder]
   )
 
-  // Find active usage session for current user
-  const activeSession = usageLogs?.find(
-    log => log.trang_thai === 'dang_su_dung' && log.nguoi_su_dung_id === user?.id
-  )
-
   // Check if equipment is currently in use by someone else
-  const isInUseByOther = usageLogs?.some(
-    log => log.trang_thai === 'dang_su_dung' && log.nguoi_su_dung_id !== user?.id
-  )
+  const isInUseByOther = !!activeSession && activeSession.nguoi_su_dung_id !== user?.id
 
   const formatDuration = (startTime: string, endTime?: string) => {
     const start = new Date(startTime)
@@ -359,6 +359,21 @@ export function UsageHistoryTab({ equipment }: UsageHistoryTabProps) {
               </TableBody>
             </Table>
           </ScrollArea>
+        )}
+
+        {hasNextPage && (
+          <div className="flex justify-center pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="gap-2"
+            >
+              {isFetchingNextPage && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isFetchingNextPage ? "Đang tải..." : "Xem thêm"}
+            </Button>
+          </div>
         )}
       </div>
 

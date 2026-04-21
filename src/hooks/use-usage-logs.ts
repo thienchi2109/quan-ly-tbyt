@@ -1,7 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 import { type UsageLog } from '@/types/database'
+import {
+  DEFAULT_SERVER_PAGE_SIZE,
+  flattenServerPages,
+  getNextServerPageParam,
+  getServerPaginationRange,
+  type ServerPaginationPage,
+  toServerPaginationPage,
+} from '@/lib/server-pagination'
+import { type UsageLogSortOrder } from '@/lib/usage-log-display'
 
 // Query keys for caching
 export const usageLogKeys = {
@@ -11,15 +20,62 @@ export const usageLogKeys = {
   details: () => [...usageLogKeys.all, 'detail'] as const,
   detail: (id: string) => [...usageLogKeys.details(), id] as const,
   equipment: (equipmentId: string) => [...usageLogKeys.all, 'equipment', equipmentId] as const,
+  equipmentHistory: (equipmentId: string, sortOrder: UsageLogSortOrder) =>
+    [...usageLogKeys.equipment(equipmentId), 'history', { sortOrder }] as const,
+  equipmentActive: (equipmentId: string) => [...usageLogKeys.equipment(equipmentId), 'active'] as const,
   active: () => [...usageLogKeys.all, 'active'] as const,
 }
 
 // Fetch usage logs for specific equipment
-export function useEquipmentUsageLogs(equipmentId: string | null) {
+export function useEquipmentUsageLogs(
+  equipmentId: string | null,
+  sortOrder: UsageLogSortOrder = 'newest',
+) {
+  const query = useInfiniteQuery<
+    ServerPaginationPage<UsageLog>,
+    Error,
+    InfiniteData<ServerPaginationPage<UsageLog>, number>,
+    ReturnType<typeof usageLogKeys.equipmentHistory>,
+    number
+  >({
+    queryKey: usageLogKeys.equipmentHistory(equipmentId || '', sortOrder),
+    queryFn: async ({ pageParam }) => {
+      if (!equipmentId) return toServerPaginationPage<UsageLog>([], pageParam, DEFAULT_SERVER_PAGE_SIZE)
+      if (!supabase) {
+        throw new Error('Supabase client not initialized')
+      }
+
+      const { from, to } = getServerPaginationRange(pageParam, DEFAULT_SERVER_PAGE_SIZE)
+      const { data, error } = await supabase
+        .from('nhat_ky_su_dung')
+        .select(`
+          *,
+          nguoi_su_dung:nhan_vien(id, full_name, khoa_phong)
+        `)
+        .eq('thiet_bi_id', equipmentId)
+        .order('thoi_gian_bat_dau', { ascending: sortOrder === 'oldest' })
+        .range(from, to)
+
+      if (error) throw error
+      return toServerPaginationPage(data as UsageLog[], pageParam, DEFAULT_SERVER_PAGE_SIZE)
+    },
+    enabled: !!equipmentId,
+    initialPageParam: 0,
+    getNextPageParam: getNextServerPageParam,
+    staleTime: 30 * 1000, // 30 seconds
+  })
+
+  return {
+    ...query,
+    usageLogs: flattenServerPages<UsageLog>(query.data),
+  }
+}
+
+export function useActiveEquipmentUsageLog(equipmentId: string | null) {
   return useQuery({
-    queryKey: usageLogKeys.equipment(equipmentId || ''),
+    queryKey: usageLogKeys.equipmentActive(equipmentId || ''),
     queryFn: async () => {
-      if (!equipmentId) return []
+      if (!equipmentId) return null
       if (!supabase) {
         throw new Error('Supabase client not initialized')
       }
@@ -31,13 +87,14 @@ export function useEquipmentUsageLogs(equipmentId: string | null) {
           nguoi_su_dung:nhan_vien(id, full_name, khoa_phong)
         `)
         .eq('thiet_bi_id', equipmentId)
-        .order('thoi_gian_bat_dau', { ascending: false })
+        .eq('trang_thai', 'dang_su_dung')
+        .maybeSingle()
 
       if (error) throw error
-      return data as UsageLog[]
+      return data as UsageLog | null
     },
     enabled: !!equipmentId,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 10 * 1000,
   })
 }
 
