@@ -1,18 +1,26 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { User, Lock, Globe, BarChart3, Wrench, Calendar, FileText, QrCode, Settings } from "lucide-react"
 import { Logo } from "@/components/icons"
 import { useAuth } from "@/contexts/auth-context"
 import { useLanguage } from "@/contexts/language-context"
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, user, isInitialized } = useAuth()
   const { currentLanguage, setLanguage, t } = useLanguage()
+  const { replace } = useRouter()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (isInitialized && user) {
+      replace("/dashboard")
+    }
+  }, [isInitialized, replace, user])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +39,10 @@ export default function LoginPage() {
       ? { code: 'vi' as const, name: 'Tiếng Việt' }
       : { code: 'en' as const, name: 'English' }
     setLanguage(newLang)
+  }
+
+  if (isInitialized && user) {
+    return null
   }
 
   // Core features for the infographic
