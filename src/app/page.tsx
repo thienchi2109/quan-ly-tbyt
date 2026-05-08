@@ -41,7 +41,7 @@ export default function LoginPage() {
     setLanguage(newLang)
   }
 
-  if (isInitialized && user) {
+  if (!isInitialized || user) {
     return null
   }
 

@@ -34,6 +34,30 @@ jest.mock("lucide-react", () => ({
 const encodeSession = (sessionData: Record<string, unknown>) =>
   btoa(unescape(encodeURIComponent(JSON.stringify(sessionData))))
 
+const seedUnexpiredSession = () => {
+  localStorage.setItem(
+    "auth_session_token",
+    encodeSession({
+      user_id: 1,
+      username: "admin",
+      role: "admin",
+      khoa_phong: "Khoa A",
+      full_name: "Admin User",
+      created_at: Date.now(),
+      expires_at: Date.now() + 3 * 60 * 60 * 1000,
+    }),
+  )
+}
+
+const renderLoginPage = () =>
+  render(
+    <LanguageProvider>
+      <AuthProvider>
+        <LoginPage />
+      </AuthProvider>
+    </LanguageProvider>,
+  )
+
 describe("LoginPage restored session navigation", () => {
   beforeEach(() => {
     localStorage.clear()
@@ -42,26 +66,8 @@ describe("LoginPage restored session navigation", () => {
   })
 
   it("redirects a restored, unexpired session from the login page to the dashboard", async () => {
-    localStorage.setItem(
-      "auth_session_token",
-      encodeSession({
-        user_id: 1,
-        username: "admin",
-        role: "admin",
-        khoa_phong: "Khoa A",
-        full_name: "Admin User",
-        created_at: Date.now(),
-        expires_at: Date.now() + 3 * 60 * 60 * 1000,
-      }),
-    )
-
-    render(
-      <LanguageProvider>
-        <AuthProvider>
-          <LoginPage />
-        </AuthProvider>
-      </LanguageProvider>,
-    )
+    seedUnexpiredSession()
+    renderLoginPage()
 
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith("/dashboard")
