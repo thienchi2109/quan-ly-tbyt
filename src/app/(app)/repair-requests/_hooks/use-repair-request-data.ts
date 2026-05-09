@@ -6,6 +6,10 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase, supabaseError } from "@/lib/supabase"
 import type { User } from "@/types/database"
 
+import {
+  isSameRepairRequestDepartment,
+  normalizeRepairRequestDepartmentName,
+} from "../_lib/department-normalization"
 import { getRepairRequestDepartment } from "../_lib/repair-request-permissions"
 import type { EquipmentSelectItem, RepairRequestWithEquipment } from "../types"
 
@@ -27,7 +31,26 @@ function filterVisibleRepairRequests(
   }
 
   return requests.filter((request) => {
-    return request.thiet_bi?.khoa_phong_quan_ly === department
+    return isSameRepairRequestDepartment(
+      request.thiet_bi?.khoa_phong_quan_ly,
+      department,
+    )
+  })
+}
+
+function filterVisibleEquipment(
+  equipments: EquipmentSelectItem[],
+  department: string | null,
+) {
+  if (!department) {
+    return equipments
+  }
+
+  return equipments.filter((equipment) => {
+    return isSameRepairRequestDepartment(
+      equipment.khoa_phong_quan_ly,
+      department,
+    )
   })
 }
 
@@ -50,7 +73,10 @@ export function useRepairRequestData({
 
     setIsLoading(true)
     const department = getRepairRequestDepartment(user)
-    const cacheKey = department ? `${CACHE_KEY}_${department}` : CACHE_KEY
+    const normalizedDepartment = normalizeRepairRequestDepartmentName(department)
+    const cacheKey = normalizedDepartment
+      ? `${CACHE_KEY}_${normalizedDepartment}`
+      : CACHE_KEY
 
     try {
       const cachedItemJSON = localStorage.getItem(cacheKey)
@@ -96,10 +122,6 @@ export function useRepairRequestData({
           khoa_phong_quan_ly
         )
       `)
-
-    if (department) {
-      query = query.eq("thiet_bi.khoa_phong_quan_ly", department)
-    }
 
     const { data, error } = await query.order("ngay_yeu_cau", {
       ascending: false,
@@ -166,14 +188,10 @@ export function useRepairRequestData({
       }
 
       try {
-        let equipmentQuery = supabase
+        const department = getRepairRequestDepartment(user)
+        const equipmentQuery = supabase
           .from("thiet_bi")
           .select("id, ma_thiet_bi, ten_thiet_bi, khoa_phong_quan_ly")
-
-        const department = getRepairRequestDepartment(user)
-        if (department) {
-          equipmentQuery = equipmentQuery.eq("khoa_phong_quan_ly", department)
-        }
 
         const { data, error } = await equipmentQuery
         if (error) {
@@ -184,7 +202,8 @@ export function useRepairRequestData({
               "Không thể tải danh sách thiết bị. " + error.message,
           })
         } else {
-          setAllEquipment(data || [])
+          const visibleEquipment = filterVisibleEquipment(data || [], department)
+          setAllEquipment(visibleEquipment)
         }
       } catch {
         toast({

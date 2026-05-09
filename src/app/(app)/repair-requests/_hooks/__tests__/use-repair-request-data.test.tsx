@@ -25,6 +25,26 @@ const departmentUser: User = {
   created_at: new Date().toISOString(),
 }
 
+const normalizedDepartmentUser: User = {
+  id: 102,
+  username: "normalized-dept-user",
+  password: "",
+  full_name: "Normalized Department User",
+  role: "qltb_khoa",
+  khoa_phong: "  Xét nghiệm  ",
+  created_at: new Date().toISOString(),
+}
+
+const hyphenDepartmentUser: User = {
+  id: 103,
+  username: "hyphen-dept-user",
+  password: "",
+  full_name: "Hyphen Department User",
+  role: "qltb_khoa",
+  khoa_phong: "Phòng khám Đa khoa - Chuyên khoa",
+  created_at: new Date().toISOString(),
+}
+
 const requestOutsideDepartment: RepairRequestWithEquipment = {
   id: 1,
   thiet_bi_id: 501,
@@ -78,7 +98,7 @@ describe("useRepairRequestData", () => {
   })
 
   it("hides repair requests outside user department when embedded equipment is missing", async () => {
-    const equipmentEq = jest.fn().mockResolvedValue({
+    const equipmentSelect = jest.fn().mockResolvedValue({
       data: [
         {
           id: 502,
@@ -90,21 +110,12 @@ describe("useRepairRequestData", () => {
       error: null,
     })
 
-    const equipmentSelect = jest.fn().mockReturnValue({
-      eq: equipmentEq,
-    })
-
     const requestOrder = jest.fn().mockResolvedValue({
       data: [requestOutsideDepartment, requestInsideDepartment],
       error: null,
     })
 
-    const requestEq = jest.fn().mockReturnValue({
-      order: requestOrder,
-    })
-
     const requestSelect = jest.fn().mockReturnValue({
-      eq: requestEq,
       order: requestOrder,
     })
 
@@ -131,8 +142,118 @@ describe("useRepairRequestData", () => {
       expect(result.current.isLoading).toBe(false)
     })
 
-    expect(requestEq).toHaveBeenCalledWith("thiet_bi.khoa_phong_quan_ly", "Khoa A")
-
     expect(result.current.requests).toEqual([requestInsideDepartment])
+  })
+
+  it("shows equipment when department names differ by case, spaces and accents", async () => {
+    const normalizedDepartmentEquipment = {
+      id: 601,
+      ma_thiet_bi: "TB-601",
+      ten_thiet_bi: "Máy xét nghiệm",
+      khoa_phong_quan_ly: "Xét Nghiệm",
+    }
+
+    const equipmentSelect = jest.fn().mockResolvedValue({
+      data: [
+        normalizedDepartmentEquipment,
+        {
+          id: 602,
+          ma_thiet_bi: "TB-602",
+          ten_thiet_bi: "Thiết bị khoa khác",
+          khoa_phong_quan_ly: "Khoa khác",
+        },
+      ],
+      error: null,
+    })
+
+    const requestOrder = jest.fn().mockResolvedValue({
+      data: [],
+      error: null,
+    })
+
+    const requestSelect = jest.fn().mockReturnValue({
+      order: requestOrder,
+    })
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "thiet_bi") {
+        return { select: equipmentSelect }
+      }
+
+      if (table === "yeu_cau_sua_chua") {
+        return { select: requestSelect }
+      }
+
+      throw new Error(`Unexpected table: ${table}`)
+    })
+
+    const { result } = renderHook(() =>
+      useRepairRequestData({
+        user: normalizedDepartmentUser,
+        toast: jest.fn(),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.allEquipment).toEqual([normalizedDepartmentEquipment])
+  })
+
+  it("matches department names with hyphen differences in spacing and case", async () => {
+    const hyphenDepartmentEquipment = {
+      id: 701,
+      ma_thiet_bi: "TB-701",
+      ten_thiet_bi: "Máy nội soi",
+      khoa_phong_quan_ly: "Phòng khám đa khoa- chuyên khoa",
+    }
+
+    const equipmentSelect = jest.fn().mockResolvedValue({
+      data: [
+        hyphenDepartmentEquipment,
+        {
+          id: 702,
+          ma_thiet_bi: "TB-702",
+          ten_thiet_bi: "Thiết bị ngoài khoa",
+          khoa_phong_quan_ly: "Khoa ngoại",
+        },
+      ],
+      error: null,
+    })
+
+    const requestOrder = jest.fn().mockResolvedValue({
+      data: [],
+      error: null,
+    })
+
+    const requestSelect = jest.fn().mockReturnValue({
+      order: requestOrder,
+    })
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "thiet_bi") {
+        return { select: equipmentSelect }
+      }
+
+      if (table === "yeu_cau_sua_chua") {
+        return { select: requestSelect }
+      }
+
+      throw new Error(`Unexpected table: ${table}`)
+    })
+
+    const { result } = renderHook(() =>
+      useRepairRequestData({
+        user: hyphenDepartmentUser,
+        toast: jest.fn(),
+      }),
+    )
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.allEquipment).toEqual([hyphenDepartmentEquipment])
   })
 })

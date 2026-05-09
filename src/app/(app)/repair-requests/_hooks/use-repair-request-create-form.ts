@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase"
 import type { User } from "@/types/database"
 
+import { isSameRepairRequestDepartment } from "../_lib/department-normalization"
 import { getRepairRequestDepartment } from "../_lib/repair-request-permissions"
 import type { EquipmentSelectItem } from "../types"
 import type {
@@ -184,7 +185,7 @@ export function useRepairRequestCreateForm({
             return
           }
 
-          if (data.khoa_phong_quan_ly !== department) {
+          if (!isSameRepairRequestDepartment(data.khoa_phong_quan_ly, department)) {
             toast({
               variant: "destructive",
               title: "Không có quyền",
