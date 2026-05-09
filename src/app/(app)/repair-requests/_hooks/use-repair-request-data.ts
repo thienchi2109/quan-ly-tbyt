@@ -18,6 +18,19 @@ interface UseRepairRequestDataParams {
   toast: ToastFn
 }
 
+function filterVisibleRepairRequests(
+  requests: RepairRequestWithEquipment[],
+  department: string | null,
+) {
+  if (!department) {
+    return requests
+  }
+
+  return requests.filter((request) => {
+    return request.thiet_bi?.khoa_phong_quan_ly === department
+  })
+}
+
 export function useRepairRequestData({
   user,
   toast,
@@ -43,7 +56,11 @@ export function useRepairRequestData({
       const cachedItemJSON = localStorage.getItem(cacheKey)
       if (cachedItemJSON) {
         const cachedItem = JSON.parse(cachedItemJSON)
-        setRequests(cachedItem.data as RepairRequestWithEquipment[])
+        const cachedRequests = filterVisibleRepairRequests(
+          (cachedItem.data ?? []) as RepairRequestWithEquipment[],
+          department,
+        )
+        setRequests(cachedRequests)
         setIsLoading(false)
       }
     } catch (error) {
@@ -99,10 +116,14 @@ export function useRepairRequestData({
         setRequests([])
       }
     } else {
-      setRequests(data as unknown as RepairRequestWithEquipment[])
+      const visibleRequests = filterVisibleRepairRequests(
+        (data ?? []) as unknown as RepairRequestWithEquipment[],
+        department,
+      )
+      setRequests(visibleRequests)
 
       try {
-        localStorage.setItem(cacheKey, JSON.stringify({ data }))
+        localStorage.setItem(cacheKey, JSON.stringify({ data: visibleRequests }))
       } catch (cacheError) {
         console.error("Error writing repair requests to localStorage", cacheError)
       }
