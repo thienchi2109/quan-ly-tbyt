@@ -22,6 +22,7 @@ interface AddEquipmentDialogProps {
 export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipmentDialogProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const submitInFlightRef = React.useRef(false)
   const [departments, setDepartments] = React.useState<string[]>([])
   const form = useForm<EquipmentFormValues>({
     resolver: zodResolver(equipmentFormSchema),
@@ -68,6 +69,11 @@ export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipme
   }, [fetchDepartments, form, open])
 
   const onSubmit = React.useCallback(async (values: EquipmentFormValues) => {
+    if (submitInFlightRef.current) {
+      return
+    }
+
+    submitInFlightRef.current = true
     setIsSubmitting(true)
     if (!supabase) {
       toast({
@@ -76,6 +82,7 @@ export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipme
         description: "Lỗi kết nối cơ sở dữ liệu.",
       })
       setIsSubmitting(false)
+      submitInFlightRef.current = false
       return
     }
 
@@ -101,6 +108,7 @@ export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipme
         description: `Không thể thêm thiết bị. ${message}`,
       })
     } finally {
+      submitInFlightRef.current = false
       setIsSubmitting(false)
     }
   }, [form, onOpenChange, onSuccess, toast])
