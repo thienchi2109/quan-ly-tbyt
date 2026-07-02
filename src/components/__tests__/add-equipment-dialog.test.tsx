@@ -57,15 +57,20 @@ jest.mock("@/components/equipment-form-dialog-shared", () => {
     equipmentFormDefaultValues: {},
     equipmentFormSchema: z.object({}),
     EquipmentFormDialogShared: ({ onSubmit }: { onSubmit: (values: EquipmentFormValues) => Promise<void> }) => (
-      <button
-        type="button"
-        onClick={() => {
-          void onSubmit(payload)
-          void onSubmit(payload)
-        }}
-      >
-        Save twice
-      </button>
+      <>
+        <button type="button" onClick={() => void onSubmit(payload)}>
+          Save once
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            void onSubmit(payload)
+            void onSubmit(payload)
+          }}
+        >
+          Save twice
+        </button>
+      </>
     ),
   }
 })
@@ -92,6 +97,34 @@ describe("AddEquipmentDialog", () => {
 
     await waitFor(() => {
       expect(insertMock).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it("shows a clear message when the equipment code already exists", async () => {
+    insertMock.mockResolvedValue({
+      error: {
+        code: "23505",
+        message: "duplicate key value violates unique constraint \"thiet_bi_ma_thiet_bi_key\"",
+        details: "Key (ma_thiet_bi)=(TB-DOUBLE-SUBMIT) already exists.",
+      },
+    })
+
+    render(
+      <AddEquipmentDialog
+        open
+        onOpenChange={onOpenChangeMock}
+        onSuccess={onSuccessMock}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Save once" }))
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith(expect.objectContaining({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Mã thiết bị này đã tồn tại. Vui lòng kiểm tra lại mã thiết bị hoặc chọn mã khác.",
+      }))
     })
   })
 })

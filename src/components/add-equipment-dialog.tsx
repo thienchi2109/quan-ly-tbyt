@@ -19,6 +19,40 @@ interface AddEquipmentDialogProps {
   onSuccess: () => void
 }
 
+function getAddEquipmentErrorDescription(error: unknown) {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "23505"
+  ) {
+    return "Mã thiết bị này đã tồn tại. Vui lòng kiểm tra lại mã thiết bị hoặc chọn mã khác."
+  }
+
+  let message: string | null = null
+
+  if (error instanceof Error && error.message) {
+    message = error.message
+  }
+
+  if (
+    !message &&
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string" &&
+    error.message.trim()
+  ) {
+    message = error.message
+  }
+
+  if (!message || message === "Không thể thêm thiết bị.") {
+    return "Không thể thêm thiết bị."
+  }
+
+  return `Không thể thêm thiết bị. ${message}`
+}
+
 export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipmentDialogProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -101,11 +135,10 @@ export function AddEquipmentDialog({ open, onOpenChange, onSuccess }: AddEquipme
       onOpenChange(false)
       form.reset(equipmentFormDefaultValues)
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Không thể thêm thiết bị."
       toast({
         variant: "destructive",
         title: "Lỗi",
-        description: `Không thể thêm thiết bị. ${message}`,
+        description: getAddEquipmentErrorDescription(error),
       })
     } finally {
       submitInFlightRef.current = false
